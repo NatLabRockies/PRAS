@@ -178,6 +178,8 @@ A struct representing storage devices in the system.
  - `μ` (repair probability): Probability the unit transitions from forced outage to
    operational during a given simulation timestep, for each storage unit in each
    timeperiod. Unitless.
+ - 'initial_soc': Optional keyword for initial state of charge as a ratio [0,1.0] of `energy_capacity` at first timestep for 
+   each storage unit at the beginning of the simulation. Default is zero.
 """
 struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
@@ -195,12 +197,15 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
     λ::Matrix{Float64}
     μ::Matrix{Float64}
 
+    initial_soc::Vector{Float64} # energy
+
     function Storages{N,L,T,P,E}(
         names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
         chargecapacity::Matrix{Int}, dischargecapacity::Matrix{Int},
         energycapacity::Matrix{Int}, chargeefficiency::Matrix{Float64},
         dischargeefficiency::Matrix{Float64}, carryoverefficiency::Matrix{Float64},
-        λ::Matrix{Float64}, μ::Matrix{Float64}
+        λ::Matrix{Float64}, μ::Matrix{Float64}; 
+        initial_soc::Vector{Float64} = zeros(Float64, length(names))
     ) where {N,L,T,P,E}
 
         n_stors = length(names)
@@ -226,10 +231,14 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
         @assert all(isfractional, λ)
         @assert all(isfractional, μ)
 
+        @assert length(initial_soc) == n_stors
+        @assert all(isfractional, initial_soc)
+
+        #order of this is tied to how struct order is defined
         new{N,L,T,P,E}(string.(names), string.(categories),
                        chargecapacity, dischargecapacity, energycapacity,
                        chargeefficiency, dischargeefficiency, carryoverefficiency,
-                       λ, μ)
+                       λ, μ, initial_soc)
 
     end
 
@@ -242,7 +251,8 @@ function Storages{N,L,T,P,E}() where {N,L,T,P,E}
                 String[], String[], 
                 zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
                 zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
-                zeros(Float64, 0, N), zeros(Float64, 0, N))
+                zeros(Float64, 0, N), zeros(Float64, 0, N);
+                initial_soc =  zeros(Float64, 0))
 end
 
 Base.:(==)(x::T, y::T) where {T <: Storages} =
@@ -255,13 +265,15 @@ Base.:(==)(x::T, y::T) where {T <: Storages} =
     x.discharge_efficiency == y.discharge_efficiency &&
     x.carryover_efficiency == y.carryover_efficiency &&
     x.λ == y.λ &&
-    x.μ == y.μ
+    x.μ == y.μ &&
+    x.initial_soc == y.initial_soc
 
 Base.getindex(s::S, idxs::AbstractVector{Int}) where {S <: Storages} =
     S(s.names[idxs], s.categories[idxs],s.charge_capacity[idxs,:],
       s.discharge_capacity[idxs, :],s.energy_capacity[idxs, :],
       s.charge_efficiency[idxs, :], s.discharge_efficiency[idxs, :], 
-      s.carryover_efficiency[idxs, :],s.λ[idxs, :], s.μ[idxs, :])
+      s.carryover_efficiency[idxs, :],s.λ[idxs, :], s.μ[idxs, :];
+      initial_soc = s.initial_soc[idxs])
 
 function Base.vcat(stors::Storages{N,L,T,P,E}...) where {N, L, T, P, E}
 
@@ -280,6 +292,8 @@ function Base.vcat(stors::Storages{N,L,T,P,E}...) where {N, L, T, P, E}
 
     λ = Matrix{Float64}(undef, n_stors, N)
     μ = Matrix{Float64}(undef, n_stors, N)
+
+    initial_soc = Vector{Float64}(undef, n_stors)
 
     last_idx = 0
 
@@ -302,12 +316,15 @@ function Base.vcat(stors::Storages{N,L,T,P,E}...) where {N, L, T, P, E}
         λ[rows, :] = s.λ
         μ[rows, :] = s.μ
 
+        initial_soc[rows] = s.initial_soc
+
         last_idx += n
 
     end
 
     return Storages{N,L,T,P,E}(names, categories, charge_capacity, discharge_capacity, energy_capacity, charge_efficiency, discharge_efficiency, 
-                               carryover_efficiency, λ, μ)
+                               carryover_efficiency, λ, μ;
+                               initial_soc = initial_soc)
 
 end
 
@@ -351,6 +368,8 @@ A struct representing generator-storage hybrid devices within a power system.
  - `μ` (repair probability): Probability the unit transitions from forced outage to
    operational during a given simulation timestep, for each generator-storage unit in each
    timeperiod. Unitless.
+ - 'initial_soc': Optional keywrod arg initial state of charge as a ratio [0,1.0] of `energy_capacity` at first timestep for 
+   each storage unit at the beginning of the simulation. Default is zero.
 """
 struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
@@ -372,6 +391,8 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
     λ::Matrix{Float64}
     μ::Matrix{Float64}
 
+    initial_soc::Vector{Float64} # energy
+
     function GeneratorStorages{N,L,T,P,E}(
         names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
         charge_capacity::Matrix{Int}, discharge_capacity::Matrix{Int},
@@ -380,7 +401,8 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
         carryover_efficiency::Matrix{Float64},
         inflow::Matrix{Int},
         gridwithdrawal_capacity::Matrix{Int}, gridinjection_capacity::Matrix{Int},
-        λ::Matrix{Float64}, μ::Matrix{Float64}
+        λ::Matrix{Float64}, μ::Matrix{Float64},; 
+        initial_soc::Vector{Float64} = zeros(Float64, length(names)),
     ) where {N,L,T,P,E}
 
         n_stors = length(names)
@@ -416,12 +438,15 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
         @assert all(isfractional, λ)
         @assert all(isfractional, μ)
 
+        @assert length(initial_soc) == n_stors
+        @assert all(isfractional, initial_soc)
+
         new{N,L,T,P,E}(
             string.(names), string.(categories),
             charge_capacity, discharge_capacity, energy_capacity,
             charge_efficiency, discharge_efficiency, carryover_efficiency,
             inflow, gridwithdrawal_capacity, gridinjection_capacity,
-            λ, μ)
+            λ, μ,initial_soc)
 
     end
 
@@ -435,7 +460,7 @@ function GeneratorStorages{N,L,T,P,E}() where {N,L,T,P,E}
                 zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
                 zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
                 zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
-                zeros(Float64, 0, N), zeros(Float64, 0, N))
+                zeros(Float64, 0, N), zeros(Float64, 0, N); initial_soc =  zeros(Float64, 0))
     
 end
 
@@ -452,7 +477,8 @@ Base.:(==)(x::T, y::T) where {T <: GeneratorStorages} =
     x.gridwithdrawal_capacity == y.gridwithdrawal_capacity &&
     x.gridinjection_capacity == y.gridinjection_capacity &&
     x.λ == y.λ &&
-    x.μ == y.μ
+    x.μ == y.μ &&
+    x.initial_soc == y.initial_soc
 
 Base.getindex(g_s::G, idxs::AbstractVector{Int}) where {G <: GeneratorStorages} =
     G(g_s.names[idxs], g_s.categories[idxs], g_s.charge_capacity[idxs,:],
@@ -460,7 +486,7 @@ Base.getindex(g_s::G, idxs::AbstractVector{Int}) where {G <: GeneratorStorages} 
       g_s.charge_efficiency[idxs, :], g_s.discharge_efficiency[idxs, :], 
       g_s.carryover_efficiency[idxs, :],g_s.inflow[idxs, :],
       g_s.gridwithdrawal_capacity[idxs, :],g_s.gridinjection_capacity[idxs, :],
-      g_s.λ[idxs, :], g_s.μ[idxs, :])
+      g_s.λ[idxs, :], g_s.μ[idxs, :]; initial_soc =  g_s.initial_soc[idxs])
 
 function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P, E}
 
@@ -483,6 +509,8 @@ function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P
 
     λ = Matrix{Float64}(undef, n_gen_stors, N)
     μ = Matrix{Float64}(undef, n_gen_stors, N)
+
+    initial_soc = Vector{Float64}(undef, n_gen_stors)
 
     last_idx = 0
 
@@ -509,12 +537,14 @@ function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P
         λ[rows, :] = g_s.λ
         μ[rows, :] = g_s.μ
 
+        initial_soc[rows] = g_s.initial_soc
+
         last_idx += n
 
     end
 
     return GeneratorStorages{N,L,T,P,E}(names, categories, charge_capacity, discharge_capacity, energy_capacity, charge_efficiency, discharge_efficiency, 
-                               carryover_efficiency,inflow, gridwithdrawal_capacity, gridinjection_capacity, λ, μ)
+                               carryover_efficiency,inflow, gridwithdrawal_capacity, gridinjection_capacity, λ, μ; initial_soc =  initial_soc)
 
 end
 
@@ -551,6 +581,8 @@ A struct representing demand response devices in the system.
  - `μ` (repair probability): Probability the unit transitions from forced outage to
    operational during a given simulation timestep, for each storage unit in each
    timeperiod. Unitless.
+ - 'initial_borrowed_load': Optional initial state of borrowed load as a ratio [0,1.0] of `energy_capacity` at first timestep for 
+   each demand response unit at the beginning of the simulation. Default is zero.
 """
 struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
@@ -568,6 +600,8 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
     λ::Matrix{Float64}
     μ::Matrix{Float64}
 
+    initial_borrowed_load::Vector{Float64} # energy
+
     borrow_efficiency::Matrix{Float64}
     payback_efficiency::Matrix{Float64}
 
@@ -576,8 +610,10 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         borrowcapacity::Matrix{Int}, paybackcapacity::Matrix{Int},
         energycapacity::Matrix{Int}, borrowedenergyinterest::Matrix{Float64},
         allowablepaybackperiod::Matrix{Int},
-        λ::Matrix{Float64}, μ::Matrix{Float64},
-        borrowefficiency::Matrix{Float64},paybackefficiency::Matrix{Float64}
+        λ::Matrix{Float64}, μ::Matrix{Float64},;
+        initial_borrowed_load::Vector{Float64} = zeros(Float64, length(names)),
+        borrow_efficiency::Matrix{Float64} = ones(Float64, size(borrowcapacity)),
+        payback_efficiency::Matrix{Float64} = ones(Float64, size(paybackcapacity)) 
     ) where {N,L,T,P,E}
 
         n_drs = length(names)
@@ -592,11 +628,11 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         @assert all(isnonnegative, paybackcapacity)
         @assert all(isnonnegative, energycapacity)
 
-        @assert size(borrowefficiency) == (n_drs, N)
-        @assert size(paybackefficiency) == (n_drs, N)
+        @assert size(borrow_efficiency) == (n_drs, N)
+        @assert size(payback_efficiency) == (n_drs, N)
         @assert size(borrowedenergyinterest) == (n_drs, N)
-        @assert all(isfractional, borrowefficiency)
-        @assert all(isfractional, paybackefficiency)
+        @assert all(isfractional, borrow_efficiency)
+        @assert all(isfractional, payback_efficiency)
         @assert all(borrowedenergyinterest .<= 1.0)
         @assert all(borrowedenergyinterest .>= -1.0)
 
@@ -609,41 +645,31 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         @assert all(isfractional, λ)
         @assert all(isfractional, μ)
 
+        @assert length(initial_borrowed_load) == n_drs
+        @assert all(isfractional, initial_borrowed_load)
+
         new{N,L,T,P,E}(string.(names), string.(categories),
                        borrowcapacity, paybackcapacity, energycapacity,
                       borrowedenergyinterest,
                        allowablepaybackperiod,
-                       λ, μ,borrowefficiency, paybackefficiency,)
+                       λ, μ,
+                       initial_borrowed_load,
+                       borrow_efficiency,
+                       payback_efficiency)
     end
 end
-
-# second constructor if borrow and payback efficiencies are not provided
-function DemandResponses{N,L,T,P,E}(
-  names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
-  borrowcapacity::Matrix{Int}, paybackcapacity::Matrix{Int},
-  energycapacity::Matrix{Int}, borrowedenergyinterest::Matrix{Float64},
-  allowablepaybackperiod::Matrix{Int},
-  λ::Matrix{Float64}, μ::Matrix{Float64}
-) where {N,L,T,P,E}
-    return DemandResponses{N,L,T,P,E}(
-        names, categories,
-        borrowcapacity, paybackcapacity, energycapacity,
-        borrowedenergyinterest, allowablepaybackperiod,
-        λ, μ,
-        ones(Float64, size(borrowcapacity)), ones(Float64, size(paybackcapacity))
-    )
-end
-
 
 # Empty DemandResponses constructor
 function DemandResponses{N,L,T,P,E}() where {N,L,T,P,E}
 
-    return DemandResponses{N,L,T,P,E}(
-                String[], String[],
-                Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),
-                Matrix{Float64}(undef, 0, N),
-                Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),
-                Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N))
+  return DemandResponses{N,L,T,P,E}(
+              String[], String[],
+              Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),
+              Matrix{Float64}(undef, 0, N),
+              Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N);
+              initial_borrowed_load = zeros(Float64, 0),
+              borrow_efficiency = Matrix{Float64}(undef, 0, N),
+              payback_efficiency = Matrix{Float64}(undef, 0, N))
 end
 
 Base.:(==)(x::T, y::T) where {T <: DemandResponses} =
@@ -657,13 +683,16 @@ Base.:(==)(x::T, y::T) where {T <: DemandResponses} =
     x.borrowed_energy_interest == y.borrowed_energy_interest &&
     x.allowable_payback_period == y.allowable_payback_period &&
     x.λ == y.λ &&
-    x.μ == y.μ
+    x.μ == y.μ &&
+    x.initial_borrowed_load == y.initial_borrowed_load
 
 Base.getindex(dr::DR, idxs::AbstractVector{Int}) where {DR <: DemandResponses} =
     DR(dr.names[idxs], dr.categories[idxs],dr.borrow_capacity[idxs,:],
       dr.payback_capacity[idxs, :],dr.energy_capacity[idxs, :],
-      dr.borrowed_energy_interest[idxs, :],dr.allowable_payback_period[idxs, :],dr.λ[idxs, :], dr.μ[idxs, :],
-      dr.borrow_efficiency[idxs, :], dr.payback_efficiency[idxs, :])
+      dr.borrowed_energy_interest[idxs, :],dr.allowable_payback_period[idxs, :],dr.λ[idxs, :], dr.μ[idxs, :];
+      initial_borrowed_load = dr.initial_borrowed_load[idxs],
+      borrow_efficiency = dr.borrow_efficiency[idxs, :], 
+      payback_efficiency = dr.payback_efficiency[idxs, :])
 
 function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
 
@@ -685,6 +714,8 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
 
     λ = Matrix{Float64}(undef, n_drs, N)
     μ = Matrix{Float64}(undef, n_drs, N)
+
+    initial_borrowed_load = Vector{Float64}(undef, n_drs)
 
     last_idx = 0
 
@@ -709,12 +740,17 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
         λ[rows, :] = dr.λ
         μ[rows, :] = dr.μ
 
+        initial_borrowed_load[rows] = dr.initial_borrowed_load
+
         last_idx += n
 
     end
 
     return DemandResponses{N,L,T,P,E}(names, categories, borrow_capacity, payback_capacity, energy_capacity,
-    borrowed_energy_interest,allowable_payback_period, λ, μ, borrow_efficiency, payback_efficiency)
+    borrowed_energy_interest,allowable_payback_period, λ, μ;
+    initial_borrowed_load = initial_borrowed_load,
+    borrow_efficiency = borrow_efficiency, 
+    payback_efficiency = payback_efficiency)
 
 end
 
