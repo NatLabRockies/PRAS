@@ -164,6 +164,9 @@ function process_storages!(
 
     storages["repairprobability", deflate = compression] = sys.storages.μ
 
+    storages["initialsoc", deflate = compression] =
+         sys.storages.initial_soc
+
     return
 
 end
@@ -217,6 +220,8 @@ function process_generatorstorages!(
     generatorstorages["repairprobability", deflate = compression] =
         sys.generatorstorages.μ
 
+    generatorstorages["initialsoc", deflate = compression] =
+        sys.generatorstorages.initial_soc
     return
 
 end
@@ -261,6 +266,8 @@ function process_demandresponses!(
 
     demandresponses["repairprobability", deflate = compression] = sys.demandresponses.μ
 
+    generatorstorages["initialborrowedload", deflate = compression] =
+        sys.generatorstorages.initial_borrowed_load
     return
 
 end
