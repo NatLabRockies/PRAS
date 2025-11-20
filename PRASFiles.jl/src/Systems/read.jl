@@ -20,9 +20,9 @@ function SystemModel(inputfile::String)
         # Determine the appropriate version of the importer to use
         return if (0,5,0) <= version < (0,8,0)
             systemmodel_0_5(f)
-        elseif (0,8,0) <= version < (0,9,0)
-            systemmodel_0_8(f)
-        elseif (0,8,1) <= version
+        elseif version == (0,8,0)
+            systemmodel_0_8_0(f)
+        elseif version >= (0,8,1)
             systemmodel_0_8_1(f)
         else
             error("PRAS file format $versionstring not supported by this version of PRASBase.")
@@ -60,7 +60,6 @@ function _systemmodel_core(f::File)
 
     has_regions = haskey(f, "regions")
     has_generators = haskey(f, "generators")
-    has_storages = haskey(f, "storages")
     has_generatorstorages = haskey(f, "generatorstorages")
     has_interfaces = haskey(f, "interfaces")
     has_lines = haskey(f, "lines")
@@ -105,72 +104,6 @@ function _systemmodel_core(f::File)
         generators = Generators{N,L,T,P}()
 
         region_gen_idxs = fill(1:0, n_regions)
-
-    end
-
-    if has_storages
-
-        stor_core = read(f["storages/_core"])
-        stor_names, stor_categories, stor_regionnames = readvector.(
-            Ref(stor_core), [:name, :category, :region])
-
-        stor_regions = getindex.(Ref(regionlookup), stor_regionnames)
-        region_order = sortperm(stor_regions)
-
-        storages = Storages{N,L,T,P,E}(
-            stor_names[region_order], stor_categories[region_order],
-            load_matrix(f["storages/chargecapacity"], region_order, Int),
-            load_matrix(f["storages/dischargecapacity"], region_order, Int),
-            load_matrix(f["storages/energycapacity"], region_order, Int),
-            load_matrix(f["storages/chargeefficiency"], region_order, Float64),
-            load_matrix(f["storages/dischargeefficiency"], region_order, Float64),
-            load_matrix(f["storages/carryoverefficiency"], region_order, Float64),
-            load_matrix(f["storages/failureprobability"], region_order, Float64),
-            load_matrix(f["storages/repairprobability"], region_order, Float64)
-        )
-
-        region_stor_idxs = makeidxlist(stor_regions[region_order], n_regions)
-
-    else
-
-        storages = Storages{N,L,T,P,E}()
-
-        region_stor_idxs = fill(1:0, n_regions)
-
-    end
-
-
-    if has_generatorstorages
-
-        genstor_core = read(f["generatorstorages/_core"])
-        genstor_names, genstor_categories, genstor_regionnames = readvector.(
-            Ref(genstor_core), [:name, :category, :region])
-
-        genstor_regions = getindex.(Ref(regionlookup), genstor_regionnames)
-        region_order = sortperm(genstor_regions)
-
-        generatorstorages = GeneratorStorages{N,L,T,P,E}(
-            genstor_names[region_order], genstor_categories[region_order],
-            load_matrix(f["generatorstorages/chargecapacity"], region_order, Int),
-            load_matrix(f["generatorstorages/dischargecapacity"], region_order, Int),
-            load_matrix(f["generatorstorages/energycapacity"], region_order, Int),
-            load_matrix(f["generatorstorages/chargeefficiency"], region_order, Float64),
-            load_matrix(f["generatorstorages/dischargeefficiency"], region_order, Float64),
-            load_matrix(f["generatorstorages/carryoverefficiency"], region_order, Float64),
-            load_matrix(f["generatorstorages/inflow"], region_order, Int),
-            load_matrix(f["generatorstorages/gridwithdrawalcapacity"], region_order, Int),
-            load_matrix(f["generatorstorages/gridinjectioncapacity"], region_order, Int),
-            load_matrix(f["generatorstorages/failureprobability"], region_order, Float64),
-            load_matrix(f["generatorstorages/repairprobability"], region_order, Float64)
-        )
-
-        region_genstor_idxs = makeidxlist(genstor_regions[region_order], n_regions)
-
-    else
-
-        generatorstorages = GeneratorStorages{N,L,T,P,E}()
-
-        region_genstor_idxs = fill(1:0, n_regions)
 
     end
 
@@ -260,8 +193,6 @@ function _systemmodel_core(f::File)
 
     return (regions, interfaces,
             generators, region_gen_idxs,
-            storages, region_stor_idxs,
-            generatorstorages, region_genstor_idxs,
             lines, interface_line_idxs,
             timestamps),type_params
 end
@@ -271,29 +202,179 @@ Read a SystemModel from a PRAS file in version 0.5.x - 0.7.x format.
 """
 function systemmodel_0_5(f::File)
 
-    systemmodel_0_5_objs, _ = _systemmodel_core(f)
-
-    return SystemModel(systemmodel_0_5_objs...)
-
-end
-
-"""
-Read a SystemModel from a PRAS file in version 0.8.x format.
-"""
-function systemmodel_0_8(f::File)
-    
     (regions, interfaces,
     generators, region_gen_idxs,
-    storages, region_stor_idxs,
-    generatorstorages, region_genstor_idxs,
     lines, interface_line_idxs,
     timestamps), (N,L,T,P,E) = _systemmodel_core(f)
 
     n_regions = length(regions)
     regionlookup = Dict(n=>i for (i, n) in enumerate(regions.names))
+    attrs = read_attrs(f)
 
-    if haskey(f, "demandresponses")
+    has_storages = haskey(f, "storages")
+    has_generatorstorages = haskey(f, "generatorstorages")
 
+    if has_storages
+
+        stor_core = read(f["storages/_core"])
+        stor_names, stor_categories, stor_regionnames = readvector.(
+            Ref(stor_core), [:name, :category, :region])
+
+        stor_regions = getindex.(Ref(regionlookup), stor_regionnames)
+        region_order = sortperm(stor_regions)
+
+        storages = Storages{N,L,T,P,E}(
+            stor_names[region_order], stor_categories[region_order],
+            load_matrix(f["storages/chargecapacity"], region_order, Int),
+            load_matrix(f["storages/dischargecapacity"], region_order, Int),
+            load_matrix(f["storages/energycapacity"], region_order, Int),
+            load_matrix(f["storages/chargeefficiency"], region_order, Float64),
+            load_matrix(f["storages/dischargeefficiency"], region_order, Float64),
+            load_matrix(f["storages/carryoverefficiency"], region_order, Float64),
+            load_matrix(f["storages/failureprobability"], region_order, Float64),
+            load_matrix(f["storages/repairprobability"], region_order, Float64)
+        )
+
+        region_stor_idxs = makeidxlist(stor_regions[region_order], n_regions)
+
+    else
+
+        storages = Storages{N,L,T,P,E}()
+
+        region_stor_idxs = fill(1:0, n_regions)
+
+    end
+
+
+    if has_generatorstorages
+
+        genstor_core = read(f["generatorstorages/_core"])
+        genstor_names, genstor_categories, genstor_regionnames = readvector.(
+            Ref(genstor_core), [:name, :category, :region])
+
+        genstor_regions = getindex.(Ref(regionlookup), genstor_regionnames)
+        region_order = sortperm(genstor_regions)
+
+        generatorstorages = GeneratorStorages{N,L,T,P,E}(
+            genstor_names[region_order], genstor_categories[region_order],
+            load_matrix(f["generatorstorages/chargecapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/dischargecapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/energycapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/chargeefficiency"], region_order, Float64),
+            load_matrix(f["generatorstorages/dischargeefficiency"], region_order, Float64),
+            load_matrix(f["generatorstorages/carryoverefficiency"], region_order, Float64),
+            load_matrix(f["generatorstorages/inflow"], region_order, Int),
+            load_matrix(f["generatorstorages/gridwithdrawalcapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/gridinjectioncapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/failureprobability"], region_order, Float64),
+            load_matrix(f["generatorstorages/repairprobability"], region_order, Float64)
+        )
+
+        region_genstor_idxs = makeidxlist(genstor_regions[region_order], n_regions)
+
+    else
+
+        generatorstorages = GeneratorStorages{N,L,T,P,E}()
+
+        region_genstor_idxs = fill(1:0, n_regions)
+
+    end
+
+    return SystemModel(
+        regions, interfaces,
+        generators, region_gen_idxs,
+        storages, region_stor_idxs,
+        generatorstorages, region_genstor_idxs,
+        lines, interface_line_idxs,
+        timestamps, attrs)
+
+end
+
+"""
+Read a SystemModel from a PRAS file in version 0.8.0 format. Adds Demand Response component info
+"""
+function systemmodel_0_8_0(f::File)
+    
+    (regions, interfaces,
+    generators, region_gen_idxs,
+    lines, interface_line_idxs,
+    timestamps), (N,L,T,P,E) = _systemmodel_core(f)
+
+    n_regions = length(regions)
+    regionlookup = Dict(n=>i for (i, n) in enumerate(regions.names))
+    attrs = read_attrs(f)
+
+    has_storages = haskey(f, "storages")
+    has_generatorstorages = haskey(f, "generatorstorages")
+    has_demandresponses = haskey(f, "demandresponses")
+
+    if has_storages
+
+        stor_core = read(f["storages/_core"])
+        stor_names, stor_categories, stor_regionnames = readvector.(
+            Ref(stor_core), [:name, :category, :region])
+
+        stor_regions = getindex.(Ref(regionlookup), stor_regionnames)
+        region_order = sortperm(stor_regions)
+
+        storages = Storages{N,L,T,P,E}(
+            stor_names[region_order], stor_categories[region_order],
+            load_matrix(f["storages/chargecapacity"], region_order, Int),
+            load_matrix(f["storages/dischargecapacity"], region_order, Int),
+            load_matrix(f["storages/energycapacity"], region_order, Int),
+            load_matrix(f["storages/chargeefficiency"], region_order, Float64),
+            load_matrix(f["storages/dischargeefficiency"], region_order, Float64),
+            load_matrix(f["storages/carryoverefficiency"], region_order, Float64),
+            load_matrix(f["storages/failureprobability"], region_order, Float64),
+            load_matrix(f["storages/repairprobability"], region_order, Float64)
+        )
+
+        region_stor_idxs = makeidxlist(stor_regions[region_order], n_regions)
+
+    else
+
+        storages = Storages{N,L,T,P,E}()
+
+        region_stor_idxs = fill(1:0, n_regions)
+
+    end
+
+
+    if has_generatorstorages
+
+        genstor_core = read(f["generatorstorages/_core"])
+        genstor_names, genstor_categories, genstor_regionnames = readvector.(
+            Ref(genstor_core), [:name, :category, :region])
+
+        genstor_regions = getindex.(Ref(regionlookup), genstor_regionnames)
+        region_order = sortperm(genstor_regions)
+
+        generatorstorages = GeneratorStorages{N,L,T,P,E}(
+            genstor_names[region_order], genstor_categories[region_order],
+            load_matrix(f["generatorstorages/chargecapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/dischargecapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/energycapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/chargeefficiency"], region_order, Float64),
+            load_matrix(f["generatorstorages/dischargeefficiency"], region_order, Float64),
+            load_matrix(f["generatorstorages/carryoverefficiency"], region_order, Float64),
+            load_matrix(f["generatorstorages/inflow"], region_order, Int),
+            load_matrix(f["generatorstorages/gridwithdrawalcapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/gridinjectioncapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/failureprobability"], region_order, Float64),
+            load_matrix(f["generatorstorages/repairprobability"], region_order, Float64)
+        )
+
+        region_genstor_idxs = makeidxlist(genstor_regions[region_order], n_regions)
+
+    else
+
+        generatorstorages = GeneratorStorages{N,L,T,P,E}()
+
+        region_genstor_idxs = fill(1:0, n_regions)
+
+    end
+
+    if has_demandresponses
 
         dr_core = read(f["demandresponses/_core"])
         dr_names, dr_categories, dr_regionnames = readvector.(
@@ -324,8 +405,6 @@ function systemmodel_0_8(f::File)
 
     end
 
-    attrs = read_attrs(f)
-
     return SystemModel(
         regions, interfaces,
         generators, region_gen_idxs,
@@ -338,76 +417,22 @@ function systemmodel_0_8(f::File)
 end
 
 """
-Read a SystemModel from a PRAS file in version 0.8.1 format. Optional params required
+Read a SystemModel from a PRAS file in version 0.8.1+ format. Optional params (initial soc levels and borrowing efficiencies optional params required)
 """
 function systemmodel_0_8_1(f::File)
     
-    metadata = attributes(f)
+    (regions, interfaces,
+    generators, region_gen_idxs,
+    lines, interface_line_idxs,
+    timestamps), (N,L,T,P,E) = _systemmodel_core(f)
 
-    start_timestamp = ZonedDateTime(read(metadata["start_timestamp"]),
-                                    dateformat"yyyy-mm-ddTHH:MM:SSz")
+    n_regions = length(regions)
+    regionlookup = Dict(n=>i for (i, n) in enumerate(regions.names))
+    attrs = read_attrs(f)
 
-    N = Int(read(metadata["timestep_count"]))
-    L = Int(read(metadata["timestep_length"]))
-    T = timeunits[read(metadata["timestep_unit"])]
-    P = powerunits[read(metadata["power_unit"])]
-    E = energyunits[read(metadata["energy_unit"])]
-
-    type_params = (N,L,T,P,E)
-
-    timestep = T(L)
-    end_timestamp = start_timestamp + (N-1)*timestep
-    timestamps = StepRange(start_timestamp, timestep, end_timestamp)
-
-    has_regions = haskey(f, "regions")
-    has_generators = haskey(f, "generators")
     has_storages = haskey(f, "storages")
     has_generatorstorages = haskey(f, "generatorstorages")
-    has_interfaces = haskey(f, "interfaces")
-    has_lines = haskey(f, "lines")
-
-    has_regions ||
-        error("Region data must be provided")
-
-    has_generators || has_generatorstorages ||
-        error("Generator or generator storage data (or both) must be provided")
-
-    xor(has_interfaces, has_lines) &&
-        error("Both (or neither) interface and line data must be provided")
-
-    regionnames = readvector(f["regions/_core"], :name)
-    regions = Regions{N,P}(
-        regionnames,
-        Int.(read(f["regions/load"]))
-    )
-    regionlookup = Dict(n=>i for (i, n) in enumerate(regionnames))
-    n_regions = length(regions)
-
-    if has_generators
-
-        gen_core = read(f["generators/_core"])
-        gen_names, gen_categories, gen_regionnames = readvector.(
-            Ref(gen_core), [:name, :category, :region])
-
-        gen_regions = getindex.(Ref(regionlookup), gen_regionnames)
-        region_order = sortperm(gen_regions)
-
-        generators = Generators{N,L,T,P}(
-            gen_names[region_order], gen_categories[region_order],
-            load_matrix(f["generators/capacity"], region_order, Int),
-            load_matrix(f["generators/failureprobability"], region_order, Float64),
-            load_matrix(f["generators/repairprobability"], region_order, Float64)
-        )
-
-        region_gen_idxs = makeidxlist(gen_regions[region_order], n_regions)
-
-    else
-
-        generators = Generators{N,L,T,P}()
-
-        region_gen_idxs = fill(1:0, n_regions)
-
-    end
+    has_demandresponses = haskey(f, "demandresponses")
 
     if has_storages
 
@@ -477,9 +502,8 @@ function systemmodel_0_8_1(f::File)
 
     end
 
-    if haskey(f, "demandresponses")
 
-
+    if has_demandresponses
         dr_core = read(f["demandresponses/_core"])
         dr_names, dr_categories, dr_regionnames = readvector.(
             Ref(dr_core), [:name, :category, :region])
@@ -509,92 +533,6 @@ function systemmodel_0_8_1(f::File)
         region_dr_idxs = fill(1:0, n_regions)
 
     end
-    
-    if has_interfaces
-
-        interfaces_core = read(f["interfaces/_core"])
-        from_regionnames, to_regionnames =
-            readvector.(Ref(interfaces_core), [:region_from, :region_to])
-        forwardcapacity = Int.(read(f["interfaces/forwardcapacity"]))
-        backwardcapacity = Int.(read(f["interfaces/backwardcapacity"]))
-
-        n_interfaces = length(from_regionnames)
-        from_regions = getindex.(Ref(regionlookup), from_regionnames)
-        to_regions = getindex.(Ref(regionlookup), to_regionnames)
-
-        # Force interface definitions as smaller => larger region numbers
-        for i in 1:n_interfaces
-            from_region = from_regions[i]
-            to_region = to_regions[i]
-            if from_region > to_region
-                from_regions[i] = to_region
-                to_regions[i] = from_region
-                new_forwardcapacity = backwardcapacity[i, :]
-                backwardcapacity[i, :] .= forwardcapacity[i, :]
-                forwardcapacity[i, :] .= new_forwardcapacity
-            elseif from_region == to_region
-                error("Cannot have an interface to and from " *
-                      "the same region ($(from_region))")
-            end
-        end
-
-        interfaces = Interfaces{N,P}(
-            from_regions, to_regions, forwardcapacity, backwardcapacity)
-
-        interface_lookup = Dict((r1, r2) => i for (i, (r1, r2))
-                                in enumerate(tuple.(from_regions, to_regions)))
-
-        lines_core = read(f["lines/_core"])
-        line_names, line_categories, line_fromregionnames, line_toregionnames =
-            readvector.(Ref(lines_core), [:name, :category, :region_from, :region_to])
-        line_forwardcapacity = Int.(read(f["lines/forwardcapacity"]))
-        line_backwardcapacity = Int.(read(f["lines/backwardcapacity"]))
-
-        n_lines = length(line_names)
-        line_fromregions = getindex.(Ref(regionlookup), line_fromregionnames)
-        line_toregions  = getindex.(Ref(regionlookup), line_toregionnames)
-
-        # Force line definitions as smaller => larger region numbers
-        for i in 1:n_lines
-            from_region = line_fromregions[i]
-            to_region = line_toregions[i]
-            if from_region > to_region
-                line_fromregions[i] = to_region
-                line_toregions[i] = from_region
-                new_forwardcapacity = line_backwardcapacity[i, :]
-                line_backwardcapacity[i, :] .= line_forwardcapacity[i, :]
-                line_forwardcapacity[i, :] = new_forwardcapacity
-            elseif from_region == to_region
-                error("Cannot have a line ($(line_names[i])) to and from " *
-                      "the same region ($(from_region))")
-            end
-        end
-
-        line_interfaces = getindex.(Ref(interface_lookup),
-                                    tuple.(line_fromregions, line_toregions))
-        interface_order = sortperm(line_interfaces)
-
-        lines = Lines{N,L,T,P}(
-            line_names[interface_order], line_categories[interface_order],
-            line_forwardcapacity[interface_order, :],
-            line_backwardcapacity[interface_order, :],
-            load_matrix(f["lines/failureprobability"], interface_order, Float64),
-            load_matrix(f["lines/repairprobability"], interface_order, Float64)
-        )
-
-        interface_line_idxs = makeidxlist(line_interfaces[interface_order], n_interfaces)
-
-    else
-
-        interfaces = Interfaces{N,P}()
-
-        lines = Lines{N,L,T,P}()
-
-        interface_line_idxs = UnitRange{Int}[]
-
-    end
-
-    attrs = read_attrs(f)
 
     return SystemModel(
         regions, interfaces,
