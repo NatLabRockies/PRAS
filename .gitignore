@@ -4,6 +4,7 @@
 Manifest.toml
 *.DS_Store
 *.pras
+!PRASFiles.jl/test/versioned_toy/*
 PRASFiles.jl/test/PRAS_Results_Export/
 
 docs/build/
