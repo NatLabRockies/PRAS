@@ -43,7 +43,7 @@ using JSON3
     @testset "Read version 0.8.0 to 0.8.1 compatibility" begin
 
         path = dirname(@__FILE__)
-        version_0_8_0 = SystemModel(path * "/versioned_toy/toymodel_v0_7_0.pras")
+        version_0_8_0 = SystemModel(path * "/versioned_toy/toymodel_v0_8_0.pras")
         version_0_8_1 = SystemModel(path * "/versioned_toy/toymodel_v0_8_1.pras")
 
         @test version_0_8_0 == version_0_8_1
