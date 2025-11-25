@@ -300,8 +300,8 @@ The `storages` group should also contain the following datasets describing
 
 An optional parameter is available to set the initial state of charge for the unit:
 
- - `initialsoc`, as 64-bit floats representing the initial percentage state of charge of
-   the unit [0.0, 1.0], for each storage unit, expressed in percentage of energycapacity at timestep 1.
+ - `initialsoc`, as 64-bit floats representing the initial state of charge of
+   the unit as a fraction [0.0, 1.0] of energy capacity at timestep 1, for each storage unit.
 
 #### `generatorstorages` group
 
@@ -369,8 +369,8 @@ generator-storage devices:
 
 An optional parameter is available to set the initial state of charge for the unit:
 
- - `initialsoc`, as 64-bit floats representing the initial percentage state of charge of
-   the unit [0.0, 1.0], for each generatorstorage unit, expressed in percentage of energycapacity at timestep 1.
+ - `initialsoc`, as 64-bit floats representing the initial state of charge of
+   the unit as a fraction [0.0, 1.0] of energy capacity at timestep 1, for each generator-storage unit.
 
 #### `demandresponses` group
 
@@ -418,8 +418,8 @@ The `demandresponse` group should also contain the following datasets describing
 
 An optional parameter is available to set the initial state of borrowed load for the unit:
 
- - `initialborrowedload`, as 64-bit floats representing the initial percentage borrowed load
-   for the unit [0.0, 1.0], for each demandresponse unit, expressed in percentage of energycapacity at timestep 1.
+ - `initialborrowedload`, as 64-bit floats representing the initial borrowed load
+   for the unit as a fraction [0.0, 1.0] of energy capacity at timestep 1, for each demand response unit.
 
 #### `interfaces` group
 
