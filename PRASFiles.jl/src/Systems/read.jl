@@ -417,7 +417,7 @@ function systemmodel_0_8_0(f::File)
 end
 
 """
-Read a SystemModel from a PRAS file in version 0.8.1+ format. Optional params (initial soc levels and borrowing efficiencies optional params required)
+Read a SystemModel from a PRAS file in version 0.8.1+ format. Requires initial SOC levels for storages/generator-storages and initial borrowed load/efficiency parameters for demand responses.
 """
 function systemmodel_0_8_1(f::File)
     
