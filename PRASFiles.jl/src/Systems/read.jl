@@ -453,7 +453,7 @@ function systemmodel_0_8_1(f::File)
             load_matrix(f["storages/carryoverefficiency"], region_order, Float64),
             load_matrix(f["storages/failureprobability"], region_order, Float64),
             load_matrix(f["storages/repairprobability"], region_order, Float64);
-            initial_soc = load_matrix(f["storages/initialsoc"], region_order, Float64) #optional param required
+            initial_soc = load_matrix(f["storages/initialsoc"], region_order, Float64)
         )
 
         region_stor_idxs = makeidxlist(stor_regions[region_order], n_regions)
@@ -489,7 +489,7 @@ function systemmodel_0_8_1(f::File)
             load_matrix(f["generatorstorages/gridinjectioncapacity"], region_order, Int),
             load_matrix(f["generatorstorages/failureprobability"], region_order, Float64),
             load_matrix(f["generatorstorages/repairprobability"], region_order, Float64);
-            initial_soc = load_matrix(f["generatorstorages/initialsoc"], region_order, Float64) #optional param required
+            initial_soc = load_matrix(f["generatorstorages/initialsoc"], region_order, Float64)
         )
 
         region_genstor_idxs = makeidxlist(genstor_regions[region_order], n_regions)
@@ -520,9 +520,9 @@ function systemmodel_0_8_1(f::File)
             load_matrix(f["demandresponses/allowablepaybackperiod"], region_order, Int),
             load_matrix(f["demandresponses/failureprobability"], region_order, Float64),
             load_matrix(f["demandresponses/repairprobability"], region_order, Float64);
-            initial_borrowed_load = load_matrix(f["demandresponses/initialborrowedload"], region_order, Float64), #optional param required
-            borrow_efficiency = load_matrix(f["demandresponses/borrowefficiency"], region_order, Float64), #optional param required
-            payback_efficiency = load_matrix(f["demandresponses/paybackefficiency"], region_order, Float64), #optional param required
+            initial_borrowed_load = load_matrix(f["demandresponses/initialborrowedload"], region_order, Float64),
+            borrow_efficiency = load_matrix(f["demandresponses/borrowefficiency"], region_order, Float64),
+            payback_efficiency = load_matrix(f["demandresponses/paybackefficiency"], region_order, Float64),
         )
 
         region_dr_idxs = makeidxlist(dr_regions[region_order], n_regions)
