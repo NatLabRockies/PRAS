@@ -267,7 +267,7 @@ function process_demandresponses!(
     demandresponses["repairprobability", deflate = compression] = sys.demandresponses.μ
 
     generatorstorages["initialborrowedload", deflate = compression] =
-        sys.generatorstorages.initial_borrowed_load
+        sys.demandresponses.initial_borrowed_load
     return
 
 end
