@@ -401,7 +401,7 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
         carryover_efficiency::Matrix{Float64},
         inflow::Matrix{Int},
         gridwithdrawal_capacity::Matrix{Int}, gridinjection_capacity::Matrix{Int},
-        λ::Matrix{Float64}, μ::Matrix{Float64},; 
+        λ::Matrix{Float64}, μ::Matrix{Float64}; 
         initial_soc::Vector{Float64} = zeros(Float64, length(names)),
     ) where {N,L,T,P,E}
 
@@ -610,7 +610,7 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         borrowcapacity::Matrix{Int}, paybackcapacity::Matrix{Int},
         energycapacity::Matrix{Int}, borrowedenergyinterest::Matrix{Float64},
         allowablepaybackperiod::Matrix{Int},
-        λ::Matrix{Float64}, μ::Matrix{Float64},;
+        λ::Matrix{Float64}, μ::Matrix{Float64};
         initial_borrowed_load::Vector{Float64} = zeros(Float64, length(names)),
         borrow_efficiency::Matrix{Float64} = ones(Float64, size(borrowcapacity)),
         payback_efficiency::Matrix{Float64} = ones(Float64, size(paybackcapacity)) 
