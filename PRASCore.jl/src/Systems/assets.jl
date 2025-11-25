@@ -178,7 +178,7 @@ A struct representing storage devices in the system.
  - `μ` (repair probability): Probability the unit transitions from forced outage to
    operational during a given simulation timestep, for each storage unit in each
    timeperiod. Unitless.
- - 'initial_soc': Optional keyword for initial state of charge as a ratio [0,1.0] of `energy_capacity` at first timestep for 
+ - `initial_soc`: Optional keyword for initial state of charge as a fraction [0,1.0] of `energy_capacity` at first timestep for 
    each storage unit at the beginning of the simulation. Default is zero.
 """
 struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
@@ -368,8 +368,8 @@ A struct representing generator-storage hybrid devices within a power system.
  - `μ` (repair probability): Probability the unit transitions from forced outage to
    operational during a given simulation timestep, for each generator-storage unit in each
    timeperiod. Unitless.
- - 'initial_soc': Optional keywrod arg initial state of charge as a ratio [0,1.0] of `energy_capacity` at first timestep for 
-   each storage unit at the beginning of the simulation. Default is zero.
+ - `initial_soc`: Optional keyword for initial state of charge as a fraction [0.0, 1.0] of 
+   `energy_capacity` at the first timestep for each storage unit. Default is zero.
 """
 struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
@@ -581,7 +581,7 @@ A struct representing demand response devices in the system.
  - `μ` (repair probability): Probability the unit transitions from forced outage to
    operational during a given simulation timestep, for each storage unit in each
    timeperiod. Unitless.
- - 'initial_borrowed_load': Optional initial state of borrowed load as a ratio [0,1.0] of `energy_capacity` at first timestep for 
+ - `initial_borrowed_load`: Optional initial state of borrowed load as a fraction [0,1.0] of `energy_capacity` at first timestep for 
    each demand response unit at the beginning of the simulation. Default is zero.
 """
 struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
