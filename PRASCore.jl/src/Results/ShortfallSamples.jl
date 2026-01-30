@@ -185,6 +185,61 @@ function NEUE(x::ShortfallSamplesResult, r::AbstractString)
 
 end
 
+function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T,P,E}
+    estimate = x[]
+    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+    
+    return CVAR{N,L,T,E}(cvar, alpha)
+
+end
+
+function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString) where {N,L,T,P,E}
+    estimate = x[r]
+    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+    
+    return CVAR{N,L,T,E}(cvar, alpha)
+
+end
+
+function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, t::ZonedDateTime) where {N,L,T,P,E}
+    estimate = x[t]
+    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+    
+    return CVAR{N,L,T,E}(cvar, alpha)
+
+end
+
+function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString, t::ZonedDateTime) where {N,L,T,P,E}
+    estimate = x[r, t]
+    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+    
+    return CVAR{N,L,T,E}(cvar, alpha)
+
+end
 function finalize(
     acc::ShortfallSamplesAccumulator{S},
     system::SystemModel{N,L,T,P,E},

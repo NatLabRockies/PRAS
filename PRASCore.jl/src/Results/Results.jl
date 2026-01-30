@@ -4,7 +4,7 @@ import Base: broadcastable, getindex, merge!
 import OnlineStats: Series
 import OnlineStatsBase: EqualWeight, Mean, Variance, value
 import Printf: @sprintf
-import StatsBase: mean, std, stderror
+import StatsBase: mean, std, stderror, quantile
 
 import ..Systems: SystemModel, ZonedDateTime, Period,
                   PowerUnit, EnergyUnit, conversionfactor,
@@ -13,7 +13,7 @@ export
 
     # Metrics
     ReliabilityMetric, LOLE, EUE, NEUE,
-    val, stderror,
+    val, stderror, CVAR,
 
     # Result specifications
     Shortfall, ShortfallSamples,

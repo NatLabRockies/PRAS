@@ -164,3 +164,35 @@ function Base.show(io::IO, x::NEUE)
     print(io, "NEUE = ", x.neue, " ppm")
 
 end
+
+"""
+    CVAR
+
+`CVAR` reports conditional value at risk of shortfalls.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
+
+    cvar::MeanEstimate
+    alpha::Float64
+    
+    function CVAR{N,L,T,E}(cvar::MeanEstimate, alpha::Float64) where {N,L,T<:Period,E<:EnergyUnit}
+        val(cvar) >= 0 || throw(DomainError(
+            "$val is not a valid CVAR"))
+        new{N,L,T,E}(cvar, alpha)
+    end
+
+end
+
+val(x::CVAR) = val(x.cvar)
+stderror(x::CVAR) = stderror(x.cvar)
+
+function Base.show(io::IO, x::CVAR{N,L,T,E}) where {N,L,T,E}
+
+    print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
+          unitsymbol(E), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
+
+end
