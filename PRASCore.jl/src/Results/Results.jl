@@ -13,7 +13,7 @@ export
 
     # Metrics
     ReliabilityMetric, LOLE, EUE, NEUE,
-    val, stderror, CVAR, NCVAR, 
+    val, stderror, CVAR, NCVAR,
 
     # Result specifications
     Shortfall, ShortfallSamples,
