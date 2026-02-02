@@ -206,15 +206,15 @@ Contains both the estimated value itself as well as the standard error
 of that estimate, which can be extracted with `val` and `stderror`,
 respectively.
 """
-struct NCVAR{N,L,T<:Period} <: ReliabilityMetric
+struct NCVAR <: ReliabilityMetric
 
     ncvar::MeanEstimate
     alpha::Float64
     
-    function NCVAR{N,L,T}(ncvar::MeanEstimate, alpha::Float64) where {N,L,T<:Period}
+    function NCVAR(ncvar::MeanEstimate, alpha::Float64)
         val(ncvar) >= 0 || throw(DomainError(
             "$val is not a valid NCVAR"))
-        new{N,L,T}(ncvar, alpha)
+        new(ncvar, alpha)
     end
 
 end

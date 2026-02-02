@@ -241,48 +241,30 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractS
 
 end
 
-function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, alpha::Float64) where {N,L,T,P}
+function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, cvar::CVAR) where {N,L,T,P}
     demand = sum(x.regions.load)
 
-    estimate = x[]
-    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end
-
     ncvar = if demand > 0
-        div(cvar, demand/1e6)
+        div(cvar.cvar, demand/1e6)
     else
         MeanEstimate(0.)
     end
 
-    return NCVAR{N,L,T}(ncvar, alpha)
+    return NCVAR(ncvar, cvar.alpha)
 
 end
 
-function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, alpha::Float64, r::AbstractString) where {N,L,T,P}
+function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, cvar::CVAR, r::AbstractString) where {N,L,T,P}
     i_r = findfirstunique(x.regions.names, r)
     demand = sum(x.regions.load[i_r, :])
 
-    estimate = x[r]
-    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end
-
     ncvar = if demand > 0
-        div(cvar, demand/1e6)
+        div(cvar.cvar, demand/1e6)
     else
         MeanEstimate(0.)
     end
     
-    return NCVAR{N,L,T}(ncvar, alpha)
+    return NCVAR(ncvar, cvar.alpha)
 
 end
 
