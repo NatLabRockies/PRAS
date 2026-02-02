@@ -240,6 +240,52 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractS
     return CVAR{N,L,T,E}(cvar, alpha)
 
 end
+
+function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, alpha::Float64) where {N,L,T,P}
+    demand = sum(x.regions.load)
+
+    estimate = x[]
+    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+
+    ncvar = if demand > 0
+        div(cvar, demand/1e6)
+    else
+        MeanEstimate(0.)
+    end
+
+    return NCVAR{N,L,T}(ncvar, alpha)
+
+end
+
+function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, alpha::Float64, r::AbstractString) where {N,L,T,P}
+    i_r = findfirstunique(x.regions.names, r)
+    demand = sum(x.regions.load[i_r, :])
+
+    estimate = x[r]
+    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+
+    ncvar = if demand > 0
+        div(cvar, demand/1e6)
+    else
+        MeanEstimate(0.)
+    end
+    
+    return NCVAR{N,L,T}(ncvar, alpha)
+
+end
+
 function finalize(
     acc::ShortfallSamplesAccumulator{S},
     system::SystemModel{N,L,T,P,E},

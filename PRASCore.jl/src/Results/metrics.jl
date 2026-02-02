@@ -196,3 +196,33 @@ function Base.show(io::IO, x::CVAR{N,L,T,E}) where {N,L,T,E}
           unitsymbol(E), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
 
 end
+
+"""
+    NCVAR
+
+`NCVAR` reports normalized conditional value at risk of shortfalls.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct NCVAR{N,L,T<:Period} <: ReliabilityMetric
+
+    ncvar::MeanEstimate
+    alpha::Float64
+    
+    function NCVAR{N,L,T}(ncvar::MeanEstimate, alpha::Float64) where {N,L,T<:Period}
+        val(ncvar) >= 0 || throw(DomainError(
+            "$val is not a valid NCVAR"))
+        new{N,L,T}(ncvar, alpha)
+    end
+
+end
+
+val(x::NCVAR) = val(x.ncvar)
+stderror(x::NCVAR) = stderror(x.ncvar)
+
+function Base.show(io::IO, x::NCVAR)
+    print(io, "NCVAR@$(x.alpha) = ", x.ncvar, " ppm")
+
+end
