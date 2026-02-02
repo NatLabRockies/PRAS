@@ -100,6 +100,7 @@ end
     N = DD.nperiods
     r, r_idx, r_bad = DD.testresource, DD.testresource_idx, DD.notaresource
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
+    alpha = 0.95
 
     result = PRASCore.Results.ShortfallSamplesResult{N,1,Hour,MW,MWh,ShortfallSamples}(
         Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods, DD.d)
@@ -123,6 +124,16 @@ end
     @test val(neue) ≈ mean(result[]) / load*1e6
     @test stderror(neue) ≈ std(result[]) / sqrt(DD.nsamples) / load*1e6
 
+    cvar = CVAR(result, alpha)
+    estimate = result[];
+    tail_losses = estimate[estimate .>= quantile(estimate, alpha)];
+    @test val(cvar) ≈ mean(tail_losses)
+    @test stderror(cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
+
+    ncvar = NCVAR(result, cvar)
+    @test val(ncvar) ≈ val(cvar) / load*1e6
+    @test stderror(ncvar) ≈ stderror(cvar) / load*1e6
+
     # Region-specific
 
     @test length(result[r]) == DD.nsamples
@@ -142,10 +153,22 @@ end
     @test val(region_neue) ≈ mean(result[r]) / load*1e6
     @test stderror(region_neue) ≈ std(result[r]) / sqrt(DD.nsamples) / load*1e6
 
+    region_cvar = CVAR(result, alpha, r)
+    region_estimate = result[r];
+    region_tail_losses = region_estimate[region_estimate .>= quantile(region_estimate, alpha)];
+    @test val(region_cvar) ≈ mean(region_tail_losses)
+    @test stderror(region_cvar) ≈ std(region_tail_losses) / sqrt(length(region_tail_losses))
+
+    region_ncvar = NCVAR(result, region_cvar, r)
+    @test val(region_ncvar) ≈ val(region_cvar) / load*1e6
+    @test stderror(region_ncvar) ≈ stderror(region_cvar) / load*1e6
+
     @test_throws BoundsError result[r_bad]
     @test_throws BoundsError LOLE(result, r_bad)
     @test_throws BoundsError EUE(result, r_bad)
     @test_throws BoundsError NEUE(result, r_bad)
+    @test_throws BoundsError CVAR(result, alpha, r_bad)
+    @test_throws BoundsError NCVAR(result, region_cvar, r_bad)
 
     # Period-specific
 
@@ -161,9 +184,16 @@ end
     @test val(period_eue) ≈ mean(result[t])
     @test stderror(period_eue) ≈ std(result[t]) / sqrt(DD.nsamples)
 
+    period_cvar = CVAR(result, alpha, t)
+    period_estimate = result[t];
+    period_tail_losses = period_estimate[period_estimate .>= quantile(period_estimate, alpha)];
+    @test val(period_cvar) ≈ mean(period_tail_losses)
+    @test stderror(period_cvar) ≈ std(period_tail_losses) / sqrt(length(period_tail_losses))
+
     @test_throws BoundsError result[t_bad]
     @test_throws BoundsError LOLE(result, t_bad)
     @test_throws BoundsError EUE(result, t_bad)
+    @test_throws BoundsError CVAR(result, alpha, t_bad)
 
     # Region + period-specific
 
@@ -180,6 +210,12 @@ end
     @test val(regionperiod_eue) ≈ mean(result[r, t])
     @test stderror(regionperiod_eue) ≈ std(result[r, t]) / sqrt(DD.nsamples)
 
+    regionperiod_cvar = CVAR(result, alpha, r, t)
+    regionperiod_estimate = result[r, t];
+    regionperiod_tail_losses = regionperiod_estimate[regionperiod_estimate .>= quantile(regionperiod_estimate, alpha)];
+    @test val(regionperiod_cvar) ≈ mean(regionperiod_tail_losses)
+    @test stderror(regionperiod_cvar) ≈ std(regionperiod_tail_losses) / sqrt(length(regionperiod_tail_losses))
+
     @test_throws BoundsError result[r, t_bad]
     @test_throws BoundsError result[r_bad, t]
     @test_throws BoundsError result[r_bad, t_bad]
@@ -191,5 +227,9 @@ end
     @test_throws BoundsError EUE(result, r, t_bad)
     @test_throws BoundsError EUE(result, r_bad, t)
     @test_throws BoundsError EUE(result, r_bad, t_bad)
+
+    @test_throws BoundsError CVAR(result, alpha, r, t_bad)
+    @test_throws BoundsError CVAR(result, alpha, r_bad, t)
+    @test_throws BoundsError CVAR(result, alpha, r_bad, t_bad)
 
 end
