@@ -13,7 +13,7 @@ export
 
     # Metrics
     ReliabilityMetric, LOLE, EUE, NEUE,
-    val, stderror, CVAR, NCVAR,
+    val, stderror, CVAR, NCVAR, 
 
     # Result specifications
     Shortfall, ShortfallSamples,
@@ -79,6 +79,22 @@ NEUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
 
 NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
     NEUE.(x, x.regions.names, permutedims(x.timestamps))
+
+##TODO: Need to check these CVAR and NCVAR implementations
+CVAR(x::AbstractShortfallResult, ::Colon, t::ZonedDateTime) =
+    CVAR.(x, x.regions.names, t)
+
+CVAR(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
+    CVAR.(x, r, x.timestamps)
+
+CVAR(x::AbstractShortfallResult, ::Colon, ::Colon) =
+    CVAR.(x, x.regions.names, permutedims(x.timestamps))    
+
+NCVAR(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
+    NCVAR.(x, r, x.timestamps)
+
+NCVAR(x::AbstractShortfallResult, ::Colon, ::Colon) =
+    NCVAR.(x, x.regions.names, permutedims(x.timestamps))
 
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
