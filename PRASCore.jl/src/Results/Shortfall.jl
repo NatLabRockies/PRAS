@@ -292,6 +292,107 @@ function NEUE(x::ShortfallResult, r::AbstractString)
 
 end
 
+function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64) where {N,L,T,E}
+    estimate = x.shortfall_mean[:]
+    var = quantile(estimate, alpha)
+    tail_losses = estimate[estimate .>= var]
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+
+    cvar_type = "period"
+
+    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
+  
+end
+
+function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString) where {N,L,T,E}
+
+    i_r = findfirstunique(x.regions.names, r)
+    estimate = x.shortfall_mean[i_r, :]
+    var = quantile(estimate, alpha)
+    tail_losses = estimate[estimate .>= var]
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+
+    cvar_type = "period"
+
+    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
+  
+end
+
+function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64, t::ZonedDateTime) where {N,L,T,E}
+    estimate = x.shortfall_mean[t, :]
+    var = quantile(estimate, alpha)
+    tail_losses = estimate[estimate .>= var]
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+
+    cvar_type = "period"
+
+    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
+  
+end
+
+function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString, t::ZonedDateTime) where {N,L,T,E}
+    estimate = x.shortfall_mean[r, t, :]
+    var = quantile(estimate, alpha)
+    tail_losses = estimate[estimate .>= var]
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+
+    cvar_type = "period"
+
+    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
+  
+end
+
+function NCVAR(x::ShortfallResult{N,L,T,E}, cvar::CVAR) where {N,L,T,E}
+    demand = sum(x.regions.load)
+
+    if demand > 0
+        ncvar = div(cvar.cvar, demand/1e6)
+        var = div(cvar.var, demand/1e6)
+    else
+        ncvar = MeanEstimate(0.)
+        var = MeanEstimate(0.)
+    end
+
+    return NCVAR(ncvar, cvar.alpha, var)
+  
+end
+
+function NCVAR(x::ShortfallResult{N,L,T,E}, cvar::CVAR, r::AbstractString) where {N,L,T,E}
+    i_r = findfirstunique(x.regions.names, r)
+    demand = sum(x.regions.load[i_r, :])
+
+    if demand > 0
+        ncvar = div(cvar.cvar, demand/1e6)
+        var = div(cvar.var, demand/1e6)
+    else
+        ncvar = MeanEstimate(0.)
+        var = MeanEstimate(0.)
+    end
+
+    return NCVAR(ncvar, cvar.alpha, var)
+  
+end
+
 function finalize(
     acc::ShortfallAccumulator{S},
     system::SystemModel{N,L,T,P,E},
