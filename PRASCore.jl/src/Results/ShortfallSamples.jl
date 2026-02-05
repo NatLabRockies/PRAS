@@ -187,21 +187,25 @@ end
 
 function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T,P,E}
     estimate = x[]
-    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
+    var = quantile(estimate, alpha)
+    tail_losses = estimate[estimate .>= var]
 
     cvar = if !isempty(tail_losses)
         MeanEstimate(tail_losses)
     else
         MeanEstimate(0.)
     end
+
+    cvar_type = "sample"
     
-    return CVAR{N,L,T,E}(cvar, alpha)
+    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
 
 end
 
 function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString) where {N,L,T,P,E}
     estimate = x[r]
-    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
+    var = quantile(estimate, alpha)
+    tail_losses = estimate[estimate .>= var]
 
     cvar = if !isempty(tail_losses)
         MeanEstimate(tail_losses)
@@ -209,13 +213,16 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractS
         MeanEstimate(0.)
     end
     
-    return CVAR{N,L,T,E}(cvar, alpha)
+    cvar_type = "sample"
+
+    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
 
 end
 
 function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, t::ZonedDateTime) where {N,L,T,P,E}
     estimate = x[t]
-    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
+    var = quantile(estimate, alpha)
+    tail_losses = estimate[estimate .>= var]
 
     cvar = if !isempty(tail_losses)
         MeanEstimate(tail_losses)
@@ -223,13 +230,16 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, t::ZonedDate
         MeanEstimate(0.)
     end
     
-    return CVAR{N,L,T,E}(cvar, alpha)
+    cvar_type = "sample"
+    
+    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
 
 end
 
 function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString, t::ZonedDateTime) where {N,L,T,P,E}
     estimate = x[r, t]
-    tail_losses = estimate[estimate .>= quantile(estimate, alpha)]
+    var = quantile(estimate, alpha)
+    tail_losses = estimate[estimate .>= var]
 
     cvar = if !isempty(tail_losses)
         MeanEstimate(tail_losses)
@@ -237,20 +247,23 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractS
         MeanEstimate(0.)
     end
     
-    return CVAR{N,L,T,E}(cvar, alpha)
+    cvar_type = "sample"
 
+    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
 end
 
 function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, cvar::CVAR) where {N,L,T,P}
     demand = sum(x.regions.load)
 
-    ncvar = if demand > 0
-        div(cvar.cvar, demand/1e6)
+    if demand > 0
+        ncvar = div(cvar.cvar, demand/1e6)
+        var = div(cvar.var, demand/1e6)
     else
-        MeanEstimate(0.)
+        ncvar = MeanEstimate(0.)
+        var = MeanEstimate(0.)
     end
 
-    return NCVAR(ncvar, cvar.alpha)
+    return NCVAR(ncvar, cvar.alpha, var)
 
 end
 
@@ -258,13 +271,15 @@ function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, cvar::CVAR, r::AbstractString
     i_r = findfirstunique(x.regions.names, r)
     demand = sum(x.regions.load[i_r, :])
 
-    ncvar = if demand > 0
-        div(cvar.cvar, demand/1e6)
+    if demand > 0
+        ncvar = div(cvar.cvar, demand/1e6)
+        var = div(cvar.var, demand/1e6)
     else
-        MeanEstimate(0.)
+        ncvar = MeanEstimate(0.)
+        var = MeanEstimate(0.)
     end
     
-    return NCVAR(ncvar, cvar.alpha)
+    return NCVAR(ncvar, cvar.alpha, var)
 
 end
 
