@@ -178,11 +178,13 @@ struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
 
     cvar::MeanEstimate
     alpha::Float64
+    var::Float64
+    cvar_type::String
     
-    function CVAR{N,L,T,E}(cvar::MeanEstimate, alpha::Float64) where {N,L,T<:Period,E<:EnergyUnit}
+    function CVAR{N,L,T,E}(cvar::MeanEstimate, alpha::Float64, var::Float64, cvar_type::String) where {N,L,T<:Period,E<:EnergyUnit}
         val(cvar) >= 0 || throw(DomainError(
             "$val is not a valid CVAR"))
-        new{N,L,T,E}(cvar, alpha)
+        new{N,L,T,E}(cvar, alpha, var, cvar_type)
     end
 
 end
@@ -191,9 +193,15 @@ val(x::CVAR) = val(x.cvar)
 stderror(x::CVAR) = stderror(x.cvar)
 
 function Base.show(io::IO, x::CVAR{N,L,T,E}) where {N,L,T,E}
-
-    print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
+    if x.cvar_type == "period"
+        print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
+          unitsymbol(E))
+    else
+        print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
           unitsymbol(E), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
+    end
+    # print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
+    #       unitsymbol(E), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
 
 end
 
@@ -210,11 +218,12 @@ struct NCVAR <: ReliabilityMetric
 
     ncvar::MeanEstimate
     alpha::Float64
+    var::Float64
     
-    function NCVAR(ncvar::MeanEstimate, alpha::Float64)
+    function NCVAR(ncvar::MeanEstimate, alpha::Float64, var::Float64)
         val(ncvar) >= 0 || throw(DomainError(
             "$val is not a valid NCVAR"))
-        new(ncvar, alpha)
+        new(ncvar, alpha, var)
     end
 
 end
