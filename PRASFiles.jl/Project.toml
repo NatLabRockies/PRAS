@@ -1,10 +1,10 @@
 name = "PRASFiles"
 uuid = "a2806276-6d43-4ef5-91c0-491704cd7cf1"
 authors = [
-    "Gord Stephen <Gord.Stephen@nrel.gov>", 
-    "Surya Chandan Dhulipala <SuryaChandan.Dhulipala@nrel.gov>",
-    "Srihari Sundar <Hari.Sundar@nrel.gov>",
-    "Julian Florez <Julian.Florez@nrel.gov",
+    "Surya Chandan Dhulipala <SuryaChandan.Dhulipala@nlr.gov>",
+    "Srihari Sundar <Hari.Sundar@nlr.gov>",
+    "Julian Florez <Julian.Florez@nlr.gov",
+    "Gord Stephen <g.stephen@imperial.ac.uk>"
 ]
 version = "0.8.0"
 

@@ -4,7 +4,7 @@ Once you have PRAS [installed](@ref Installation), this page provides a brief ov
 
 ## Parallel Processing
 
-PRAS uses multi-threading, so be sure to set the environment variable controlling the number of threads available to Julia (36 in this Bash example, which is a good choice for NREL Eagle nodes - on a laptop you would probably only want 4 or so) before running scripts or launching the REPL:
+PRAS uses multi-threading, so be sure to set the environment variable controlling the number of threads available to Julia (36 in this Bash example, which is a good choice for NatLabRockies Eagle nodes - on a laptop you would probably only want 4 or so) before running scripts or launching the REPL:
 
 ```sh
 export JULIA_NUM_THREADS=36

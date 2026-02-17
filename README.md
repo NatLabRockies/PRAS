@@ -1,20 +1,20 @@
 # Probabilistic Resource Adequacy Suite
 
-[![PRAS.jl Tests](https://github.com/NREL/PRAS/actions/workflows/PRAS.jl.yml/badge.svg?branch=main)](https://github.com/NREL/PRAS/actions/workflows/PRAS.jl.yml)
-[![PRASCore.jl Tests](https://github.com/NREL/PRAS/actions/workflows/PRASCore.jl.yml/badge.svg?branch=main)](https://github.com/NREL/PRAS/actions/workflows/PRASCore.jl.yml)
-[![PRASFiles.jl Tests](https://github.com/NREL/PRAS/actions/workflows/PRASFiles.jl.yml/badge.svg?branch=main)](https://github.com/NREL/PRAS/actions/workflows/PRASFiles.jl.yml)
-[![PRASCapacityCredits.jl Tests](https://github.com/NREL/PRAS/actions/workflows/PRASCapacityCredits.jl.yml/badge.svg?branch=main)](https://github.com/NREL/PRAS/actions/workflows/PRASCapacityCredits.jl.yml)
+[![PRAS.jl Tests](https://github.com/NatLabRockies/PRAS/actions/workflows/PRAS.jl.yml/badge.svg?branch=main)](https://github.com/NatLabRockies/PRAS/actions/workflows/PRAS.jl.yml)
+[![PRASCore.jl Tests](https://github.com/NatLabRockies/PRAS/actions/workflows/PRASCore.jl.yml/badge.svg?branch=main)](https://github.com/NatLabRockies/PRAS/actions/workflows/PRASCore.jl.yml)
+[![PRASFiles.jl Tests](https://github.com/NatLabRockies/PRAS/actions/workflows/PRASFiles.jl.yml/badge.svg?branch=main)](https://github.com/NatLabRockies/PRAS/actions/workflows/PRASFiles.jl.yml)
+[![PRASCapacityCredits.jl Tests](https://github.com/NatLabRockies/PRAS/actions/workflows/PRASCapacityCredits.jl.yml/badge.svg?branch=main)](https://github.com/NatLabRockies/PRAS/actions/workflows/PRASCapacityCredits.jl.yml)
 
-[![codecov](https://codecov.io/gh/NREL/PRAS/branch/main/graph/badge.svg?token=WiP3quRaIA)](https://codecov.io/gh/NREL/PRAS)
-[![docsstable](https://img.shields.io/badge/docs-stable-blue.svg)](https://nrel.github.io/PRAS/)
-[![docsdev](https://img.shields.io/badge/docs-dev-blue.svg)](https://nrel.github.io/PRAS/dev)
+[![codecov](https://codecov.io/gh/NatLabRockies/PRAS/branch/main/graph/badge.svg?token=WiP3quRaIA)](https://codecov.io/gh/NatLabRockies/PRAS)
+[![docsstable](https://img.shields.io/badge/docs-stable-blue.svg)](https://NatLabRockies.github.io/PRAS/)
+[![docsdev](https://img.shields.io/badge/docs-dev-blue.svg)](https://NatLabRockies.github.io/PRAS/dev)
 [![DOI](https://img.shields.io/badge/DOI-10.11578/dc.20190814.1-blue.svg)](https://www.osti.gov/biblio/1557438)
 
 The Probabilistic Resource Adequacy Suite (PRAS) is a collection of tools for
 bulk power system resource adequacy analysis and capacity credit calculation. Latest
-documentation is available [here](https://nrel.github.io/PRAS/).
+documentation is available [here](https://NatLabRockies.github.io/PRAS/).
 The citable documentation report for v0.6 is available
-[here](https://www.nrel.gov/docs/fy21osti/79698.pdf).
+[here](https://www.nlr.gov/docs/fy21osti/79698.pdf).
 
 # Installation
 
@@ -61,5 +61,5 @@ println("Total system $(EUE(shortfall))")
 # Total system EUE = 0.00000 MWh/8784h
 ```
 
-The [Getting Started](https://nrel.github.io/PRAS/dev/quickstart/) page provides more information
+The [Getting Started](https://natlabrockies.github.io/PRAS/dev/quickstart/) page provides more information
 on using PRAS.

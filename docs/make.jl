@@ -24,7 +24,7 @@ makedocs(
     sitename = "PRAS",
     format = Documenter.HTML(
         prettyurls = true,
-        canonical = "https://nrel.github.io/PRAS/stable"
+        canonical = "https://natlabrockies.github.io/PRAS/stable"
     ),
     modules = [PRASCore, PRASFiles, PRASCapacityCredits],
     pages = [
@@ -58,6 +58,6 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/NREL/PRAS.git",
+    repo = "github.com/NatLabRockies/PRAS.git",
     push_preview = true,
 )

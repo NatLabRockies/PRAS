@@ -1,10 +1,10 @@
 name = "PRASCore"
 uuid = "c5c32b99-e7c3-4530-a685-6f76e19f7fe2"
 authors = [
-    "Gord Stephen <gord.stephen@nrel.gov>",
-    "Surya Chandan Dhulipala <SuryaChandan.Dhulipala@nrel.gov>",
-    "Srihari Sundar <Hari.Sundar@nrel.gov>",
-    "Julian Florez <Julian.Florez@nrel.gov"
+    "Surya Chandan Dhulipala <SuryaChandan.Dhulipala@nlr.gov>",
+    "Srihari Sundar <Hari.Sundar@nlr.gov>",
+    "Julian Florez <Julian.Florez@nlr.gov>",
+    "Gord Stephen <g.stephen@imperial.ac.uk>"
 ]
 version = "0.8.1"
 

@@ -25,10 +25,10 @@
 - Enforced interface-level limits and forced outages for storage and generator-storage.
 - Removed unused test files and updated the README with a code coverage badge.
 
-This version is availabe at the NREL Julia registries or through source code available 
-in the [`master`](https://github.com/NREL/PRAS/tree/master) branch of the PRAS github 
+This version is availabe at the NatLabRockies Julia registries or through source code available 
+in the [`master`](https://github.com/NatLabRockies/PRAS/tree/master) branch of the PRAS github 
 repository. Documentation for this version is available [here]
-(https://docs.nrel.gov/docs/fy21osti/79698.pdf).
+(https://docs.NatLabRockies.gov/docs/fy21osti/79698.pdf).
 
 
 ## [0.5], 2020 - November
