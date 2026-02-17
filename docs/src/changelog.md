@@ -28,7 +28,7 @@
 This version is availabe at the NatLabRockies Julia registries or through source code available 
 in the [`master`](https://github.com/NatLabRockies/PRAS/tree/master) branch of the PRAS github 
 repository. Documentation for this version is available [here]
-(https://docs.NatLabRockies.gov/docs/fy21osti/79698.pdf).
+(https://docs.nlr.gov/docs/fy21osti/79698.pdf).
 
 
 ## [0.5], 2020 - November
