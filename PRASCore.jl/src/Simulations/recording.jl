@@ -55,7 +55,9 @@ function record!(
 end
 
 function reset!(acc::Results.ShortfallAccumulator, sampleid::Int)
-
+    # Store total UE for each sample
+    acc.unservedload_sample[sampleid] = acc.unservedload_total_currentsim 
+    
     # Store regional / total sums for current simulation
     fit!(acc.periodsdropped_total, acc.periodsdropped_total_currentsim)
     fit!(acc.unservedload_total, acc.unservedload_total_currentsim)
@@ -63,6 +65,7 @@ function reset!(acc::Results.ShortfallAccumulator, sampleid::Int)
     for r in eachindex(acc.periodsdropped_region)
         fit!(acc.periodsdropped_region[r], acc.periodsdropped_region_currentsim[r])
         fit!(acc.unservedload_region[r], acc.unservedload_region_currentsim[r])
+        acc.unservedload_region_sample[r, sampleid] = acc.unservedload_region_currentsim[r]
     end
 
     # Reset for new simulation
