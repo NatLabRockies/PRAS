@@ -22,7 +22,11 @@ MeanEstimate(mu::Real, sigma::Real, n::Int) = MeanEstimate(mu, sigma / sqrt(n))
 
 function MeanEstimate(xs::AbstractArray{<:Real})
     est = mean(xs)
-    return MeanEstimate(est, std(xs, mean=est), length(xs))
+    if length(xs) > 1
+        MeanEstimate(est, std(xs, mean=est), length(xs))
+    else
+        MeanEstimate(est)
+    end
 end
 
 val(est::MeanEstimate) = est.estimate
@@ -179,12 +183,17 @@ struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
     cvar::MeanEstimate
     alpha::Float64
     var::Float64
-    cvar_type::String
+    period_cvar::MeanEstimate
+    period_var::Float64
     
-    function CVAR{N,L,T,E}(cvar::MeanEstimate, alpha::Float64, var::Float64, cvar_type::String) where {N,L,T<:Period,E<:EnergyUnit}
+    function CVAR{N,L,T,E}(cvar::MeanEstimate,
+                           alpha::Float64,
+                           var::Float64,
+                           period_cvar::MeanEstimate,
+                           period_var::Float64) where {N,L,T<:Period,E<:EnergyUnit}
         val(cvar) >= 0 || throw(DomainError(
             "$val is not a valid CVAR"))
-        new{N,L,T,E}(cvar, alpha, var, cvar_type)
+        new{N,L,T,E}(cvar, alpha, var, period_cvar, period_var)
     end
 
 end
@@ -193,15 +202,9 @@ val(x::CVAR) = val(x.cvar)
 stderror(x::CVAR) = stderror(x.cvar)
 
 function Base.show(io::IO, x::CVAR{N,L,T,E}) where {N,L,T,E}
-    if x.cvar_type == "period"
-        print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
-          unitsymbol(E))
-    else
-        print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
+    
+    print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
           unitsymbol(E), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
-    end
-    # print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
-    #       unitsymbol(E), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
 
 end
 
