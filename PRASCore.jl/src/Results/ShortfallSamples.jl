@@ -186,9 +186,10 @@ function NEUE(x::ShortfallSamplesResult, r::AbstractString)
 end
 
 function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T,P,E}
+    
     estimate = x[]
     var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
+    tail_losses = estimate[estimate .> var]
 
     cvar = if !isempty(tail_losses)
         MeanEstimate(tail_losses)
@@ -196,9 +197,18 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T
         MeanEstimate(0.)
     end
 
-    cvar_type = "sample"
+    period_estimate = x.shortfall[:]
+    period_var = quantile(period_estimate, alpha)
+    period_tail_losses = period_estimate[period_estimate .>= period_var]
+
+    period_cvar = if !isempty(period_tail_losses)
+        MeanEstimate(period_tail_losses)
+    else
+        MeanEstimate(0.)
+    end     
+
     
-    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
+    return CVAR{N,L,T,E}(cvar, alpha, var, period_cvar, period_var)
 
 end
 
@@ -213,9 +223,18 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractS
         MeanEstimate(0.)
     end
     
-    cvar_type = "sample"
+    i_r = findfirstunique(x.regions.names, r)
+    period_estimate = x.shortfall[i_r, :, :][:]
+    period_var = quantile(period_estimate, alpha)
+    period_tail_losses = period_estimate[period_estimate .>= period_var]
 
-    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
+    period_cvar = if !isempty(period_tail_losses)
+        MeanEstimate(period_tail_losses)
+    else
+        MeanEstimate(0.)
+    end  
+
+    return CVAR{N,L,T,E}(cvar, alpha, var, period_cvar, period_var)
 
 end
 
@@ -229,10 +248,8 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, t::ZonedDate
     else
         MeanEstimate(0.)
     end
-    
-    cvar_type = "sample"
-    
-    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
+
+    return CVAR{N,L,T,E}(cvar, alpha, var, cvar, var)
 
 end
 
@@ -247,9 +264,7 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractS
         MeanEstimate(0.)
     end
     
-    cvar_type = "sample"
-
-    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
+    return CVAR{N,L,T,E}(cvar, alpha, var, cvar, var)
 end
 
 function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, cvar::CVAR) where {N,L,T,P}
