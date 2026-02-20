@@ -6,6 +6,7 @@ using TimeZones
 const tz = tz"UTC"
 
 nsamples = 100
+alpha = 0.95
 
 resourcenames = ["A", "B", "C"]
 nresources = length(resourcenames)
@@ -32,6 +33,8 @@ d1 = rand()
 d1_resource = rand(nresources)
 d1_period = rand(nperiods)
 d1_resourceperiod = rand(nresources, nperiods)
+d1_sample = rand(0:999, nsamples)
+d1_resourcesample = rand(0:999, nresources, nsamples)
 
 d2 = rand()
 d2_resource = rand(nresources)
