@@ -74,25 +74,25 @@
 
     @testset "CVAR" begin
 
-        cvar1 = CVAR{2,1,Hour,MWh}(MeanEstimate(1.2), 0.95)
+        cvar1 = CVAR{2,1,Hour,MWh}(MeanEstimate(1.2), 0.95, 1.2, MeanEstimate(1.0), 1.2)
         @test string(cvar1) == "CVAR@0.95 = 1.20000 MWh/2h"
 
-        cvar2 = CVAR{1,2,Year,GWh}(MeanEstimate(17.2, 1.3), 0.95)
+        cvar2 = CVAR{1,2,Year,GWh}(MeanEstimate(17.2, 1.3), 0.95, 1.2, MeanEstimate(17.2, 1.3), 1.2)
         @test string(cvar2) == "CVAR@0.95 = 17±1 GWh/2y"
 
-        @test_throws DomainError CVAR{1,1,Hour,MWh}(MeanEstimate(-1.2), 0.95)
+        @test_throws DomainError CVAR{1,1,Hour,MWh}(MeanEstimate(-1.2), 0.95, 1.2, MeanEstimate(-1.2), 1.2)
 
     end    
 
     @testset "NCVAR" begin
 
-        ncvar1 = NCVAR(MeanEstimate(1.2), 0.95)
+        ncvar1 = NCVAR(MeanEstimate(1.2), 0.95, 1.2)
         @test string(ncvar1) == "NCVAR@0.95 = 1.20000 ppm"
 
-        ncvar2 = NCVAR(MeanEstimate(17.2, 1.3), 0.95)
+        ncvar2 = NCVAR(MeanEstimate(17.2, 1.3), 0.95, 1.3)
         @test string(ncvar2) == "NCVAR@0.95 = 17±1 ppm"
 
-        @test_throws DomainError NCVAR(MeanEstimate(-1.2), 0.95)
+        @test_throws DomainError NCVAR(MeanEstimate(-1.2), 0.95, -1.2)
 
     end
 

@@ -4,13 +4,15 @@
     N = DD.nperiods
     r, r_idx, r_bad = DD.testresource, DD.testresource_idx, DD.notaresource
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
+    alpha = DD.alpha
 
     result = PRASCore.Results.ShortfallResult{N,1,Hour,MWh,Shortfall}(
         DD.nsamples, Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods,
         DD.d1, DD.d2, DD.d1_resource, DD.d2_resource,
         DD.d1_period, DD.d2_period, DD.d1_resourceperiod, DD.d2_resourceperiod,
         DD.d3_resourceperiod,
-        DD.d4, DD.d4_resource, DD.d4_period, DD.d4_resourceperiod)
+        DD.d4, DD.d4_resource, DD.d4_period, DD.d4_resourceperiod,
+        DD.d1_sample, DD.d1_resourcesample)
 
     # Overall
 
@@ -28,6 +30,17 @@
     load = sum(DD.resource_vals)
     @test val(neue) ≈ first(result[]) / load*1e6
     @test stderror(neue) ≈ last(result[]) / sqrt(DD.nsamples) / load*1e6
+
+    cvar = CVAR(result, alpha)
+    estimate = result.shortfall_samples;
+    tail_losses = estimate[estimate .>= quantile(estimate, alpha)];
+    @test val(cvar) ≈ mean(tail_losses)
+    @test stderror(cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
+
+    ncvar = NCVAR(result, cvar)
+    @test val(ncvar) ≈ val(cvar) / load*1e6
+    @test stderror(ncvar) ≈ stderror(cvar) / load*1e6
+
     # Region-specific
 
     @test result[r] ≈ (sum(DD.d3_resourceperiod[r_idx,:]), DD.d4_resource[r_idx])
@@ -45,10 +58,22 @@
     @test val(region_neue) ≈ first(result[r]) / load*1e6
     @test stderror(region_neue) ≈ last(result[r]) / sqrt(DD.nsamples) / load*1e6
 
+    region_cvar = CVAR(result, alpha, r)
+    region_estimate = result.shortfall_region_samples[r_idx, :];
+    region_tail_losses = region_estimate[region_estimate .>= quantile(region_estimate, alpha)];
+    @test val(region_cvar) ≈ mean(region_tail_losses)
+    @test stderror(region_cvar) ≈ std(region_tail_losses) / sqrt(length(region_tail_losses))
+
+    region_ncvar = NCVAR(result, region_cvar, r)
+    @test val(region_ncvar) ≈ val(region_cvar) / load*1e6
+    @test stderror(region_ncvar) ≈ stderror(region_cvar) / load*1e6
+
     @test_throws BoundsError result[r_bad]
     @test_throws BoundsError LOLE(result, r_bad)
     @test_throws BoundsError EUE(result, r_bad)
     @test_throws BoundsError NEUE(result, r_bad)
+    @test_throws BoundsError CVAR(result, alpha, r_bad)
+    @test_throws BoundsError NCVAR(result, region_cvar, r_bad)
 
     # Period-specific
 
