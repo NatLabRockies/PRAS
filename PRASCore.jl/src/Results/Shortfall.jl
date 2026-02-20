@@ -67,6 +67,10 @@ mutable struct ShortfallAccumulator{S} <: ResultAccumulator{Shortfall}
     unservedload_total_currentsim::Int
     unservedload_region_currentsim::Vector{Int}
 
+    # Sample-level UE for current simulation
+    unservedload_sample::Union{Vector{Float64}, Vector{Int}}
+    unservedload_region_sample::Union{Matrix{Float64}, Matrix{Int}}
+
 end
 
 function accumulator(
@@ -90,6 +94,8 @@ function accumulator(
 
     unservedload_total_currentsim = 0
     unservedload_region_currentsim = zeros(Int, nregions)
+    unservedload_sample = zeros(Float64, nsamples)
+    unservedload_region_sample = zeros(Float64, nregions, nsamples)
 
     return ShortfallAccumulator{S}(
         periodsdropped_total, periodsdropped_region,
@@ -97,7 +103,8 @@ function accumulator(
         periodsdropped_total_currentsim, periodsdropped_region_currentsim,
         unservedload_total, unservedload_region,
         unservedload_period, unservedload_regionperiod,
-        unservedload_total_currentsim, unservedload_region_currentsim)
+        unservedload_total_currentsim, unservedload_region_currentsim,
+        unservedload_sample, unservedload_region_sample)
 
 end
 
@@ -114,6 +121,9 @@ function merge!(
     foreach(merge!, x.unservedload_region, y.unservedload_region)
     foreach(merge!, x.unservedload_period, y.unservedload_period)
     foreach(merge!, x.unservedload_regionperiod, y.unservedload_regionperiod)
+
+    x.unservedload_sample .+= y.unservedload_sample
+    x.unservedload_region_sample .+= y.unservedload_region_sample
 
     return
 
@@ -149,6 +159,9 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
     shortfall_period_std::Vector{Float64}
     shortfall_regionperiod_std::Matrix{Float64}
 
+    shortfall_samples::Union{Vector{Float64}, Vector{Int}}
+    shortfall_region_samples::Union{Matrix{Float64}, Matrix{Int}}
+
     function ShortfallResult{N,L,T,E,S}(
         nsamples::Union{Int,Nothing},
         regions::Regions,
@@ -165,7 +178,9 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
         shortfall_std::Float64,
         shortfall_region_std::Vector{Float64},
         shortfall_period_std::Vector{Float64},
-        shortfall_regionperiod_std::Matrix{Float64}
+        shortfall_regionperiod_std::Matrix{Float64},
+        shortfall_samples::Union{Vector{Float64}, Vector{Int}},
+        shortfall_region_samples::Union{Matrix{Float64}, Matrix{Int}}
     ) where {N,L,T<:Period,E<:EnergyUnit,S <: Union{Shortfall,DemandResponseShortfall}}
 
         isnothing(nsamples) || nsamples > 0 ||
@@ -185,7 +200,9 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
         size(eventperiod_regionperiod_std) == (nregions, N) &&
         length(shortfall_region_std) == nregions &&
         length(shortfall_period_std) == N &&
-        size(shortfall_regionperiod_std) == (nregions, N) ||
+        size(shortfall_regionperiod_std) == (nregions, N) &&
+        size(shortfall_samples) == (nsamples,) &&
+        size(shortfall_region_samples) == (nregions, nsamples) ||
             error("Inconsistent input data sizes")
 
         new{N,L,T,E,S}(nsamples, regions, timestamps,
@@ -195,7 +212,8 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
             eventperiod_regionperiod_mean, eventperiod_regionperiod_std,
             shortfall_mean, shortfall_std,
             shortfall_region_std, shortfall_period_std,
-            shortfall_regionperiod_std)
+            shortfall_regionperiod_std, shortfall_samples,
+            shortfall_region_samples)
 
     end
 
@@ -293,7 +311,8 @@ function NEUE(x::ShortfallResult, r::AbstractString)
 end
 
 function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64) where {N,L,T,E}
-    estimate = x.shortfall_mean[:]
+
+    estimate = x.shortfall_samples
     var = quantile(estimate, alpha)
     tail_losses = estimate[estimate .>= var]
 
@@ -301,18 +320,26 @@ function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64) where {N,L,T,E}
         MeanEstimate(tail_losses)
     else
         MeanEstimate(0.)
-    end
+    end                                                           
 
-    cvar_type = "period"
+    period_estimate = x.shortfall_mean[:]
+    period_var = quantile(period_estimate, alpha)
+    period_tail_losses = period_estimate[period_estimate .>= period_var]
 
-    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
+    period_cvar = if !isempty(period_tail_losses)
+        MeanEstimate(period_tail_losses)
+    else
+        MeanEstimate(0.)
+    end                                                               
+
+    return CVAR{N,L,T,E}(cvar, alpha, var, period_cvar, period_var)
   
 end
 
 function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString) where {N,L,T,E}
 
     i_r = findfirstunique(x.regions.names, r)
-    estimate = x.shortfall_mean[i_r, :]
+    estimate = x.shortfall_region_samples[i_r, :]
     var = quantile(estimate, alpha)
     tail_losses = estimate[estimate .>= var]
 
@@ -322,43 +349,17 @@ function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString) wh
         MeanEstimate(0.)
     end
 
-    cvar_type = "period"
+    period_estimate = x.shortfall_mean[i_r, :]
+    period_var = quantile(period_estimate, alpha)
+    period_tail_losses = period_estimate[period_estimate .>= period_var]
 
-    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
-  
-end
-
-function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64, t::ZonedDateTime) where {N,L,T,E}
-    estimate = x.shortfall_mean[t, :]
-    var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
+    period_cvar = if !isempty(period_tail_losses)
+        MeanEstimate(period_tail_losses)
     else
         MeanEstimate(0.)
-    end
+    end   
 
-    cvar_type = "period"
-
-    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
-  
-end
-
-function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString, t::ZonedDateTime) where {N,L,T,E}
-    estimate = x.shortfall_mean[r, t, :]
-    var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end
-
-    cvar_type = "period"
-
-    return CVAR{N,L,T,E}(cvar, alpha, var, cvar_type)
+    return CVAR{N,L,T,E}(cvar, alpha, var, period_cvar, period_var)
   
 end
 
@@ -418,6 +419,8 @@ function finalize(
     ue_region_std .*= p2e
     ue_period_std .*= p2e
     ue_regionperiod_std .*= p2e
+    ue_sample = acc.unservedload_sample .* p2e
+    ue_region_sample = acc.unservedload_region_sample .* p2e
 
     return ShortfallResult{N,L,T,E,S}(
         nsamples, system.regions, system.timestamps,
@@ -425,6 +428,7 @@ function finalize(
         ep_period_mean, ep_period_std,
         ep_regionperiod_mean, ep_regionperiod_std,
         ue_regionperiod_mean, ue_total_std,
-        ue_region_std, ue_period_std, ue_regionperiod_std)
+        ue_region_std, ue_period_std, ue_regionperiod_std,
+        ue_sample, ue_region_sample)
 
 end
