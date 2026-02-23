@@ -68,8 +68,8 @@ mutable struct ShortfallAccumulator{S} <: ResultAccumulator{Shortfall}
     unservedload_region_currentsim::Vector{Int}
 
     # Sample-level UE for current simulation
-    unservedload_sample::Union{Vector{Float64}, Vector{Int}}
-    unservedload_region_sample::Union{Matrix{Float64}, Matrix{Int}}
+    unservedload_sample::Vector{Int}
+    unservedload_region_sample::Matrix{Int}
 
 end
 
@@ -94,8 +94,8 @@ function accumulator(
 
     unservedload_total_currentsim = 0
     unservedload_region_currentsim = zeros(Int, nregions)
-    unservedload_sample = zeros(Float64, nsamples)
-    unservedload_region_sample = zeros(Float64, nregions, nsamples)
+    unservedload_sample = zeros(Int, nsamples)
+    unservedload_region_sample = zeros(Int, nregions, nsamples)
 
     return ShortfallAccumulator{S}(
         periodsdropped_total, periodsdropped_region,
@@ -151,16 +151,16 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
     eventperiod_regionperiod_mean::Matrix{Float64}
     eventperiod_regionperiod_std::Matrix{Float64}
 
-
     shortfall_mean::Matrix{Float64} # r x t
+    capacity_shortfall_mean::Matrix{Float64} # r x t
 
     shortfall_std::Float64
     shortfall_region_std::Vector{Float64}
     shortfall_period_std::Vector{Float64}
     shortfall_regionperiod_std::Matrix{Float64}
 
-    shortfall_samples::Union{Vector{Float64}, Vector{Int}}
-    shortfall_region_samples::Union{Matrix{Float64}, Matrix{Int}}
+    shortfall_samples::Vector{Float64}
+    shortfall_region_samples::Matrix{Float64}
 
     function ShortfallResult{N,L,T,E,S}(
         nsamples::Union{Int,Nothing},
@@ -175,12 +175,13 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
         eventperiod_regionperiod_mean::Matrix{Float64},
         eventperiod_regionperiod_std::Matrix{Float64},
         shortfall_mean::Matrix{Float64},
+        capacity_shortfall_mean::Matrix{Float64},
         shortfall_std::Float64,
         shortfall_region_std::Vector{Float64},
         shortfall_period_std::Vector{Float64},
         shortfall_regionperiod_std::Matrix{Float64},
-        shortfall_samples::Union{Vector{Float64}, Vector{Int}},
-        shortfall_region_samples::Union{Matrix{Float64}, Matrix{Int}}
+        shortfall_samples::Vector{Float64},
+        shortfall_region_samples::Matrix{Float64},
     ) where {N,L,T<:Period,E<:EnergyUnit,S <: Union{Shortfall,DemandResponseShortfall}}
 
         isnothing(nsamples) || nsamples > 0 ||
@@ -210,7 +211,7 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
             eventperiod_region_mean, eventperiod_region_std,
             eventperiod_period_mean, eventperiod_period_std,
             eventperiod_regionperiod_mean, eventperiod_regionperiod_std,
-            shortfall_mean, shortfall_std,
+            shortfall_mean, capacity_shortfall_mean, shortfall_std,
             shortfall_region_std, shortfall_period_std,
             shortfall_regionperiod_std, shortfall_samples,
             shortfall_region_samples)
@@ -322,17 +323,17 @@ function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64) where {N,L,T,E}
         MeanEstimate(0.)
     end                                                           
 
-    period_estimate = x.shortfall_mean[:]
-    period_var = quantile(period_estimate, alpha)
-    period_tail_losses = period_estimate[period_estimate .>= period_var]
+    capacity_estimate = x.capacity_shortfall_mean[:]
+    capacity_var = quantile(capacity_estimate, alpha)
+    capacity_tail_losses = capacity_estimate[capacity_estimate .>= capacity_var]
 
-    period_cvar = if !isempty(period_tail_losses)
-        MeanEstimate(period_tail_losses)
+    capacity_cvar = if !isempty(capacity_tail_losses)
+        MeanEstimate(capacity_tail_losses)
     else
         MeanEstimate(0.)
     end                                                               
 
-    return CVAR{N,L,T,E}(cvar, alpha, var, period_cvar, period_var)
+    return CVAR{N,L,T,E}(cvar, alpha, var, capacity_cvar, capacity_var)
   
 end
 
@@ -349,17 +350,17 @@ function CVAR(x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString) wh
         MeanEstimate(0.)
     end
 
-    period_estimate = x.shortfall_mean[i_r, :]
-    period_var = quantile(period_estimate, alpha)
-    period_tail_losses = period_estimate[period_estimate .>= period_var]
+    capacity_estimate = x.capacity_shortfall_mean[i_r, :]
+    capacity_var = quantile(capacity_estimate, alpha)
+    capacity_tail_losses = capacity_estimate[capacity_estimate .>= capacity_var]
 
-    period_cvar = if !isempty(period_tail_losses)
-        MeanEstimate(period_tail_losses)
+    capacity_cvar = if !isempty(capacity_tail_losses)
+        MeanEstimate(capacity_tail_losses)
     else
         MeanEstimate(0.)
-    end   
+    end 
 
-    return CVAR{N,L,T,E}(cvar, alpha, var, period_cvar, period_var)
+    return CVAR{N,L,T,E}(cvar, alpha, var, capacity_cvar, capacity_var)
   
 end
 
@@ -414,21 +415,22 @@ function finalize(
     nsamples = first(acc.unservedload_total.stats).n
 
     p2e = conversionfactor(L,T,P,E)
+    capacity_shortfall_mean = ue_regionperiod_mean
     ue_regionperiod_mean .*= p2e
     ue_total_std *= p2e
     ue_region_std .*= p2e
     ue_period_std .*= p2e
     ue_regionperiod_std .*= p2e
-    ue_sample = acc.unservedload_sample .* p2e
-    ue_region_sample = acc.unservedload_region_sample .* p2e
+    ue_sample = float(acc.unservedload_sample .* p2e)
+    ue_region_sample = float(acc.unservedload_region_sample .* p2e)
 
     return ShortfallResult{N,L,T,E,S}(
         nsamples, system.regions, system.timestamps,
         ep_total_mean, ep_total_std, ep_region_mean, ep_region_std,
         ep_period_mean, ep_period_std,
         ep_regionperiod_mean, ep_regionperiod_std,
-        ue_regionperiod_mean, ue_total_std,
+        ue_regionperiod_mean, capacity_shortfall_mean, ue_total_std,
         ue_region_std, ue_period_std, ue_regionperiod_std,
-        ue_sample, ue_region_sample)
+        ue_sample, ue_region_sample, )
 
 end

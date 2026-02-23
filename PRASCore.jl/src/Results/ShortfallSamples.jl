@@ -82,6 +82,7 @@ struct ShortfallSamplesResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit, S} <: Ab
     timestamps::StepRange{ZonedDateTime,T}
 
     shortfall::Array{Int,3} # r x t x s
+    capacity_shortfall::Array{Int,2} # r x s
 
 end
 
@@ -197,18 +198,17 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T
         MeanEstimate(0.)
     end
 
-    period_estimate = x.shortfall[:]
-    period_var = quantile(period_estimate, alpha)
-    period_tail_losses = period_estimate[period_estimate .>= period_var]
+    capacity_estimate = x.capacity_shortfall[:]
+    capacity_var = quantile(capacity_estimate, alpha)
+    capacity_tail_losses = capacity_estimate[capacity_estimate .>= capacity_var]
 
-    period_cvar = if !isempty(period_tail_losses)
-        MeanEstimate(period_tail_losses)
+    capacity_cvar = if !isempty(capacity_tail_losses)
+        MeanEstimate(capacity_tail_losses)
     else
         MeanEstimate(0.)
     end     
 
-    
-    return CVAR{N,L,T,E}(cvar, alpha, var, period_cvar, period_var)
+    return CVAR{N,L,T,E}(cvar, alpha, var, capacity_cvar, capacity_var)
 
 end
 
@@ -224,17 +224,17 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractS
     end
     
     i_r = findfirstunique(x.regions.names, r)
-    period_estimate = x.shortfall[i_r, :, :][:]
-    period_var = quantile(period_estimate, alpha)
-    period_tail_losses = period_estimate[period_estimate .>= period_var]
+    capacity_estimate = x.capacity_shortfall[i_r, :]
+    capacity_var = quantile(capacity_estimate, alpha)
+    capacity_tail_losses = capacity_estimate[capacity_estimate .>= capacity_var]
 
-    period_cvar = if !isempty(period_tail_losses)
-        MeanEstimate(period_tail_losses)
+    capacity_cvar = if !isempty(capacity_tail_losses)
+        MeanEstimate(capacity_tail_losses)
     else
         MeanEstimate(0.)
-    end  
+    end     
 
-    return CVAR{N,L,T,E}(cvar, alpha, var, period_cvar, period_var)
+    return CVAR{N,L,T,E}(cvar, alpha, var, capacity_cvar, capacity_var)
 
 end
 
@@ -303,7 +303,10 @@ function finalize(
     system::SystemModel{N,L,T,P,E},
 ) where {N,L,T,P,E,S<:Union{ShortfallSamples,DemandResponseShortfallSamples}}
 
+    n_regions = length(system.regions)
+    p2e = conversionfactor(L,T,P,E)
+    max_capacity_shortfall = reshape(maximum(acc.shortfall, dims=[2]) ./ p2e, n_regions, :)
     return ShortfallSamplesResult{N,L,T,P,E,S}(
-        system.regions, system.timestamps, acc.shortfall)
+        system.regions, system.timestamps, acc.shortfall, max_capacity_shortfall)
 
 end
