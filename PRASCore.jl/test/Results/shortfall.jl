@@ -10,7 +10,7 @@
         DD.nsamples, Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods,
         DD.d1, DD.d2, DD.d1_resource, DD.d2_resource,
         DD.d1_period, DD.d2_period, DD.d1_resourceperiod, DD.d2_resourceperiod,
-        DD.d3_resourceperiod,
+        DD.d3_resourceperiod, DD.d3_resourceperiod, 
         DD.d4, DD.d4_resource, DD.d4_period, DD.d4_resourceperiod,
         DD.d1_sample, DD.d1_resourcesample)
 
@@ -36,6 +36,14 @@
     tail_losses = estimate[estimate .>= quantile(estimate, alpha)];
     @test val(cvar) ≈ mean(tail_losses)
     @test stderror(cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
+
+    capacity_cvar = cvar.capacity_cvar
+    cap_shortfal = vec(reshape(result.capacity_shortfall_mean, 1, :))
+    var = quantile(cap_shortfal, alpha)
+    tail_losses = cap_shortfal[cap_shortfal .>= var]
+    capacity_cvar_check = mean(tail_losses)
+    @test val(capacity_cvar) ≈ capacity_cvar_check
+    @test stderror(capacity_cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
 
     ncvar = NCVAR(result, cvar)
     @test val(ncvar) ≈ val(cvar) / load*1e6
@@ -63,6 +71,14 @@
     region_tail_losses = region_estimate[region_estimate .>= quantile(region_estimate, alpha)];
     @test val(region_cvar) ≈ mean(region_tail_losses)
     @test stderror(region_cvar) ≈ std(region_tail_losses) / sqrt(length(region_tail_losses))
+
+    region_capacity_cvar = region_cvar.capacity_cvar
+    region_cap_shortfal = result.capacity_shortfall_mean[r_idx, :]
+    var = quantile(region_cap_shortfal, alpha)
+    tail_losses = region_cap_shortfal[region_cap_shortfal .>= var]
+    region_capacity_cvar_check = mean(tail_losses)
+    @test val(region_capacity_cvar) ≈ region_capacity_cvar_check
+    @test stderror(region_capacity_cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
 
     region_ncvar = NCVAR(result, region_cvar, r)
     @test val(region_ncvar) ≈ val(region_cvar) / load*1e6
@@ -128,7 +144,7 @@ end
     alpha = 0.95
 
     result = PRASCore.Results.ShortfallSamplesResult{N,1,Hour,MW,MWh,ShortfallSamples}(
-        Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods, DD.d)
+        Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods, DD.d, DD.cap_d)
 
     # Overall
 
@@ -154,6 +170,14 @@ end
     tail_losses = estimate[estimate .>= quantile(estimate, alpha)];
     @test val(cvar) ≈ mean(tail_losses)
     @test stderror(cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
+
+    capacity_cvar = cvar.capacity_cvar
+    cap_shortfal = vec(reshape(result.capacity_shortfall, 1, :))
+    var = quantile(cap_shortfal, alpha)
+    tail_losses = cap_shortfal[cap_shortfal .>= var]
+    capacity_cvar_check = mean(tail_losses)
+    @test val(capacity_cvar) ≈ capacity_cvar_check
+    @test stderror(capacity_cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
 
     ncvar = NCVAR(result, cvar)
     @test val(ncvar) ≈ val(cvar) / load*1e6
@@ -183,6 +207,14 @@ end
     region_tail_losses = region_estimate[region_estimate .>= quantile(region_estimate, alpha)];
     @test val(region_cvar) ≈ mean(region_tail_losses)
     @test stderror(region_cvar) ≈ std(region_tail_losses) / sqrt(length(region_tail_losses))
+
+    region_capacity_cvar = region_cvar.capacity_cvar
+    region_cap_shortfal = result.capacity_shortfall[r_idx, :]
+    var = quantile(region_cap_shortfal, alpha)
+    tail_losses = region_cap_shortfal[region_cap_shortfal .>= var]
+    region_capacity_cvar_check = mean(tail_losses)
+    @test val(region_capacity_cvar) ≈ region_capacity_cvar_check
+    @test stderror(region_capacity_cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
 
     region_ncvar = NCVAR(result, region_cvar, r)
     @test val(region_ncvar) ≈ val(region_cvar) / load*1e6
