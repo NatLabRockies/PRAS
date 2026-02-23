@@ -28,13 +28,14 @@ testperiod = periods[testperiod_idx]
 notaperiod = ZonedDateTime(2010,1,1,0,tz)
 
 d = rand(0:999, nresources, nperiods, nsamples)
+cap_d = rand(0:999, nresources, nsamples)
 
 d1 = rand()
 d1_resource = rand(nresources)
 d1_period = rand(nperiods)
 d1_resourceperiod = rand(nresources, nperiods)
-d1_sample = rand(0:999, nsamples)
-d1_resourcesample = rand(0:999, nresources, nsamples)
+d1_sample = rand(nsamples) * 999
+d1_resourcesample = rand(nresources, nsamples) * 999
 
 d2 = rand()
 d2_resource = rand(nresources)
