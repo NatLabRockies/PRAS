@@ -191,8 +191,8 @@ struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
                            var::Float64,
                            capacity_cvar::MeanEstimate,
                            capacity_var::Float64) where {N,L,T<:Period,E<:EnergyUnit}
-        val(cvar) >= 0 || throw(DomainError(
-            "$val is not a valid CVAR"))
+        val(cvar) >= 0 || throw(DomainError(val(cvar),
+            "$(val(cvar)) is not a valid CVAR"))
         new{N,L,T,E}(cvar, alpha, var, capacity_cvar, capacity_var)
     end
 
@@ -224,8 +224,8 @@ struct NCVAR <: ReliabilityMetric
     var::Float64
     
     function NCVAR(ncvar::MeanEstimate, alpha::Float64, var::Float64)
-        val(ncvar) >= 0 || throw(DomainError(
-            "$val is not a valid NCVAR"))
+        val(ncvar) >= 0 || throw(DomainError(val(ncvar),
+            "$(val(ncvar)) is not a valid NCVAR"))
         new(ncvar, alpha, var)
     end
 

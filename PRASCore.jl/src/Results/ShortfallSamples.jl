@@ -190,7 +190,7 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T
     
     estimate = x[]
     var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .> var]
+    tail_losses = estimate[estimate .>= var]
 
     cvar = if !isempty(tail_losses)
         MeanEstimate(tail_losses)

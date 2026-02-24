@@ -415,7 +415,7 @@ function finalize(
     nsamples = first(acc.unservedload_total.stats).n
 
     p2e = conversionfactor(L,T,P,E)
-    capacity_shortfall_mean = ue_regionperiod_mean
+    capacity_shortfall_mean = copy(ue_regionperiod_mean)
     ue_regionperiod_mean .*= p2e
     ue_total_std *= p2e
     ue_region_std .*= p2e

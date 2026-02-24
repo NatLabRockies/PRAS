@@ -89,11 +89,11 @@ CVAR(x::AbstractShortfallResult, alpha::Float64, r::AbstractString, ::Colon) =
 CVAR(x::AbstractShortfallResult, alpha::Float64, ::Colon, ::Colon) =
     CVAR.(x, alpha, x.regions.names, permutedims(x.timestamps))    
 
-NCVAR(x::AbstractShortfallResult, alpha::Float64, r::AbstractString, ::Colon) =
-    NCVAR.(x, alpha, r, x.timestamps)
+NCVAR(x::AbstractShortfallResult, cvar::CVAR, r::AbstractString, ::Colon) =
+    NCVAR.(x, cvar, r, x.timestamps)
 
-NCVAR(x::AbstractShortfallResult, alpha::Float64, ::Colon, ::Colon) =
-    NCVAR.(x, alpha, x.regions.names, permutedims(x.timestamps))
+NCVAR(x::AbstractShortfallResult, cvar::CVAR, ::Colon, ::Colon) =
+    NCVAR.(x, cvar, x.regions.names, permutedims(x.timestamps))
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
 
