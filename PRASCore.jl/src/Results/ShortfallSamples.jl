@@ -82,7 +82,7 @@ struct ShortfallSamplesResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit, S} <: Ab
     timestamps::StepRange{ZonedDateTime,T}
 
     shortfall::Array{Int,3} # r x t x s
-    capacity_shortfall::Array{Int,2} # r x s
+    capacity_shortfall::Array{Float64,2} # r x s
 
 end
 
