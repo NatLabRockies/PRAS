@@ -180,20 +180,24 @@ respectively.
 """
 struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
 
+    unit::Union{Type{<:EnergyUnit}, Type{<:PowerUnit}}
     cvar::MeanEstimate
     alpha::Float64
     var::Float64
-    capacity_cvar::MeanEstimate
-    capacity_var::Float64
     
-    function CVAR{N,L,T,E}(cvar::MeanEstimate,
+    function CVAR{N,L,T,E}(unit::U,
+                           cvar::MeanEstimate,
                            alpha::Float64,
-                           var::Float64,
-                           capacity_cvar::MeanEstimate,
-                           capacity_var::Float64) where {N,L,T<:Period,E<:EnergyUnit}
+                           var::Float64) where {
+                            N,
+                            L,
+                            T<:Period,
+                            E<:EnergyUnit,
+                            U<:Union{Type{<:EnergyUnit}, Type{<:PowerUnit}}
+                            }
         val(cvar) >= 0 || throw(DomainError(val(cvar),
             "$(val(cvar)) is not a valid CVAR"))
-        new{N,L,T,E}(cvar, alpha, var, capacity_cvar, capacity_var)
+        new{N,L,T,E}(unit, cvar, alpha, var)
     end
 
 end
@@ -204,7 +208,7 @@ stderror(x::CVAR) = stderror(x.cvar)
 function Base.show(io::IO, x::CVAR{N,L,T,E}) where {N,L,T,E}
     
     print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
-          unitsymbol(E), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
+          unitsymbol(x.unit), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
 
 end
 
