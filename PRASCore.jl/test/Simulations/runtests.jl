@@ -597,5 +597,55 @@
         @test isapprox(sum(dr_shortfall_samples["Region 1",dts[5]])/1e4,TestData.threenode_dr_shortfall_samples/1e4, rtol=0.01)
     end
 
+    @testset "LOLD Results" begin
+        lold_1a = LOLD(shortfall2_1a)
+        regional_lold_1a = LOLD(shortfall2_1a, "Region")
+    
+        @test val(lold_1a) isa Float64
+        @test stderror(lold_1a) isa Float64
+        @test val(regional_lold_1a) isa Float64
+        @test stderror(regional_lold_1a) isa Float64
+    
+        @test val(lold_1a) >= 0
+        @test stderror(lold_1a) >= 0
+        @test val(regional_lold_1a) >= 0
+        @test stderror(regional_lold_1a) >= 0
+    
+        @test val(lold_1a) <= length(unique(Date.(shortfall2_1a.timestamps)))
+        @test val(regional_lold_1a) <= length(unique(Date.(shortfall2_1a.timestamps)))
+        @test val(lold_1a) >= val(regional_lold_1a)
+    
+        lold_1a5 = LOLD(shortfall2_1a5)
+        regional_lold_1a5 = LOLD(shortfall2_1a5, "Region")
+    
+        @test val(lold_1a5) <= length(unique(Date.(shortfall2_1a5.timestamps)))
+        @test val(regional_lold_1a5) <= length(unique(Date.(shortfall2_1a5.timestamps)))
+        @test val(lold_1a5) >= val(regional_lold_1a5)
+    
+        lold_1b = LOLD(shortfall2_1b)
+        regional_lold_1b = LOLD(shortfall2_1b, "Region")
+    
+        @test val(lold_1b) <= length(unique(Date.(shortfall2_1b.timestamps)))
+        @test val(regional_lold_1b) <= length(unique(Date.(shortfall2_1b.timestamps)))
+        @test val(lold_1b) >= val(regional_lold_1b)
+    
+        lold_3 = LOLD(shortfall2_3)
+        regional_lold_3 = LOLD(shortfall2_3, "Region A")
+    
+        @test val(lold_3) isa Float64
+        @test stderror(lold_3) isa Float64
+        @test val(regional_lold_3) isa Float64
+        @test stderror(regional_lold_3) isa Float64
+    
+        @test val(lold_3) >= 0
+        @test stderror(lold_3) >= 0
+        @test val(regional_lold_3) >= 0
+        @test stderror(regional_lold_3) >= 0
+    
+        @test val(lold_3) <= length(unique(Date.(shortfall2_3.timestamps)))
+        @test val(regional_lold_3) <= length(unique(Date.(shortfall2_3.timestamps)))
+        @test val(lold_3) >= val(regional_lold_3)
+    end
+
 
 end
