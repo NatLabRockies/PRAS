@@ -5,6 +5,7 @@ import OnlineStats: Series
 import OnlineStatsBase: EqualWeight, Mean, Variance, value
 import Printf: @sprintf
 import StatsBase: mean, std, stderror, quantile
+import Dates: Date
 
 import ..Systems: SystemModel, ZonedDateTime, Period,
                   PowerUnit, EnergyUnit, conversionfactor,
@@ -12,7 +13,7 @@ import ..Systems: SystemModel, ZonedDateTime, Period,
 export
 
     # Metrics
-    ReliabilityMetric, LOLE, EUE, NEUE,
+    ReliabilityMetric, LOLE, EUE, NEUE, LOLD,
     val, stderror, CVAR, NCVAR,
 
     # Result specifications

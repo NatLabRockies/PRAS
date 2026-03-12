@@ -259,3 +259,46 @@ function finalize(
         system.regions, system.timestamps, acc.shortfall)
 
 end
+
+function _count_dropped_days_by_sample(flags_by_period_sample, day_ids)
+    nperiods, nsamples = size(flags_by_period_sample)
+    counts = zeros(Int, nsamples)
+
+    isempty(day_ids) && return counts
+
+    for s in 1:nsamples
+        current_day = day_ids[1]
+        day_has_shortfall = false
+        dropped_days = 0
+
+        for t in 1:nperiods
+            if day_ids[t] != current_day
+                dropped_days += day_has_shortfall
+                current_day = day_ids[t]
+                day_has_shortfall = false
+            end
+
+            day_has_shortfall |= flags_by_period_sample[t, s]
+        end
+
+        dropped_days += day_has_shortfall
+        counts[s] = dropped_days
+    end
+
+    return counts
+end
+
+function LOLD(x::ShortfallSamplesResult{N,L,T}) where {N,L,T}
+    flags = dropdims(sum(x.shortfall, dims=1) .> 0, dims=1)
+    day_ids = _day_ids(x.timestamps)
+    daycounts = _count_dropped_days_by_sample(flags, day_ids)
+    return LOLD{N,L,T}(MeanEstimate(daycounts))
+end
+
+function LOLD(x::ShortfallSamplesResult{N,L,T}, r::AbstractString) where {N,L,T}
+    i_r = findfirstunique(x.regions.names, r)
+    flags = Matrix(view(x.shortfall, i_r, :, :) .> 0)
+    day_ids = _day_ids(x.timestamps)
+    daycounts = _count_dropped_days_by_sample(flags, day_ids)
+    return LOLD{N,L,T}(MeanEstimate(daycounts))
+end

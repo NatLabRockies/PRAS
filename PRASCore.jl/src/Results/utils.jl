@@ -65,3 +65,25 @@ function _ncvar(cvar::CVAR, demand::Real)
     end
     return ncvar, var
 end
+
+function _day_ids(timestamps)
+    n = length(timestamps)
+    ids = Vector{Int}(undef, n)
+
+    n == 0 && return ids
+
+    current_day = Date(first(timestamps))
+    current_id = 1
+    ids[1] = current_id
+
+    for i in 2:n
+        d = Date(timestamps[i])
+        if d != current_day
+            current_day = d
+            current_id += 1
+        end
+        ids[i] = current_id
+    end
+
+    return ids
+end

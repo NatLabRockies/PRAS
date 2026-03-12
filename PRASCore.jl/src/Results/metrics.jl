@@ -243,3 +243,30 @@ function Base.show(io::IO, x::NCVAR)
     print(io, "NCVAR@$(x.alpha) = ", x.ncvar, " ppm")
 
 end
+
+"""
+    LOLD
+
+`LOLD` reports loss of load days over a particular time period
+and regional extent.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct LOLD{N, L, T <: Period} <: ReliabilityMetric
+    lold::MeanEstimate
+
+    function LOLD{N,L,T}(lold::MeanEstimate) where {N,L,T<:Period}
+        val(lold) >= 0 || throw(DomainError(val(lold),
+            "$(val(lold)) is not a valid expected count of event-days"))
+        new{N,L,T}(lold)
+    end
+end
+
+val(x::LOLD) = val(x.lold)
+stderror(x::LOLD) = stderror(x.lold)
+
+function Base.show(io::IO, x::LOLD{N,L,T}) where {N,L,T}
+    print(io, "LOLD = ", x.lold, " event-day")
+end
