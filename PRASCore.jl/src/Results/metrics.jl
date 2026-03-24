@@ -254,19 +254,20 @@ Contains both the estimated value itself as well as the standard error
 of that estimate, which can be extracted with `val` and `stderror`,
 respectively.
 """
-struct LOLD{N, L, T <: Period} <: ReliabilityMetric
+struct LOLD{D} <: ReliabilityMetric
     lold::MeanEstimate
 
-    function LOLD{N,L,T}(lold::MeanEstimate) where {N,L,T<:Period}
+    function LOLD{D}(lold::MeanEstimate) where {D}
         val(lold) >= 0 || throw(DomainError(val(lold),
             "$(val(lold)) is not a valid expected count of event-days"))
-        new{N,L,T}(lold)
+        new{D}(lold)
     end
 end
 
 val(x::LOLD) = val(x.lold)
 stderror(x::LOLD) = stderror(x.lold)
 
-function Base.show(io::IO, x::LOLD{N,L,T}) where {N,L,T}
-    print(io, "LOLD = ", x.lold, " event-day")
+function Base.show(io::IO, x::LOLD{D}) where {D}
+    print(io, "LOLD = ", x.lold, " event-day/",
+          D == 1 ? "day" : string(D) * "days")
 end

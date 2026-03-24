@@ -90,6 +90,16 @@ end
 
 NCVAR(x::AbstractShortfallResult, cvar::CVAR, ::Colon) =
     NCVAR.(x, cvar, x.regions.names)
+
+LOLD(x::AbstractShortfallResult, ::Colon, d::Date) =
+    LOLD.(x, x.regions.names, d)
+
+LOLD(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
+    LOLD.(x, r, _unique_days(x.timestamps))
+
+LOLD(x::AbstractShortfallResult, ::Colon, ::Colon) =
+    LOLD.(x, x.regions.names, permutedims(_unique_days(x.timestamps)))
+
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
 

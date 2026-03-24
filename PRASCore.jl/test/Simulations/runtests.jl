@@ -597,54 +597,111 @@
         @test isapprox(sum(dr_shortfall_samples["Region 1",dts[5]])/1e4,TestData.threenode_dr_shortfall_samples/1e4, rtol=0.01)
     end
 
-    @testset "LOLD Results" begin
-        lold_1a = LOLD(shortfall2_1a)
-        regional_lold_1a = LOLD(shortfall2_1a, "Region")
+    @testset "LOLD" begin
+        @testset "Whole-horizon equals sum over days" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                days = unique(Date.(x.timestamps))
     
-        @test val(lold_1a) isa Float64
-        @test stderror(lold_1a) isa Float64
-        @test val(regional_lold_1a) isa Float64
-        @test stderror(regional_lold_1a) isa Float64
+                @test isapprox(
+                    val(LOLD(x)),
+                    sum(val(LOLD(x, d)) for d in days)
+                )
     
-        @test val(lold_1a) >= 0
-        @test stderror(lold_1a) >= 0
-        @test val(regional_lold_1a) >= 0
-        @test stderror(regional_lold_1a) >= 0
+                for r in x.regions.names
+                    @test isapprox(
+                        val(LOLD(x, r)),
+                        sum(val(LOLD(x, r, d)) for d in days)
+                    )
+                end
+            end
+        end
     
-        @test val(lold_1a) <= length(unique(Date.(shortfall2_1a.timestamps)))
-        @test val(regional_lold_1a) <= length(unique(Date.(shortfall2_1a.timestamps)))
-        @test val(lold_1a) >= val(regional_lold_1a)
+        @testset "Single-day query matches direct sample calculation" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                days = unique(Date.(x.timestamps))
     
-        lold_1a5 = LOLD(shortfall2_1a5)
-        regional_lold_1a5 = LOLD(shortfall2_1a5, "Region")
+                # test first, middle, and last day
+                testdays = unique([first(days), days[cld(length(days), 2)], last(days)])
     
-        @test val(lold_1a5) <= length(unique(Date.(shortfall2_1a5.timestamps)))
-        @test val(regional_lold_1a5) <= length(unique(Date.(shortfall2_1a5.timestamps)))
-        @test val(lold_1a5) >= val(regional_lold_1a5)
+                for d in testdays
+                    mask = Date.(x.timestamps) .== d
     
-        lold_1b = LOLD(shortfall2_1b)
-        regional_lold_1b = LOLD(shortfall2_1b, "Region")
+                    # system-wide day event by sample:
+                    # did any region have any shortfall in any timestep of this day?
+                    manual_system = vec(any(dropdims(sum(x.shortfall[:, mask, :], dims=1), dims=1) .> 0, dims=1))
+                    expected_system = MeanEstimate(manual_system)
     
-        @test val(lold_1b) <= length(unique(Date.(shortfall2_1b.timestamps)))
-        @test val(regional_lold_1b) <= length(unique(Date.(shortfall2_1b.timestamps)))
-        @test val(lold_1b) >= val(regional_lold_1b)
+                    @test LOLD(x, d) ≈ LOLD{1}(expected_system)
     
-        lold_3 = LOLD(shortfall2_3)
-        regional_lold_3 = LOLD(shortfall2_3, "Region A")
+                    for r in x.regions.names
+                        i_r = findfirst(isequal(r), x.regions.names)
     
-        @test val(lold_3) isa Float64
-        @test stderror(lold_3) isa Float64
-        @test val(regional_lold_3) isa Float64
-        @test stderror(regional_lold_3) isa Float64
+                        # region-day event by sample:
+                        # did this region have any shortfall in any timestep of this day?
+                        manual_region = vec(any(x.shortfall[i_r, mask, :] .> 0, dims=1))
+                        expected_region = MeanEstimate(manual_region)
     
-        @test val(lold_3) >= 0
-        @test stderror(lold_3) >= 0
-        @test val(regional_lold_3) >= 0
-        @test stderror(regional_lold_3) >= 0
+                        @test LOLD(x, r, d) ≈ LOLD{1}(expected_region)
+                    end
+                end
+            end
+        end
     
-        @test val(lold_3) <= length(unique(Date.(shortfall2_3.timestamps)))
-        @test val(regional_lold_3) <= length(unique(Date.(shortfall2_3.timestamps)))
-        @test val(lold_3) >= val(regional_lold_3)
+        @testset "Broadcast helpers match scalar calls" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                days = unique(Date.(x.timestamps))
+    
+                # region over all days
+                for r in x.regions.names
+                    @test all(LOLD(x, r, :) .≈ LOLD.(Ref(x), r, days))
+                end
+    
+                # all regions for one day
+                for d in (first(days), days[cld(length(days), 2)], last(days))
+                    @test all(LOLD(x, :, d) .≈ LOLD.(Ref(x), x.regions.names, d))
+                end
+    
+                # full region x day grid
+                @test all(LOLD(x, :, :) .≈ LOLD.(Ref(x), x.regions.names, permutedims(days)))
+            end
+        end
+    
+        @testset "System day risk dominates regional day risk" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                for d in unique(Date.(x.timestamps))
+                    system_val = val(LOLD(x, d))
+                    for r in x.regions.names
+                        @test system_val >= val(LOLD(x, r, d))
+                    end
+                end
+            end
+        end
+    
+        @testset "Invalid day throws useful error" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                bad_day = first(unique(Date.(x.timestamps))) - Day(1)
+        
+                err = try
+                    LOLD(x, bad_day)
+                    nothing
+                catch e
+                    e
+                end
+        
+                @test err isa ArgumentError
+                @test occursin("simulation horizon", sprint(showerror, err))
+        
+                err = try
+                    LOLD(x, first(x.regions.names), bad_day)
+                    nothing
+                catch e
+                    e
+                end
+        
+                @test err isa ArgumentError
+                @test occursin("simulation horizon", sprint(showerror, err))
+            end
+        end
     end
 
 

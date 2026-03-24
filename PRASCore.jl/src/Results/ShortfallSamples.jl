@@ -15,6 +15,7 @@ shortfall, =
     assess(sys, SequentialMonteCarlo(samples=10), ShortfallSamples())
 
 period = ZonedDateTime(2020, 1, 1, 0, tz"UTC")
+day = Date(2020, 1, 1)
 
 samples = shortfall["Region A", period]
 
@@ -25,19 +26,23 @@ samples = shortfall["Region A", period]
 eue = EUE(shortfall)
 lole = LOLE(shortfall)
 neue = NEUE(shortfall)
+lold = LOLD(shortfall)
 
 # Regional risk metrics
 regional_eue = EUE(shortfall, "Region A")
 regional_lole = LOLE(shortfall, "Region A")
 regional_neue = NEUE(shortfall, "Region A")
+regional_lold = LOLD(shortfall, "Region A")
 
 # Period-specific risk metrics
 period_eue = EUE(shortfall, period)
 period_lolp = LOLE(shortfall, period)
+day_lold = LOLD(shortfall, day)
 
 # Region- and period-specific risk metrics
 period_eue = EUE(shortfall, "Region A", period)
 period_lolp = LOLE(shortfall, "Region A", period)
+regional_day_lold = LOLD(shortfall, "Region A", day)
 ```
 
 Note that this result specification requires large amounts of memory for
@@ -288,17 +293,39 @@ function _count_dropped_days_by_sample(flags_by_period_sample, day_ids)
     return counts
 end
 
-function LOLD(x::ShortfallSamplesResult{N,L,T}) where {N,L,T}
+function LOLD(x::ShortfallSamplesResult)
     flags = dropdims(sum(x.shortfall, dims=1) .> 0, dims=1)
-    day_ids = _day_ids(x.timestamps)
-    daycounts = _count_dropped_days_by_sample(flags, day_ids)
-    return LOLD{N,L,T}(MeanEstimate(daycounts))
+    daycounts = _count_dropped_days_by_sample(flags, _day_ids(x.timestamps))
+    return LOLD{_ndays(x.timestamps)}(MeanEstimate(daycounts))
 end
 
-function LOLD(x::ShortfallSamplesResult{N,L,T}, r::AbstractString) where {N,L,T}
+function LOLD(x::ShortfallSamplesResult, r::AbstractString)
     i_r = findfirstunique(x.regions.names, r)
     flags = Matrix(view(x.shortfall, i_r, :, :) .> 0)
-    day_ids = _day_ids(x.timestamps)
-    daycounts = _count_dropped_days_by_sample(flags, day_ids)
-    return LOLD{N,L,T}(MeanEstimate(daycounts))
+    daycounts = _count_dropped_days_by_sample(flags, _day_ids(x.timestamps))
+    return LOLD{_ndays(x.timestamps)}(MeanEstimate(daycounts))
+end
+
+function LOLD(x::ShortfallSamplesResult, d::Date)
+    dayrange = _day_range(x.timestamps, d)
+
+    # day_slice has shape: region × day_timestamps × sample
+    day_slice = view(x.shortfall, :, dayrange, :)
+
+    # For each sample, event occurs if any region has any shortfall in any timestep of the day
+    eventdays = vec(dropdims(any(day_slice .> 0, dims=(1, 2)), dims=(1, 2)))
+
+    return LOLD{1}(MeanEstimate(eventdays))
+end
+
+function LOLD(x::ShortfallSamplesResult, r::AbstractString, d::Date)
+    i_r = findfirstunique(x.regions.names, r)
+    dayrange = _day_range(x.timestamps, d)
+
+    region_day_slice = view(x.shortfall, i_r, dayrange, :)
+
+    # For each sample, did this region have any shortfall during the day?
+    eventdays = vec(dropdims(any(region_day_slice .> 0, dims=1), dims=1))
+
+    return LOLD{1}(MeanEstimate(eventdays))
 end
