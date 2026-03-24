@@ -58,11 +58,25 @@ function NEUEResult(shortfall::AbstractShortfallResult; region::Union{Nothing, S
     )
 end
 
+struct LOLDResult
+    mean::Float64
+    stderror::Float64
+end
+
+function LOLDResult(shortfall::ShortfallSamplesResult; region::Union{Nothing,String}=nothing)
+    lold = (region === nothing) ? LOLD(shortfall) : LOLD(shortfall, region)
+    return LOLDResult(
+        lold.lold.estimate,
+        lold.lold.standarderror,
+    )
+end
+
 struct RegionResult
     name::String
     eue::EUEResult
     lole::LOLEResult
     neue::NEUEResult
+    lold::Union{Nothing,LOLDResult}
     load::Vector{Int64}
     peak_load::Float64
     capacity::Dict{String,Vector{Int64}}
@@ -78,6 +92,7 @@ struct SystemResult
     eue::EUEResult
     lole::LOLEResult
     neue::NEUEResult
+    lold::Union{Nothing,LOLDResult}
     region_results::Vector{RegionResult}
 end
 
@@ -97,10 +112,24 @@ function get_nsamples(shortfall::ShortfallSamplesResult)
     return size(shortfall.shortfall,3)
 end
 
+const _lold_warned = Ref(false)
+function get_lold_result(shortfall::ShortfallResult; region::Union{Nothing,String}=nothing)
+    if !_lold_warned[]
+        @warn "LOLD is not implemented for ShortfallResult and will not be included in the JSON export. Use ShortfallSamplesResult to compute LOLD."
+        _lold_warned[] = true
+    end
+    return nothing
+end
+
+function get_lold_result(shortfall::ShortfallSamplesResult; region::Union{Nothing,String}=nothing)
+    return LOLDResult(shortfall; region=region)
+end
+
 # Define structtypes for different structs defined above
 StructType(::Type{TypeParams}) = Struct()
 StructType(::Type{EUEResult}) = Struct()
 StructType(::Type{NEUEResult}) = Struct()
 StructType(::Type{LOLEResult}) = Struct()
+StructType(::Type{LOLDResult}) = Struct()
 StructType(::Type{RegionResult}) = OrderedStruct()
 StructType(::Type{SystemResult}) = OrderedStruct()
