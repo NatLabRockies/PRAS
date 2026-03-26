@@ -115,7 +115,7 @@ end
 const _lold_warned = Ref(false)
 function get_lold_result(shortfall::ShortfallResult; region::Union{Nothing,String}=nothing)
     if !_lold_warned[]
-        @warn "LOLD is not implemented for ShortfallResult and will not be included in the JSON export. Use ShortfallSamplesResult to compute LOLD."
+        @info "LOLD is not implemented for ShortfallResult and will not be included in the JSON export. Use ShortfallSamplesResult to compute LOLD."
         _lold_warned[] = true
     end
     return nothing
