@@ -198,17 +198,17 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T
         MeanEstimate(0.)
     end
 
-    capacity_estimate = x.capacity_shortfall[:]
-    capacity_var = quantile(capacity_estimate, alpha)
-    capacity_tail_losses = capacity_estimate[capacity_estimate .>= capacity_var]
+    # capacity_estimate = x.capacity_shortfall[:]
+    # capacity_var = quantile(capacity_estimate, alpha)
+    # capacity_tail_losses = capacity_estimate[capacity_estimate .>= capacity_var]
 
-    capacity_cvar = if !isempty(capacity_tail_losses)
-        MeanEstimate(capacity_tail_losses)
-    else
-        MeanEstimate(0.)
-    end     
+    # capacity_cvar = if !isempty(capacity_tail_losses)
+    #     MeanEstimate(capacity_tail_losses)
+    # else
+    #     MeanEstimate(0.)
+    # end     
 
-    return CVAR{N,L,T,E}(cvar, alpha, var, capacity_cvar, capacity_var)
+    return CVAR{N,L,T,E}(cvar, alpha, var)
 
 end
 
@@ -223,18 +223,18 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractS
         MeanEstimate(0.)
     end
     
-    i_r = findfirstunique(x.regions.names, r)
-    capacity_estimate = x.capacity_shortfall[i_r, :]
-    capacity_var = quantile(capacity_estimate, alpha)
-    capacity_tail_losses = capacity_estimate[capacity_estimate .>= capacity_var]
+    # i_r = findfirstunique(x.regions.names, r)
+    # capacity_estimate = x.capacity_shortfall[i_r, :]
+    # capacity_var = quantile(capacity_estimate, alpha)
+    # capacity_tail_losses = capacity_estimate[capacity_estimate .>= capacity_var]
 
-    capacity_cvar = if !isempty(capacity_tail_losses)
-        MeanEstimate(capacity_tail_losses)
-    else
-        MeanEstimate(0.)
-    end     
+    # capacity_cvar = if !isempty(capacity_tail_losses)
+    #     MeanEstimate(capacity_tail_losses)
+    # else
+    #     MeanEstimate(0.)
+    # end     
 
-    return CVAR{N,L,T,E}(cvar, alpha, var, capacity_cvar, capacity_var)
+    return CVAR{N,L,T,E}(cvar, alpha, var)
 
 end
 
