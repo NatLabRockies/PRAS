@@ -11,7 +11,7 @@ using Test
     neue = NEUE(sf)
 
     alpha = 0.95
-    cvar = CVAR(sf, alpha)
+    cvar = CVAR(energyunit, sf, alpha)
     ncvar = NCVAR(sf, cvar)
 
     @test val(eue) isa Float64
@@ -35,7 +35,7 @@ end
     neue = NEUE(sf)
 
     alpha = 0.95
-    cvar = CVAR(sf, alpha)
+    cvar = CVAR(energyunit, sf, alpha)
     ncvar = NCVAR(sf, cvar)
 
     @test val(eue) isa Float64
