@@ -11,6 +11,7 @@ using Test
     neue = NEUE(sf)
 
     alpha = 0.95
+    (timesteps,periodunit,periodunit,powerunit,energyunit) = get_params(rts_gmlc())
     cvar = CVAR(energyunit, sf, alpha)
     ncvar = NCVAR(sf, cvar)
 
@@ -35,6 +36,7 @@ end
     neue = NEUE(sf)
 
     alpha = 0.95
+    (timesteps,periodunit,periodunit,powerunit,energyunit) = get_params(rts_gmlc())
     cvar = CVAR(energyunit, sf, alpha)
     ncvar = NCVAR(sf, cvar)
 
