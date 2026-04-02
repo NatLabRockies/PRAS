@@ -5,6 +5,7 @@
     r, r_idx, r_bad = DD.testresource, DD.testresource_idx, DD.notaresource
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
     alpha = DD.alpha
+    energyunit = MWh
 
     result = PRASCore.Results.ShortfallResult{N,1,Hour,MWh,Shortfall}(
         DD.nsamples, Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods,
@@ -31,19 +32,11 @@
     @test val(neue) ≈ first(result[]) / load*1e6
     @test stderror(neue) ≈ last(result[]) / sqrt(DD.nsamples) / load*1e6
 
-    cvar = CVAR(result, alpha)
+    cvar = CVAR(energyunit, result, alpha)
     estimate = result.shortfall_samples;
     tail_losses = estimate[estimate .>= quantile(estimate, alpha)];
     @test val(cvar) ≈ mean(tail_losses)
     @test stderror(cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
-
-    capacity_cvar = cvar.capacity_cvar
-    cap_shortfal = vec(reshape(result.capacity_shortfall_mean, 1, :))
-    var = quantile(cap_shortfal, alpha)
-    tail_losses = cap_shortfal[cap_shortfal .>= var]
-    capacity_cvar_check = mean(tail_losses)
-    @test val(capacity_cvar) ≈ capacity_cvar_check
-    @test stderror(capacity_cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
 
     ncvar = NCVAR(result, cvar)
     @test val(ncvar) ≈ val(cvar) / load*1e6
@@ -66,19 +59,11 @@
     @test val(region_neue) ≈ first(result[r]) / load*1e6
     @test stderror(region_neue) ≈ last(result[r]) / sqrt(DD.nsamples) / load*1e6
 
-    region_cvar = CVAR(result, alpha, r)
+    region_cvar = CVAR(energyunit, result, alpha, r)
     region_estimate = result.shortfall_region_samples[r_idx, :];
     region_tail_losses = region_estimate[region_estimate .>= quantile(region_estimate, alpha)];
     @test val(region_cvar) ≈ mean(region_tail_losses)
     @test stderror(region_cvar) ≈ std(region_tail_losses) / sqrt(length(region_tail_losses))
-
-    region_capacity_cvar = region_cvar.capacity_cvar
-    region_cap_shortfal = result.capacity_shortfall_mean[r_idx, :]
-    var = quantile(region_cap_shortfal, alpha)
-    tail_losses = region_cap_shortfal[region_cap_shortfal .>= var]
-    region_capacity_cvar_check = mean(tail_losses)
-    @test val(region_capacity_cvar) ≈ region_capacity_cvar_check
-    @test stderror(region_capacity_cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
 
     region_ncvar = NCVAR(result, region_cvar, r)
     @test val(region_ncvar) ≈ val(region_cvar) / load*1e6
@@ -88,7 +73,7 @@
     @test_throws BoundsError LOLE(result, r_bad)
     @test_throws BoundsError EUE(result, r_bad)
     @test_throws BoundsError NEUE(result, r_bad)
-    @test_throws BoundsError CVAR(result, alpha, r_bad)
+    @test_throws BoundsError CVAR(energyunit,result, alpha, r_bad)
     @test_throws BoundsError NCVAR(result, region_cvar, r_bad)
 
     # Period-specific
@@ -142,6 +127,7 @@ end
     r, r_idx, r_bad = DD.testresource, DD.testresource_idx, DD.notaresource
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
     alpha = 0.95
+    energyunit = MWh
 
     result = PRASCore.Results.ShortfallSamplesResult{N,1,Hour,MW,MWh,ShortfallSamples}(
         Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods, DD.d, DD.cap_d)
@@ -165,23 +151,15 @@ end
     @test val(neue) ≈ mean(result[]) / load*1e6
     @test stderror(neue) ≈ std(result[]) / sqrt(DD.nsamples) / load*1e6
 
-    cvar = CVAR(result, alpha)
+    ue_cvar = CVAR(energyunit, result, alpha)
     estimate = result[];
     tail_losses = estimate[estimate .>= quantile(estimate, alpha)];
-    @test val(cvar) ≈ mean(tail_losses)
-    @test stderror(cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
+    @test val(ue_cvar) ≈ mean(tail_losses)
+    @test stderror(ue_cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
 
-    capacity_cvar = cvar.capacity_cvar
-    cap_shortfal = vec(reshape(result.capacity_shortfall, 1, :))
-    var = quantile(cap_shortfal, alpha)
-    tail_losses = cap_shortfal[cap_shortfal .>= var]
-    capacity_cvar_check = mean(tail_losses)
-    @test val(capacity_cvar) ≈ capacity_cvar_check
-    @test stderror(capacity_cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
-
-    ncvar = NCVAR(result, cvar)
-    @test val(ncvar) ≈ val(cvar) / load*1e6
-    @test stderror(ncvar) ≈ stderror(cvar) / load*1e6
+    ncvar = NCVAR(result, ue_cvar)
+    @test val(ncvar) ≈ val(ue_cvar) / load*1e6
+    @test stderror(ncvar) ≈ stderror(ue_cvar) / load*1e6
 
     # Region-specific
 
@@ -202,30 +180,22 @@ end
     @test val(region_neue) ≈ mean(result[r]) / load*1e6
     @test stderror(region_neue) ≈ std(result[r]) / sqrt(DD.nsamples) / load*1e6
 
-    region_cvar = CVAR(result, alpha, r)
+    region_ue_cvar = CVAR(energyunit, result, alpha, r)
     region_estimate = result[r];
     region_tail_losses = region_estimate[region_estimate .>= quantile(region_estimate, alpha)];
-    @test val(region_cvar) ≈ mean(region_tail_losses)
-    @test stderror(region_cvar) ≈ std(region_tail_losses) / sqrt(length(region_tail_losses))
+    @test val(region_ue_cvar) ≈ mean(region_tail_losses)
+    @test stderror(region_ue_cvar) ≈ std(region_tail_losses) / sqrt(length(region_tail_losses))
 
-    region_capacity_cvar = region_cvar.capacity_cvar
-    region_cap_shortfal = result.capacity_shortfall[r_idx, :]
-    var = quantile(region_cap_shortfal, alpha)
-    tail_losses = region_cap_shortfal[region_cap_shortfal .>= var]
-    region_capacity_cvar_check = mean(tail_losses)
-    @test val(region_capacity_cvar) ≈ region_capacity_cvar_check
-    @test stderror(region_capacity_cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
-
-    region_ncvar = NCVAR(result, region_cvar, r)
-    @test val(region_ncvar) ≈ val(region_cvar) / load*1e6
-    @test stderror(region_ncvar) ≈ stderror(region_cvar) / load*1e6
+    region_ncvar = NCVAR(result, region_ue_cvar, r)
+    @test val(region_ncvar) ≈ val(region_ue_cvar) / load*1e6
+    @test stderror(region_ncvar) ≈ stderror(region_ue_cvar) / load*1e6
 
     @test_throws BoundsError result[r_bad]
     @test_throws BoundsError LOLE(result, r_bad)
     @test_throws BoundsError EUE(result, r_bad)
     @test_throws BoundsError NEUE(result, r_bad)
-    @test_throws BoundsError CVAR(result, alpha, r_bad)
-    @test_throws BoundsError NCVAR(result, region_cvar, r_bad)
+    @test_throws BoundsError CVAR(energyunit, result, alpha, r_bad)
+    @test_throws BoundsError NCVAR(result, region_ue_cvar, r_bad)
 
     # Period-specific
 
@@ -241,7 +211,7 @@ end
     @test val(period_eue) ≈ mean(result[t])
     @test stderror(period_eue) ≈ std(result[t]) / sqrt(DD.nsamples)
 
-    period_cvar = CVAR(result, alpha, t)
+    period_cvar = CVAR(energyunit, result, alpha, t)
     period_estimate = result[t];
     period_tail_losses = period_estimate[period_estimate .>= quantile(period_estimate, alpha)];
     @test val(period_cvar) ≈ mean(period_tail_losses)
@@ -250,7 +220,7 @@ end
     @test_throws BoundsError result[t_bad]
     @test_throws BoundsError LOLE(result, t_bad)
     @test_throws BoundsError EUE(result, t_bad)
-    @test_throws BoundsError CVAR(result, alpha, t_bad)
+    @test_throws BoundsError CVAR(energyunit, result, alpha, t_bad)
 
     # Region + period-specific
 
@@ -267,7 +237,7 @@ end
     @test val(regionperiod_eue) ≈ mean(result[r, t])
     @test stderror(regionperiod_eue) ≈ std(result[r, t]) / sqrt(DD.nsamples)
 
-    regionperiod_cvar = CVAR(result, alpha, r, t)
+    regionperiod_cvar = CVAR(energyunit, result, alpha, r, t)
     regionperiod_estimate = result[r, t];
     regionperiod_tail_losses = regionperiod_estimate[regionperiod_estimate .>= quantile(regionperiod_estimate, alpha)];
     @test val(regionperiod_cvar) ≈ mean(regionperiod_tail_losses)
@@ -285,8 +255,8 @@ end
     @test_throws BoundsError EUE(result, r_bad, t)
     @test_throws BoundsError EUE(result, r_bad, t_bad)
 
-    @test_throws BoundsError CVAR(result, alpha, r, t_bad)
-    @test_throws BoundsError CVAR(result, alpha, r_bad, t)
-    @test_throws BoundsError CVAR(result, alpha, r_bad, t_bad)
+    @test_throws BoundsError CVAR(energyunit, result, alpha, r, t_bad)
+    @test_throws BoundsError CVAR(energyunit, result, alpha, r_bad, t)
+    @test_throws BoundsError CVAR(energyunit, result, alpha, r_bad, t_bad)
 
 end
