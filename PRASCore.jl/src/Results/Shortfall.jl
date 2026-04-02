@@ -327,21 +327,6 @@ function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64) where 
   
 end
 
-function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64) where {N,L,T,E,U<:PowerUnit}
-                                    
-    estimate = x.capacity_shortfall_mean[:]
-    var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
-
-    cvar = if !isempty(tail_losses)
-         MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end                                                               
-
-    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
-  
-end
 
 function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString) where {N,L,T,E,U<:EnergyUnit}
 
@@ -355,23 +340,6 @@ function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64, r::Abs
     else
         MeanEstimate(0.)
     end
-
-    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
-  
-end
-
-function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString) where {N,L,T,E,U<:PowerUnit}
-
-    i_r = findfirstunique(x.regions.names, r)
-    estimate = x.capacity_shortfall_mean[i_r, :]
-    var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end 
 
     return CVAR{N,L,T,E}(unit, cvar, alpha, var)
   
