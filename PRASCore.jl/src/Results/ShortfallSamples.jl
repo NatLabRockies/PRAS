@@ -186,7 +186,7 @@ function NEUE(x::ShortfallSamplesResult, r::AbstractString)
 
 end
 
-function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T,P,E}
+function CVAR(unit::Type{U}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T,P,E,U<:EnergyUnit}
     
     estimate = x[]
     var = quantile(estimate, alpha)
@@ -198,21 +198,11 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T
         MeanEstimate(0.)
     end
 
-    # capacity_estimate = x.capacity_shortfall[:]
-    # capacity_var = quantile(capacity_estimate, alpha)
-    # capacity_tail_losses = capacity_estimate[capacity_estimate .>= capacity_var]
-
-    # capacity_cvar = if !isempty(capacity_tail_losses)
-    #     MeanEstimate(capacity_tail_losses)
-    # else
-    #     MeanEstimate(0.)
-    # end     
-
-    return CVAR{N,L,T,E}(cvar, alpha, var)
+    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
 
 end
 
-function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString) where {N,L,T,P,E}
+function CVAR(unit::Type{U}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString) where {N,L,T,P,E,U<:EnergyUnit}
     estimate = x[r]
     var = quantile(estimate, alpha)
     tail_losses = estimate[estimate .>= var]
@@ -222,23 +212,12 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractS
     else
         MeanEstimate(0.)
     end
-    
-    # i_r = findfirstunique(x.regions.names, r)
-    # capacity_estimate = x.capacity_shortfall[i_r, :]
-    # capacity_var = quantile(capacity_estimate, alpha)
-    # capacity_tail_losses = capacity_estimate[capacity_estimate .>= capacity_var]
 
-    # capacity_cvar = if !isempty(capacity_tail_losses)
-    #     MeanEstimate(capacity_tail_losses)
-    # else
-    #     MeanEstimate(0.)
-    # end     
-
-    return CVAR{N,L,T,E}(cvar, alpha, var)
+    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
 
 end
 
-function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, t::ZonedDateTime) where {N,L,T,P,E}
+function CVAR(unit::Type{U}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, t::ZonedDateTime) where {N,L,T,P,E,U<:EnergyUnit}
     estimate = x[t]
     var = quantile(estimate, alpha)
     tail_losses = estimate[estimate .>= var]
@@ -249,11 +228,11 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, t::ZonedDate
         MeanEstimate(0.)
     end
 
-    return CVAR{N,L,T,E}(cvar, alpha, var, cvar, var)
+    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
 
 end
 
-function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString, t::ZonedDateTime) where {N,L,T,P,E}
+function CVAR(unit::Type{U}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString, t::ZonedDateTime) where {N,L,T,P,E,U<:EnergyUnit}
     estimate = x[r, t]
     var = quantile(estimate, alpha)
     tail_losses = estimate[estimate .>= var]
@@ -264,7 +243,7 @@ function CVAR(x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractS
         MeanEstimate(0.)
     end
     
-    return CVAR{N,L,T,E}(cvar, alpha, var, cvar, var)
+    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
 end
 
 function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, cvar::CVAR) where {N,L,T,P}
