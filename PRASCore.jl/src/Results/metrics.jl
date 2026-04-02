@@ -172,7 +172,7 @@ end
 """
     CVAR
 
-`CVAR` reports conditional value at risk of shortfalls, for total unserved energy and capacity shortfalls.
+`CVAR` reports conditional value at risk of shortfalls, for total unserved energy shortfalls.
 
 Contains both the estimated value itself as well as the standard error
 of that estimate, which can be extracted with `val` and `stderror`,
@@ -180,7 +180,7 @@ respectively.
 """
 struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
 
-    unit::Union{Type{<:EnergyUnit}, Type{<:PowerUnit}}
+    unit::Type{<:EnergyUnit}
     cvar::MeanEstimate
     alpha::Float64
     var::Float64
@@ -193,7 +193,7 @@ struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
                             L,
                             T<:Period,
                             E<:EnergyUnit,
-                            U<:Union{Type{<:EnergyUnit}, Type{<:PowerUnit}}
+                            U<:Type{<:EnergyUnit},
                             }
         val(cvar) >= 0 || throw(DomainError(val(cvar),
             "$(val(cvar)) is not a valid CVAR"))
@@ -215,7 +215,7 @@ end
 """
     NCVAR
 
-`NCVAR` reports normalized conditional value at risk of shortfalls, for total unserved energy and capacity shortfalls.
+`NCVAR` reports normalized conditional value at risk of shortfalls, for total unserved energy shortfalls.
 
 Contains both the estimated value itself as well as the standard error
 of that estimate, which can be extracted with `val` and `stderror`,

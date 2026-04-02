@@ -82,7 +82,6 @@ struct ShortfallSamplesResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit, S} <: Ab
     timestamps::StepRange{ZonedDateTime,T}
 
     shortfall::Array{Int,3} # r x t x s
-    capacity_shortfall::Array{Float64,2} # r x s
 
 end
 
@@ -282,10 +281,7 @@ function finalize(
     system::SystemModel{N,L,T,P,E},
 ) where {N,L,T,P,E,S<:Union{ShortfallSamples,DemandResponseShortfallSamples}}
 
-    n_regions = length(system.regions)
-    p2e = conversionfactor(L,T,P,E)
-    max_capacity_shortfall = reshape(maximum(acc.shortfall, dims=[2]) ./ p2e, n_regions, :)
     return ShortfallSamplesResult{N,L,T,P,E,S}(
-        system.regions, system.timestamps, acc.shortfall, max_capacity_shortfall)
+        system.regions, system.timestamps, acc.shortfall)
 
 end

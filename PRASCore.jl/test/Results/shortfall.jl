@@ -8,11 +8,11 @@
     energyunit = MWh
 
     result = PRASCore.Results.ShortfallResult{N,1,Hour,MWh,Shortfall}(
-        DD.nsamples, Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods,
-        DD.d1, DD.d2, DD.d1_resource, DD.d2_resource,
-        DD.d1_period, DD.d2_period, DD.d1_resourceperiod, DD.d2_resourceperiod,
-        DD.d3_resourceperiod, DD.d3_resourceperiod, 
-        DD.d4, DD.d4_resource, DD.d4_period, DD.d4_resourceperiod,
+        DD.nsamples, Regions{N,MW}(DD.resourcenames, DD.resource_vals),
+        DD.periods, DD.d1, DD.d2, DD.d1_resource, DD.d2_resource,
+        DD.d1_period, DD.d2_period, DD.d1_resourceperiod,
+        DD.d2_resourceperiod, DD.d3_resourceperiod, DD.d4,
+        DD.d4_resource, DD.d4_period, DD.d4_resourceperiod,
         DD.d1_sample, DD.d1_resourcesample)
 
     # Overall
@@ -130,7 +130,7 @@ end
     energyunit = MWh
 
     result = PRASCore.Results.ShortfallSamplesResult{N,1,Hour,MW,MWh,ShortfallSamples}(
-        Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods, DD.d, DD.cap_d)
+        Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods, DD.d)
 
     # Overall
 

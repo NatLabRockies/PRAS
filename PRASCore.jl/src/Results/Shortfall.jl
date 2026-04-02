@@ -152,7 +152,6 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
     eventperiod_regionperiod_std::Matrix{Float64}
 
     shortfall_mean::Matrix{Float64} # r x t
-    capacity_shortfall_mean::Matrix{Float64} # r x t
 
     shortfall_std::Float64
     shortfall_region_std::Vector{Float64}
@@ -175,7 +174,6 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
         eventperiod_regionperiod_mean::Matrix{Float64},
         eventperiod_regionperiod_std::Matrix{Float64},
         shortfall_mean::Matrix{Float64},
-        capacity_shortfall_mean::Matrix{Float64},
         shortfall_std::Float64,
         shortfall_region_std::Vector{Float64},
         shortfall_period_std::Vector{Float64},
@@ -211,7 +209,7 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
             eventperiod_region_mean, eventperiod_region_std,
             eventperiod_period_mean, eventperiod_period_std,
             eventperiod_regionperiod_mean, eventperiod_regionperiod_std,
-            shortfall_mean, capacity_shortfall_mean, shortfall_std,
+            shortfall_mean, shortfall_std,
             shortfall_region_std, shortfall_period_std,
             shortfall_regionperiod_std, shortfall_samples,
             shortfall_region_samples)
@@ -396,7 +394,6 @@ function finalize(
     nsamples = first(acc.unservedload_total.stats).n
 
     p2e = conversionfactor(L,T,P,E)
-    capacity_shortfall_mean = ue_regionperiod_mean
     ue_regionperiod_mean .*= p2e
     ue_total_std *= p2e
     ue_region_std .*= p2e
@@ -410,7 +407,7 @@ function finalize(
         ep_total_mean, ep_total_std, ep_region_mean, ep_region_std,
         ep_period_mean, ep_period_std,
         ep_regionperiod_mean, ep_regionperiod_std,
-        ue_regionperiod_mean, capacity_shortfall_mean, ue_total_std,
+        ue_regionperiod_mean, ue_total_std,
         ue_region_std, ue_period_std, ue_regionperiod_std,
         ue_sample, ue_region_sample, )
 
