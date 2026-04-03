@@ -197,6 +197,9 @@ struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
                             }
         val(cvar) >= 0 || throw(DomainError(val(cvar),
             "$(val(cvar)) is not a valid CVAR"))
+        0 <= alpha < 1 || throw(DomainError(alpha,
+         "$alpha is not a valid confidence level"))
+
         new{N,L,T,E}(unit, cvar, alpha, var)
     end
 
