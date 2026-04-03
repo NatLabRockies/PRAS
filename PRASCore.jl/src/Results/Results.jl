@@ -80,14 +80,14 @@ NEUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
 NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
     NEUE.(x, x.regions.names, permutedims(x.timestamps))
 
-CVAR(x::AbstractShortfallResult, alpha::Float64, ::Colon, t::ZonedDateTime) =
-    CVAR.(x, alpha, x.regions.names, t)
+CVAR(unit::Type{U}, x::AbstractShortfallResult, alpha::Float64, ::Colon, t::ZonedDateTime) where {U<:EnergyUnit} =
+    CVAR.(unit, x, alpha, x.regions.names, t)
 
-CVAR(x::AbstractShortfallResult, alpha::Float64, r::AbstractString, ::Colon) =
-    CVAR.(x, alpha, r, x.timestamps)
+CVAR(unit::Type{U}, x::AbstractShortfallResult, alpha::Float64, r::AbstractString, ::Colon) where {U<:EnergyUnit} =
+    CVAR.(unit, x, alpha, r, x.timestamps)
 
-CVAR(x::AbstractShortfallResult, alpha::Float64, ::Colon, ::Colon) =
-    CVAR.(x, alpha, x.regions.names, permutedims(x.timestamps))    
+CVAR(unit::Type{U}, x::AbstractShortfallResult, alpha::Float64, ::Colon, ::Colon) where {U<:EnergyUnit} =
+    CVAR.(unit, x, alpha, x.regions.names, permutedims(x.timestamps))
 
 NCVAR(x::AbstractShortfallResult, cvar::CVAR, r::AbstractString, ::Colon) =
     NCVAR.(x, cvar, r, x.timestamps)
