@@ -89,11 +89,8 @@ CVAR(unit::Type{U}, x::AbstractShortfallResult, alpha::Float64, r::AbstractStrin
 CVAR(unit::Type{U}, x::AbstractShortfallResult, alpha::Float64, ::Colon, ::Colon) where {U<:EnergyUnit} =
     CVAR.(unit, x, alpha, x.regions.names, permutedims(x.timestamps))
 
-NCVAR(x::AbstractShortfallResult, cvar::CVAR, r::AbstractString, ::Colon) =
-    NCVAR.(x, cvar, r, x.timestamps)
-
-NCVAR(x::AbstractShortfallResult, cvar::CVAR, ::Colon, ::Colon) =
-    NCVAR.(x, cvar, x.regions.names, permutedims(x.timestamps))
+NCVAR(x::AbstractShortfallResult, cvar::CVAR, ::Colon) =
+    NCVAR.(x, cvar, x.regions.names)
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
 
