@@ -249,7 +249,8 @@ function init_regionshortfall(
     edges,
     region) where {S <: Union{
                             Results.Shortfall,
-                            Results.ShortfallSamples}}
+                            Results.ShortfallSamples,
+                            Results.ShortfallEvents}}
     return edges[region].flow
 end
 

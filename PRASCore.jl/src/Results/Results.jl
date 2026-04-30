@@ -13,7 +13,8 @@ import ..Systems: SystemModel, ZonedDateTime, Period,
 export
 
     # Metrics
-    ReliabilityMetric, LOLE, EUE, NEUE, LOLD,
+    ReliabilityMetric, LOLE, EUE, NEUE, LOLD, LOLEv, 
+    MeanEventDuration, MaxEventDuration, MeanEventEnergy, MaxEventEnergy, 
     val, stderror,
 
     # Result specifications
@@ -26,7 +27,7 @@ export
     DemandResponseEnergy, DemandResponseEnergySamples,
     GeneratorAvailability, StorageAvailability,
     GeneratorStorageAvailability,DemandResponseAvailability,
-    LineAvailability
+    LineAvailability, ShortfallEvents
 
 include("utils.jl")
 include("metrics.jl")
@@ -176,12 +177,15 @@ getindex(x::AbstractEnergyResult, name::String, ::Colon) =
 getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
     getindex.(x, names(x), permutedims(x.timestamps))
 
+abstract type AbstractShortfallEventResult{N,L,T} <: Result{N,L,T} end
+
 include("StorageEnergy.jl")
 include("GeneratorStorageEnergy.jl")
 include("DemandResponseEnergy.jl")
 include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
 include("DemandResponseEnergySamples.jl")
+include("ShortfallEvents.jl")
 
 function resultchannel(
     results::T, threads::Int

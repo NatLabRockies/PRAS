@@ -22,7 +22,11 @@ MeanEstimate(mu::Real, sigma::Real, n::Int) = MeanEstimate(mu, sigma / sqrt(n))
 
 function MeanEstimate(xs::AbstractArray{<:Real})
     est = mean(xs)
-    return MeanEstimate(est, std(xs, mean=est), length(xs))
+    if length(xs) > 1
+        return MeanEstimate(est, std(xs, mean=est), length(xs))
+    else
+        return MeanEstimate(est)
+    end
 end
 
 val(est::MeanEstimate) = est.estimate
@@ -192,4 +196,163 @@ stderror(x::LOLD) = stderror(x.lold)
 function Base.show(io::IO, x::LOLD{D}) where {D}
     print(io, "LOLD = ", x.lold, " event-day/",
           D == 1 ? "day" : string(D) * "days")
+end
+
+"""
+    LOLEv
+
+`LOLEv` reports loss of load events over a particular time period
+and regional extent.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct LOLEv{N, L, T <: Period} <: ReliabilityMetric
+    lolev::MeanEstimate
+
+    function LOLEv{N,L,T}(lolev::MeanEstimate) where {N,L,T<:Period}
+        val(lolev) >= 0 || throw(DomainError(val(lolev),
+            "$(val(lolev)) is not a valid expected count of events"))
+        new{N,L,T}(lolev)
+    end
+end
+
+val(x::LOLEv) = val(x.lolev)
+stderror(x::LOLEv) = stderror(x.lolev)
+
+function Base.show(io::IO, x::LOLEv{N,L,T}) where {N,L,T}
+    print(io, "LOLEv = ", x.lolev, " events")
+end
+
+
+"""
+    MeanEventDuration
+
+`MeanEventDuration` reports the expected average duration of shortfall
+events over a particular time period and regional extent.
+
+For each sample, the mean duration of all events in that sample
+is computed. Samples with no events are assigned a duration of 0. The final
+reported metric is the mean estimate across samples.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct MeanEventDuration{N, L, T <: Period} <: ReliabilityMetric
+    duration::MeanEstimate
+
+    function MeanEventDuration{N,L,T}(duration::MeanEstimate) where {N,L,T<:Period}
+        val(duration) >= 0 || throw(DomainError(val(duration),
+            "$(val(duration)) is not a valid expected event duration"))
+        new{N,L,T}(duration)
+    end
+end
+
+val(x::MeanEventDuration) = val(x.duration)
+stderror(x::MeanEventDuration) = stderror(x.duration)
+
+function Base.show(io::IO, x::MeanEventDuration{N,L,T}) where {N,L,T}
+    t_symbol = unitsymbol(T)
+    print(io, "MeanEventDuration = ", x.duration, " ",
+          L == 1 ? t_symbol : "(" * string(L) * t_symbol * ")")
+end
+
+
+"""
+    MaxEventDuration
+
+`MaxEventDuration` reports the expected maximum duration of shortfall
+events over a particular time period and regional extent.
+
+For each sample, the maximum duration of all events in that sample
+is computed. Samples with no events are assigned a duration of 0. The final
+reported metric is the mean estimate across samples.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct MaxEventDuration{N, L, T <: Period} <: ReliabilityMetric
+    duration::MeanEstimate
+
+    function MaxEventDuration{N,L,T}(duration::MeanEstimate) where {N,L,T<:Period}
+        val(duration) >= 0 || throw(DomainError(val(duration),
+            "$(val(duration)) is not a valid expected maximum event duration"))
+        new{N,L,T}(duration)
+    end
+end
+
+val(x::MaxEventDuration) = val(x.duration)
+stderror(x::MaxEventDuration) = stderror(x.duration)
+
+function Base.show(io::IO, x::MaxEventDuration{N,L,T}) where {N,L,T}
+    t_symbol = unitsymbol(T)
+    print(io, "MaxEventDuration = ", x.duration, " ",
+          L == 1 ? t_symbol : "(" * string(L) * t_symbol * ")")
+end
+
+
+"""
+    MeanEventEnergy
+
+`MeanEventEnergy` reports the expected average unserved energy of shortfall
+events over a particular time period and regional extent.
+
+For each sample, the mean energy of all events in that sample
+is computed. Samples with no events are assigned an energy of 0. The final
+reported metric is the mean estimate across samples.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct MeanEventEnergy{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
+    energy::MeanEstimate
+
+    function MeanEventEnergy{N,L,T,E}(energy::MeanEstimate) where {N,L,T<:Period,E<:EnergyUnit}
+        val(energy) >= 0 || throw(DomainError(val(energy),
+            "$(val(energy)) is not a valid expected event energy"))
+        new{N,L,T,E}(energy)
+    end
+end
+
+val(x::MeanEventEnergy) = val(x.energy)
+stderror(x::MeanEventEnergy) = stderror(x.energy)
+
+function Base.show(io::IO, x::MeanEventEnergy{N,L,T,E}) where {N,L,T,E}
+    print(io, "MeanEventEnergy = ", x.energy, " ", unitsymbol(E))
+end
+
+
+"""
+    MaxEventEnergy
+
+`MaxEventEnergy` reports the expected maximum unserved energy of shortfall
+events over a particular time period and regional extent.
+
+For each sample, the maximum event energy in that sample
+is computed. Samples with no events are assigned an energy of 0. The final
+reported metric is the mean estimate across samples.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct MaxEventEnergy{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
+    energy::MeanEstimate
+
+    function MaxEventEnergy{N,L,T,E}(energy::MeanEstimate) where {N,L,T<:Period,E<:EnergyUnit}
+        val(energy) >= 0 || throw(DomainError(val(energy),
+            "$(val(energy)) is not a valid expected maximum event energy"))
+        new{N,L,T,E}(energy)
+    end
+end
+
+val(x::MaxEventEnergy) = val(x.energy)
+stderror(x::MaxEventEnergy) = stderror(x.energy)
+
+function Base.show(io::IO, x::MaxEventEnergy{N,L,T,E}) where {N,L,T,E}
+    print(io, "MaxEventEnergy = ", x.energy, " ", unitsymbol(E))
 end
