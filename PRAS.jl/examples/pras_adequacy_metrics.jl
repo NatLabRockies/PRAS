@@ -130,8 +130,8 @@
 
 # ## Analysis with PRAS
 #
-# We revisit the RTS-GMLC with increased system load to induce shortfall
-# which was described in (@ref pras_walkthrough)
+# We revisit the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) with increased system load to induce shortfall
+# which was described in [PRAS walkthrough](@ref pras_walkthrough)
 
 using PRAS
 sys = PRAS.rts_gmlc()
