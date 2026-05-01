@@ -13,18 +13,14 @@
 
 # ## Event-Based Interpretation
 #
-# A useful way to interpret adequacy metrics is through the concept of
-# **event-periods**.
+# Resource adequacy metrics can be understood by first defining three related concepts ([Stephen et al. 2022](https://doi.org/10.1109/PMAPS53380.2022.9810615)):
 #
-# - An **event-period** occurs when shortfall exists in a given simulation time step
-# - An **event-day** occurs when at least one event-period occurs within a day
+# - An **event-period** is a simulation time step in which a shortfall occurs.
+# - An **event-day** is a day containing at least one event-period.
+# - An **adequacy event** is a set of event-periods that are contiguous at the highest available temporal resolution.
 #
-# An **adequacy event** is a set of event-periods that are contiguous at the
-# highest available temporal resolution
-# ([Stephen et al. 2022](https://doi.org/10.1109/PMAPS53380.2022.9810615)).
-#
-# This distinction is important because different metrics count different
-# quantities:
+# These distinctions are important because each resource adequacy metric counts a different quantity, 
+# corresponding directly to one of these concepts: 
 #
 # - **LOLE** counts event-periods
 # - **LOLD** counts event-days
@@ -135,7 +131,7 @@
 # ## Analysis with PRAS
 #
 # We revisit the RTS-GMLC with increased system load to induce shortfall
-# which was described in ref(@id pras_walkthrough)
+# which was described in (@ref pras_walkthrough)
 
 using PRAS
 sys = PRAS.rts_gmlc()
