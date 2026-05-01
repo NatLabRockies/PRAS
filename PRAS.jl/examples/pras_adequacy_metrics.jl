@@ -22,9 +22,9 @@
 # These distinctions are important because each resource adequacy metric counts a different quantity, 
 # corresponding directly to one of these concepts: 
 #
-# - **LOLE** counts event-periods
-# - **LOLD** counts event-days
-# - **LOLEv** counts adequacy events
+# - **LOLE** is the expected number of event-periods
+# - **LOLD** is the expected number of event-days
+# - **LOLEv** is the expected number of adequacy events
 #
 # These metrics are related, but they are not interchangeable.
 #
