@@ -292,6 +292,30 @@ function NEUE(x::ShortfallResult, r::AbstractString)
 
 end
 
+function LOLD(::ShortfallResult)
+    throw(ArgumentError(
+        "LOLD requires a ShortfallSamplesResult. Make sure ShortfallSamples() is included in assess()."
+    ))
+end
+
+function LOLD(::ShortfallResult, ::AbstractString)
+    throw(ArgumentError(
+        "LOLD requires a ShortfallSamplesResult. Make sure ShortfallSamples() is included in assess()."
+    ))
+end
+
+function LOLD(::ShortfallResult, ::Date)
+    throw(ArgumentError(
+        "LOLD requires a ShortfallSamplesResult. Make sure ShortfallSamples() is included in assess()."
+    ))
+end
+
+function LOLD(::ShortfallResult, ::AbstractString, ::Date)
+    throw(ArgumentError(
+        "LOLD requires a ShortfallSamplesResult. Make sure ShortfallSamples() is included in assess()."
+    ))
+end
+
 function finalize(
     acc::ShortfallAccumulator{S},
     system::SystemModel{N,L,T,P,E},

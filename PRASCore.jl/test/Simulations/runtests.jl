@@ -695,6 +695,40 @@
                 @test occursin("simulation horizon", sprint(showerror, err))
             end
         end
+
+        @testset "ShortfallResult error handling" begin
+            for x in (shortfall_1a, shortfall_1a5, shortfall_1b, shortfall_3)
+                @test_throws ArgumentError LOLD(x)
+                @test_throws ArgumentError LOLD(x, first(x.regions.names))
+                @test_throws ArgumentError LOLD(x, Date(first(x.timestamps)))
+                @test_throws ArgumentError LOLD(x, first(x.regions.names), Date(first(x.timestamps)))
+            end
+        end
+
+        @testset "Multiple shortfall periods in same day count once" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                d = first(unique(Date.(x.timestamps)))
+                dayrange = findall(t -> Date(t) == d, x.timestamps)
+        
+                if length(dayrange) >= 2
+                    i_r = 1
+                    s = 1
+        
+                    y = deepcopy(x)
+                    y.shortfall .= 0
+                    y.shortfall[i_r, dayrange[1], s] = 1
+                    y.shortfall[i_r, dayrange[2], s] = 1
+        
+                    expected = 1 / size(y.shortfall, 3)
+        
+                    @test val(LOLD(y)) ≈ expected
+                    @test val(LOLD(y, d)) ≈ expected
+                    @test val(LOLD(y, y.regions.names[i_r])) ≈ expected
+                    @test val(LOLD(y, y.regions.names[i_r], d)) ≈ expected
+                end
+            end
+        end
+
     end
 
 
