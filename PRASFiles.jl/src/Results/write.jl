@@ -104,3 +104,111 @@ function saveshortfall(
 
     error("saveshortfall is not implemented for $(typeof(shortfall))")
 end
+
+function generate_eventresult(
+    events::ShortfallEventsResult{N,L,T,P,E},
+    pras_sys::SystemModel;
+    include_events::Bool = false,
+) where {N,L,T,P,E}
+
+    p2e = conversionfactor(L, T, P, E)
+
+    system_event_records = include_events ?
+        get_eventrecords(events.system_events, events.timestamps, p2e) :
+        EventRecord[]
+
+    region_results = RegionEventResult[]
+    for reg_name in pras_sys.regions.names
+        region_event_records = include_events ?
+            get_eventrecords(events, reg_name) :
+            EventRecord[]
+
+        push!(region_results,
+            RegionEventResult(
+                reg_name,
+                LOLEvResult(events, region = reg_name),
+                MeanEventDurationResult(events, region = reg_name),
+                MaxEventDurationResult(events, region = reg_name),
+                MeanEventEnergyResult(events, region = reg_name),
+                MaxEventEnergyResult(events, region = reg_name),
+                totalevents(events, reg_name),
+                region_event_records,
+            )
+        )
+    end
+
+    sys_result = SystemEventResult(
+        length(events.system_events),
+        TypeParams(pras_sys),
+        pras_sys.attrs,
+        collect(events.timestamps),
+        LOLEvResult(events),
+        MeanEventDurationResult(events),
+        MaxEventDurationResult(events),
+        MeanEventEnergyResult(events),
+        MaxEventEnergyResult(events),
+        totalevents(events),
+        system_event_records,
+        region_results,
+    )
+
+    return sys_result
+end
+
+"""
+    saveevents(
+        events::ShortfallEventsResult,
+        pras_sys::SystemModel,
+        outfile::String,
+    )
+
+Save `ShortfallEventsResult` in JSON format, including both summary event
+metrics and raw event records.
+
+# Arguments
+
+  - `events::ShortfallEventsResult`: PRAS shortfall events result
+  - `pras_sys::SystemModel`: PRAS SystemModel
+  - `outfile::String`: Location to save the event results
+
+# Returns
+
+  - Location where the event results are exported in JSON format.
+
+# Keywords
+
+    - `include_events::Bool = false`: If `true`, include full raw event records
+    at the system and regional levels. If `false`, only summary event metrics
+    and counts are exported.
+"""
+function saveevents(
+    events::ShortfallEventsResult,
+    pras_sys::SystemModel,
+    outfile::String;
+    include_events::Bool = false,
+)
+
+    dt_now = format(now(), "dd-u-yy-H-M-S")
+    export_location = joinpath(outfile, dt_now)
+    if !(isdir(export_location))
+        mkpath(export_location)
+    end
+
+    event_result = generate_eventresult(events, pras_sys; include_events = include_events)
+    open(joinpath(export_location, "pras_event_results.json"), "w") do io
+        pretty(io, event_result)
+    end
+
+    @info "Successfully exported PRAS ShortfallEventsResult here: $(export_location)"
+    return export_location
+end
+
+function saveevents(
+    events::R,
+    pras_sys::SystemModel,
+    outfile::String;
+    include_events::Bool = false,
+) where {R <: Result}
+
+    error("saveevents is not implemented for $(typeof(events))")
+end
