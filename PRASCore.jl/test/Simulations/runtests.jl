@@ -32,6 +32,8 @@
     shortfall2_1a, _, flow2_1a, util2_1a, _ =
         assess(TestData.singlenode_a, simspec, resultspecs...)
 
+    events_1a, = assess(TestData.singlenode_a, simspec, ShortfallEvents())
+
     assess(TestData.singlenode_a_5min, smallsample, resultspecs...)
     shortfall_1a5, _, flow_1a5, util_1a5,
     shortfall2_1a5, _, flow2_1a5, util2_1a5, _ =
@@ -52,6 +54,8 @@
            StorageAvailability(), GeneratorStorageAvailability(),DemandResponseAvailability(),
            StorageEnergy(), GeneratorStorageEnergy(),DemandResponseEnergy(),
            StorageEnergySamples(), GeneratorStorageEnergySamples(),DemandResponseEnergySamples())
+
+    events_3, = assess(TestData.threenode, simspec, ShortfallEvents())
 
     @testset "Shortfall Results" begin
 
@@ -695,6 +699,61 @@
                 @test occursin("simulation horizon", sprint(showerror, err))
             end
         end
+    end
+
+    @testset "Shortfall Event Metrics" begin
+        # Single-region system
+        @test val(LOLEv(events_1a)) >= 0
+        @test stderror(LOLEv(events_1a)) >= 0
+        @test val(MeanEventDuration(events_1a)) >= 0
+        @test stderror(MeanEventDuration(events_1a)) >= 0
+
+        @test LOLEv(events_1a) ≈ LOLEv(events_1a, "Region")
+        @test MeanEventDuration(events_1a) ≈ MeanEventDuration(events_1a, "Region")
+        @test MaxEventDuration(events_1a) ≈ MaxEventDuration(events_1a, "Region")
+        @test MeanEventEnergy(events_1a) ≈ MeanEventEnergy(events_1a, "Region")
+        @test MaxEventEnergy(events_1a) ≈ MaxEventEnergy(events_1a, "Region")
+
+        manual_lolev_1a = mean(length.(events_1a.system_events))
+        @test isapprox(val(LOLEv(events_1a)), manual_lolev_1a; rtol=1e-10)
+
+        manual_meandur_1a = mean([
+            isempty(evts) ? 0.0 : mean(Results.duration_periods.(evts))
+            for evts in events_1a.system_events
+        ])
+        @test isapprox(val(MeanEventDuration(events_1a)), manual_meandur_1a; rtol=1e-10)
+
+        manual_maxdur_1a = mean([
+            isempty(evts) ? 0.0 : maximum(Results.duration_periods.(evts))
+            for evts in events_1a.system_events
+        ])
+        @test isapprox(val(MaxEventDuration(events_1a)), manual_maxdur_1a; rtol=1e-10)
+
+        p2e_1a = PRASCore.Systems.conversionfactor(1, Hour, PRASCore.Systems.MW, PRASCore.Systems.MWh)
+
+        manual_meanenergy_1a = mean([
+            isempty(evts) ? 0.0 : mean(p2e_1a .* Results.event_energy.(evts))
+            for evts in events_1a.system_events
+        ])
+        @test isapprox(val(MeanEventEnergy(events_1a)), manual_meanenergy_1a; rtol=1e-10)
+
+        manual_maxenergy_1a = mean([
+            isempty(evts) ? 0.0 : maximum(p2e_1a .* Results.event_energy.(evts))
+            for evts in events_1a.system_events
+        ])
+        @test isapprox(val(MaxEventEnergy(events_1a)), manual_maxenergy_1a; rtol=1e-10)
+
+        # Multi-region system
+        @test val(LOLEv(events_3)) >= 0
+        @test val(MeanEventDuration(events_3)) >= 0
+        @test val(LOLEv(events_3, "Region A")) >= 0
+        @test val(MeanEventDuration(events_3, "Region A")) >= 0
+
+        @test val(LOLEv(events_3)) >= val(LOLEv(events_3, "Region A"))
+
+        @test Results.totalevents(events_1a) >= 0
+        @test Results.totalevents(events_3, "Region A") >= 0
+
     end
 
 
