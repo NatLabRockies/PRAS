@@ -4,8 +4,11 @@
 Manifest.toml
 *.DS_Store
 *.pras
-*.json
+PRASFiles.jl/test/PRAS_Results_Export/
 
 # Any html and duckdb files generated during testing
 *.html 
 *.duckdb
+docs/build/
+docs/site/
+docs/src/examples/

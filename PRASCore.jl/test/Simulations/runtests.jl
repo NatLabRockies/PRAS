@@ -9,7 +9,8 @@
     simspec = SequentialMonteCarlo(samples=100_000, seed=1, threaded=false)
     smallsample = SequentialMonteCarlo(samples=10, seed=123, threaded=false)
 
-    resultspecs = (Shortfall(), Surplus(), Flow(), Utilization(),
+    resultspecs = (Shortfall(), Surplus(), 
+                   Flow(), Utilization(),
                    ShortfallSamples(), SurplusSamples(),
                    FlowSamples(), UtilizationSamples(),
                    GeneratorAvailability())
@@ -31,6 +32,8 @@
     shortfall2_1a, _, flow2_1a, util2_1a, _ =
         assess(TestData.singlenode_a, simspec, resultspecs...)
 
+    events_1a, = assess(TestData.singlenode_a, simspec, ShortfallEvents())
+
     assess(TestData.singlenode_a_5min, smallsample, resultspecs...)
     shortfall_1a5, _, flow_1a5, util_1a5,
     shortfall2_1a5, _, flow2_1a5, util2_1a5, _ =
@@ -46,11 +49,13 @@
     shortfall2_3, _, flow2_3, util2_3, _ =
         assess(TestData.threenode, simspec, resultspecs...)
 
-    assess(TestData.threenode, smallsample,
+    assess(TestData.threenode, smallsample, DemandResponseShortfall(),
            GeneratorAvailability(), LineAvailability(),
-           StorageAvailability(), GeneratorStorageAvailability(),
-           StorageEnergy(), GeneratorStorageEnergy(),
-           StorageEnergySamples(), GeneratorStorageEnergySamples())
+           StorageAvailability(), GeneratorStorageAvailability(),DemandResponseAvailability(),
+           StorageEnergy(), GeneratorStorageEnergy(),DemandResponseEnergy(),
+           StorageEnergySamples(), GeneratorStorageEnergySamples(),DemandResponseEnergySamples())
+
+    events_3, = assess(TestData.threenode, simspec, ShortfallEvents())
 
     @testset "Shortfall Results" begin
 
@@ -409,6 +414,392 @@
                                TestData.test3_eenergy,
                                simspec.nsamples, nstderr_tol))
 
+
+    end
+
+    @testset "Test System 4: Gen + DR, 1 Region" begin
+
+        simspec = SequentialMonteCarlo(samples=1_000_000, seed=112)
+        region = first(TestData.test4.regions.names)
+        dr = first(TestData.test4.demandresponses.names)
+        dts = TestData.test4.timestamps
+
+        shortfall, surplus, energy =
+            assess(TestData.test4, simspec,
+                   Shortfall(), Surplus(), DemandResponseEnergy())
+
+        # Shortfall - LOLE
+        @test withinrange(LOLE(shortfall),
+                          TestData.test4_lole, nstderr_tol)
+        @test withinrange(LOLE(shortfall, region),
+                          TestData.test4_lole, nstderr_tol)
+        @test all(withinrange.(LOLE.(shortfall, dts),
+                  TestData.test4_lolps, nstderr_tol))
+        @test all(withinrange.(LOLE.(shortfall, region, dts),
+                  TestData.test4_lolps, nstderr_tol))
+
+        # Shortfall - EUE
+        @test withinrange(EUE(shortfall),
+                          TestData.test4_eue, nstderr_tol)
+        @test withinrange(EUE(shortfall, region),
+                          TestData.test4_eue, nstderr_tol)
+        @test all(withinrange.(EUE.(shortfall, dts),
+                               TestData.test4_eues, nstderr_tol))
+        @test all(withinrange.(EUE.(shortfall, region, dts),
+                               TestData.test4_eues, nstderr_tol))
+
+        # Surplus
+        @test all(withinrange.(getindex.(surplus, dts),
+                               TestData.test4_esurplus,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(surplus, region, dts),
+                               TestData.test4_esurplus,
+                               simspec.nsamples, nstderr_tol))
+        # Energy
+        @test all(withinrange.(getindex.(energy, dts),
+                               TestData.test4_eenergy,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(energy, dr, dts),
+                               TestData.test4_eenergy,
+                               simspec.nsamples, nstderr_tol))
+
+    end
+
+    @testset "Test System 5: Gen + DR + Stor, 1 Region" begin
+
+        simspec = SequentialMonteCarlo(samples=1_000_000, seed=112)
+        region = first(TestData.test5.regions.names)
+        dr = first(TestData.test5.demandresponses.names)
+        dts = TestData.test5.timestamps
+
+        shortfall, surplus, energy =
+            assess(TestData.test5, simspec,
+                   Shortfall(), Surplus(), DemandResponseEnergy())
+
+        # Shortfall - LOLE
+        @test withinrange(LOLE(shortfall),
+                          TestData.test5_lole, nstderr_tol)
+        @test withinrange(LOLE(shortfall, region),
+                          TestData.test5_lole, nstderr_tol)
+        @test all(withinrange.(LOLE.(shortfall, dts),
+                  TestData.test5_lolps, nstderr_tol))
+        @test all(withinrange.(LOLE.(shortfall, region, dts),
+                  TestData.test5_lolps, nstderr_tol))
+
+        # Shortfall - EUE
+        @test withinrange(EUE(shortfall),
+                          TestData.test5_eue, nstderr_tol)
+        @test withinrange(EUE(shortfall, region),
+                          TestData.test5_eue, nstderr_tol)
+        @test all(withinrange.(EUE.(shortfall, dts),
+                               TestData.test5_eues, nstderr_tol))
+        @test all(withinrange.(EUE.(shortfall, region, dts),
+                               TestData.test5_eues, nstderr_tol))
+
+        # Surplus
+        @test all(withinrange.(getindex.(surplus, dts),
+                               TestData.test5_esurplus,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(surplus, region, dts),
+                               TestData.test5_esurplus,
+                               simspec.nsamples, nstderr_tol))
+        # Energy
+        @test all(withinrange.(getindex.(energy, dts),
+                               TestData.test5_eenergy,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(energy, dr, dts),
+                               TestData.test5_eenergy,
+                               simspec.nsamples, nstderr_tol))
+
+    end
+
+    @testset "Test System 6: Gen + DR, 3 Regions" begin
+
+        simspec = SequentialMonteCarlo(samples=1_000_000, seed=112)
+        regions = TestData.threenode_dr.regions.names
+        dr = first(TestData.threenode_dr.demandresponses.names)
+        dts = TestData.threenode_dr.timestamps
+
+        shortfall, surplus, dr_energy, dr_energy_samples, dr_shortfall, dr_shortfall_samples, flow, utilization =
+            assess(TestData.threenode_dr, simspec,
+                   Shortfall(), Surplus(), 
+                   DemandResponseEnergy(),DemandResponseEnergySamples(),
+                   DemandResponseShortfall(), DemandResponseShortfallSamples(),
+                   Flow(), Utilization())
+
+
+        # Shortfall - LOLE
+        @test withinrange(LOLE(shortfall),
+                          TestData.threenode_dr_lole, nstderr_tol)
+        @test all(withinrange.(LOLE.(shortfall, regions),
+                               TestData.threenode_dr_lole_r, nstderr_tol))
+        @test all(withinrange.(LOLE.(shortfall, dts),
+                               TestData.threenode_dr_lole_t, nstderr_tol))
+        @test all(withinrange.(LOLE.(shortfall, "Region 2", dts),
+                               TestData.threenode_dr_lole_rt, nstderr_tol))
+
+        # Shortfall - EUE
+        @test withinrange(EUE(shortfall),
+                          TestData.threenode_dr_eue, nstderr_tol)
+        @test all(withinrange.(EUE.(shortfall, regions),
+                               TestData.threenode_dr_eue_r, nstderr_tol))
+        @test all(withinrange.(EUE.(shortfall, dts),
+                               TestData.threenode_dr_eue_t, nstderr_tol))
+        @test all(withinrange.(EUE.(shortfall, "Region 1", dts),
+                               TestData.threenode_dr_eue_rt, nstderr_tol))
+
+        # Surplus
+        @test all(withinrange.(getindex.(surplus, dts), 
+                               TestData.threenode_dr_esurplus_t,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(surplus, "Region 2", dts),
+                               TestData.threenode_dr_esurplus_rt,
+                               simspec.nsamples, nstderr_tol))
+
+        # Flow
+        @test withinrange(flow["Region 1" => "Region 2"],
+                               TestData.threenode_dr_flow,
+                               simspec.nsamples, nstderr_tol)
+        @test all(withinrange.(getindex.(flow, "Region 1"=>"Region 2", dts),
+                               TestData.threenode_dr_flow_t,
+                               simspec.nsamples, nstderr_tol))
+
+        # Utilization
+        @test withinrange((sum(x[1] for x in getindex.(utilization, "Region 1"=>"Region 2")), sum(x[end] for x in getindex.(utilization, "Region 1"=>"Region 2"))),
+                               TestData.threenode_dr_util,
+                               simspec.nsamples, nstderr_tol)
+
+        @test all(withinrange.(getindex.(utilization, "Region 1"=>"Region 2",dts),
+                               TestData.threenode_dr_util_t,
+                               simspec.nsamples, nstderr_tol))
+        # DR Energy
+        @test withinrange((sum(x[1] for x in getindex.(dr_energy, dts)), sum(x[end] for x in getindex.(dr_energy, dts))),
+                               TestData.threenode_dr_energy,
+                               simspec.nsamples, nstderr_tol)
+
+        # DR Energy Samples
+        @test isapprox(mean(sum(dr_energy_samples.energy[:, :, i]) for i in 1:1_000),TestData.threenode_dr_energy_samples, rtol=0.01)
+        
+        # DR Shortfall
+        @test withinrange(EUE(dr_shortfall),
+                          TestData.threenode_dr_shortfall_specific_eue, nstderr_tol)
+        @test all(withinrange.(EUE.(dr_shortfall, regions),
+                               TestData.threenode_dr_shortfall_specific_eue_r, nstderr_tol))
+        @test all(withinrange.(EUE.(dr_shortfall, dts),
+                               TestData.threenode_dr_shortfall_specific_eue_t, nstderr_tol))
+        @test all(withinrange.(EUE.(dr_shortfall, "Region 1", dts),
+                               TestData.threenode_dr_shortfall_specific_eue_rt, nstderr_tol))
+
+        # DR Shortfall Samples
+        @test isapprox(sum(dr_shortfall_samples["Region 1",dts[5]])/1e4,TestData.threenode_dr_shortfall_samples/1e4, rtol=0.01)
+    end
+
+    @testset "LOLD" begin
+        @testset "Whole-horizon equals sum over days" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                days = unique(Date.(x.timestamps))
+    
+                @test isapprox(
+                    val(LOLD(x)),
+                    sum(val(LOLD(x, d)) for d in days)
+                )
+    
+                for r in x.regions.names
+                    @test isapprox(
+                        val(LOLD(x, r)),
+                        sum(val(LOLD(x, r, d)) for d in days)
+                    )
+                end
+            end
+        end
+    
+        @testset "Single-day query matches direct sample calculation" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                days = unique(Date.(x.timestamps))
+    
+                # test first, middle, and last day
+                testdays = unique([first(days), days[cld(length(days), 2)], last(days)])
+    
+                for d in testdays
+                    mask = Date.(x.timestamps) .== d
+    
+                    # system-wide day event by sample:
+                    # did any region have any shortfall in any timestep of this day?
+                    manual_system = vec(any(dropdims(sum(x.shortfall[:, mask, :], dims=1), dims=1) .> 0, dims=1))
+                    expected_system = MeanEstimate(manual_system)
+    
+                    @test LOLD(x, d) ≈ LOLD{1}(expected_system)
+    
+                    for r in x.regions.names
+                        i_r = findfirst(isequal(r), x.regions.names)
+    
+                        # region-day event by sample:
+                        # did this region have any shortfall in any timestep of this day?
+                        manual_region = vec(any(x.shortfall[i_r, mask, :] .> 0, dims=1))
+                        expected_region = MeanEstimate(manual_region)
+    
+                        @test LOLD(x, r, d) ≈ LOLD{1}(expected_region)
+                    end
+                end
+            end
+        end
+    
+        @testset "Broadcast helpers match scalar calls" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                days = unique(Date.(x.timestamps))
+    
+                # region over all days
+                for r in x.regions.names
+                    @test all(LOLD(x, r, :) .≈ LOLD.(Ref(x), r, days))
+                end
+    
+                # all regions for one day
+                for d in (first(days), days[cld(length(days), 2)], last(days))
+                    @test all(LOLD(x, :, d) .≈ LOLD.(Ref(x), x.regions.names, d))
+                end
+    
+                # full region x day grid
+                @test all(LOLD(x, :, :) .≈ LOLD.(Ref(x), x.regions.names, permutedims(days)))
+            end
+        end
+    
+        @testset "System day risk dominates regional day risk" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                for d in unique(Date.(x.timestamps))
+                    system_val = val(LOLD(x, d))
+                    for r in x.regions.names
+                        @test system_val >= val(LOLD(x, r, d))
+                    end
+                end
+            end
+        end
+    
+        @testset "Invalid day throws useful error" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                bad_day = first(unique(Date.(x.timestamps))) - Day(1)
+        
+                err = try
+                    LOLD(x, bad_day)
+                    nothing
+                catch e
+                    e
+                end
+        
+                @test err isa ArgumentError
+                @test occursin("simulation horizon", sprint(showerror, err))
+        
+                err = try
+                    LOLD(x, first(x.regions.names), bad_day)
+                    nothing
+                catch e
+                    e
+                end
+        
+                @test err isa ArgumentError
+                @test occursin("simulation horizon", sprint(showerror, err))
+            end
+        end
+    end
+
+    @testset "Shortfall Event Metrics" begin
+        # Single-region system
+        @test val(LOLEv(events_1a)) >= 0
+        @test stderror(LOLEv(events_1a)) >= 0
+        @test val(MeanEventDuration(events_1a)) >= 0
+        @test stderror(MeanEventDuration(events_1a)) >= 0
+
+        @test LOLEv(events_1a) ≈ LOLEv(events_1a, "Region")
+        @test MeanEventDuration(events_1a) ≈ MeanEventDuration(events_1a, "Region")
+        @test MaxEventDuration(events_1a) ≈ MaxEventDuration(events_1a, "Region")
+        @test MeanEventEnergy(events_1a) ≈ MeanEventEnergy(events_1a, "Region")
+        @test MaxEventEnergy(events_1a) ≈ MaxEventEnergy(events_1a, "Region")
+
+        manual_lolev_1a = mean(length.(events_1a.system_events))
+        @test isapprox(val(LOLEv(events_1a)), manual_lolev_1a; rtol=1e-10)
+
+        durations_1a = [
+            Results.duration_periods(ev)
+            for evts in events_1a.system_events
+            for ev in evts
+        ]
+
+        manual_meandur_1a = isempty(durations_1a) ? 0.0 : mean(durations_1a)
+
+        @test isapprox(val(MeanEventDuration(events_1a)), manual_meandur_1a; rtol=1e-10)
+
+        manual_maxdur_1a = isempty(durations_1a) ? 0.0 : maximum(durations_1a)
+
+        @test isapprox(val(MaxEventDuration(events_1a)), manual_maxdur_1a; rtol=1e-10)
+
+        p2e_1a = PRASCore.Systems.conversionfactor(1, Hour, PRASCore.Systems.MW, PRASCore.Systems.MWh)
+
+        energies_1a = [
+            p2e_1a * Results.event_energy(ev)
+            for evts in events_1a.system_events
+            for ev in evts
+        ]
+
+        manual_meanenergy_1a = isempty(energies_1a) ? 0.0 : mean(energies_1a)
+
+        @test isapprox(val(MeanEventEnergy(events_1a)), manual_meanenergy_1a; rtol=1e-10)
+
+        manual_maxenergy_1a = isempty(energies_1a) ? 0.0 : maximum(energies_1a)
+
+        @test isapprox(val(MaxEventEnergy(events_1a)), manual_maxenergy_1a; rtol=1e-10)
+
+        # Multi-region system
+        @test val(LOLEv(events_3)) >= 0
+        @test val(MeanEventDuration(events_3)) >= 0
+        @test val(LOLEv(events_3, "Region A")) >= 0
+        @test val(MeanEventDuration(events_3, "Region A")) >= 0
+
+        @test val(LOLEv(events_3)) >= val(LOLEv(events_3, "Region A"))
+
+        @test Results.totalevents(events_1a) >= 0
+        @test Results.totalevents(events_3, "Region A") >= 0
+
+    end
+
+    @testset "Event metrics return zero when no events exist" begin
+        sys = deepcopy(TestData.singlenode_a)
+        sys.regions.load .= 0
+    
+        spec = SequentialMonteCarlo(samples=100, seed=42, threaded=false)
+        events, = assess(sys, spec, ShortfallEvents())
+    
+        @test Results.totalevents(events) == 0
+    
+        @test val(MeanEventDuration(events)) == 0.0
+        @test val(MaxEventDuration(events)) == 0.0
+        @test val(MeanEventEnergy(events)) == 0.0
+        @test val(MaxEventEnergy(events)) == 0.0
+    
+        @test stderror(MeanEventDuration(events)) == 0.0
+        @test stderror(MaxEventDuration(events)) == 0.0
+        @test stderror(MeanEventEnergy(events)) == 0.0
+        @test stderror(MaxEventEnergy(events)) == 0.0
+    end
+
+    @testset "ShortfallEvents threaded and serial results match" begin
+        serial_spec = SequentialMonteCarlo(samples=100_000, seed=123, threaded=false)
+        threaded_spec = SequentialMonteCarlo(samples=100_000, seed=123, threaded=true)
+    
+        serial_events, = assess(TestData.threenode, serial_spec, ShortfallEvents())
+        threaded_events, = assess(TestData.threenode, threaded_spec, ShortfallEvents())
+    
+        @test LOLEv(serial_events) ≈ LOLEv(threaded_events)
+        @test MeanEventDuration(serial_events) ≈ MeanEventDuration(threaded_events)
+        @test MaxEventDuration(serial_events) ≈ MaxEventDuration(threaded_events)
+        @test MeanEventEnergy(serial_events) ≈ MeanEventEnergy(threaded_events)
+        @test MaxEventEnergy(serial_events) ≈ MaxEventEnergy(threaded_events)
+    
+        for r in serial_events.regions.names
+            @test LOLEv(serial_events, r) ≈ LOLEv(threaded_events, r)
+            @test MeanEventDuration(serial_events, r) ≈ MeanEventDuration(threaded_events, r)
+            @test MaxEventDuration(serial_events, r) ≈ MaxEventDuration(threaded_events, r)
+            @test MeanEventEnergy(serial_events, r) ≈ MeanEventEnergy(threaded_events, r)
+            @test MaxEventEnergy(serial_events, r) ≈ MaxEventEnergy(threaded_events, r)
+        end
     end
 
 end

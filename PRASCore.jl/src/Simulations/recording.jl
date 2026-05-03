@@ -1,21 +1,32 @@
 # Shortfall
 
 function record!(
-    acc::Results.ShortfallAccumulator,
+    acc::Results.ShortfallAccumulator{S},
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
-) where {N,L,T,P,E}
+) where {N,L,T,P,E,S}
 
     totalshortfall = 0
     isshortfall = false
 
     edges = problem.fp.edges
 
-    for r in problem.region_unserved_edges
+    for (r, dr_idxs) in zip(problem.region_unserved_edges, system.region_dr_idxs)
 
-        regionshortfall = edges[r].flow
+        #count region shortfall and include dr shortfall
+        #if shortfall include region and dr shortfall
+        #if drshortfall don't include region shortfall
+
+        regionshortfall = init_regionshortfall(S,edges,r)
+            
+        dr_shortfall = 0
+        for i in dr_idxs
+            dr_shortfall += state.drs_unservedenergy[i]
+        end
+        regionshortfall += dr_shortfall
         isregionshortfall = regionshortfall > 0
+
 
         fit!(acc.periodsdropped_regionperiod[r,t], isregionshortfall)
         fit!(acc.unservedload_regionperiod[r,t], regionshortfall)
@@ -29,7 +40,6 @@ function record!(
             acc.unservedload_region_currentsim[r] += regionshortfall
 
         end
-
     end
 
     if isshortfall
@@ -68,14 +78,22 @@ end
 # ShortfallSamples
 
 function record!(
-    acc::Results.ShortfallSamplesAccumulator,
+    acc::Results.ShortfallSamplesAccumulator{S},
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
-) where {N,L,T,P,E}
+) where {N,L,T,P,E,S}
 
-    for (r, e) in enumerate(problem.region_unserved_edges)
-        acc.shortfall[r, t, sampleid] = problem.fp.edges[e].flow
+    for (r,dr_idxs) in zip(problem.region_unserved_edges,system.region_dr_idxs)
+        #getting dr shortfall
+        dr_shortfall = 0
+        for i in dr_idxs
+            dr_shortfall += state.drs_unservedenergy[i]
+        end
+
+        acc.shortfall[r, t, sampleid] = 
+            init_regionshortfall(S,problem.fp.edges,r) +
+            dr_shortfall
     end
 
     return
@@ -116,7 +134,6 @@ function record!(
             regionsurplus += min(grid_limit, total_unused)
 
         end
-
         fit!(acc.surplus_regionperiod[r,t], regionsurplus)
         totalsurplus += regionsurplus
 
@@ -161,7 +178,6 @@ function record!(
             regionsurplus += min(grid_limit, total_unused)
 
         end
-
         acc.surplus[r, t, sampleid] = regionsurplus
 
     end
@@ -326,6 +342,23 @@ end
 
 reset!(acc::Results.GenStorAvailabilityAccumulator, sampleid::Int) = nothing
 
+# DemandResponseAvailability
+
+function record!(
+    acc::Results.DRAvailabilityAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    acc.available[:, t, sampleid] .= state.drs_available
+    return
+
+end
+
+reset!(acc::Results.DRAvailabilityAccumulator, sampleid::Int) = nothing
+
+
 # LineAvailability
 
 function record!(
@@ -398,6 +431,37 @@ end
 
 reset!(acc::Results.GenStorageEnergyAccumulator, sampleid::Int) = nothing
 
+
+# DemandResponseEnergy
+
+function record!(
+    acc::Results.DemandResponseEnergyAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    totalenergy = 0
+    ndemandresponses = length(system.demandresponses)
+
+    for s in 1:ndemandresponses
+
+        drenergy = state.drs_energy[s]
+        fit!(acc.energy_demandresponseperiod[s,t], drenergy)
+        totalenergy += drenergy
+
+    end
+
+    fit!(acc.energy_period[t], totalenergy)
+
+    return
+
+end
+
+reset!(acc::Results.DemandResponseEnergyAccumulator, sampleid::Int) = nothing
+
+
+
 # StorageEnergySamples
 
 function record!(
@@ -429,3 +493,121 @@ function record!(
 end
 
 reset!(acc::Results.GenStorageEnergySamplesAccumulator, sampleid::Int) = nothing
+
+
+# DemandResponseEnergySamples
+
+function record!(
+    acc::Results.DemandResponseEnergySamplesAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    acc.energy[:, t, sampleid] .= state.drs_energy
+    return
+
+end
+
+reset!(acc::Results.DemandResponseEnergySamplesAccumulator, sampleid::Int) = nothing
+
+# ShortfallEvents
+
+function record!(
+    acc::Results.ShortfallEventsAccumulator{S},
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E,S}
+
+    isshortfall = false
+    totalshortfall = 0
+    edges = problem.fp.edges
+
+    for (r, dr_idxs) in zip(problem.region_unserved_edges, system.region_dr_idxs)
+
+        regionshortfall = init_regionshortfall(S, edges, r)
+
+        dr_shortfall = 0
+        for i in dr_idxs
+            dr_shortfall += state.drs_unservedenergy[i]
+        end
+
+        regionshortfall += dr_shortfall
+        isregionshortfall = regionshortfall > 0
+
+        if isregionshortfall
+            totalshortfall += regionshortfall
+
+            if !acc.in_region_event[r]
+                acc.in_region_event[r] = true
+                acc.region_event_start[r] = t
+                acc.region_event_energy[r] = 0
+            end
+
+            acc.region_event_energy[r] += regionshortfall
+
+        elseif acc.in_region_event[r]
+            push!(acc.region_events[r, sampleid],
+                  Results.ShortfallEvent(
+                      acc.region_event_start[r],
+                      t - 1,
+                      acc.region_event_energy[r]))
+            acc.in_region_event[r] = false
+            acc.region_event_start[r] = 0
+            acc.region_event_energy[r] = 0
+        end
+
+        isshortfall |= isregionshortfall
+    end
+
+    if isshortfall
+        if !acc.in_system_event
+            acc.in_system_event = true
+            acc.system_event_start = t
+            acc.system_event_energy = 0
+        end
+        acc.system_event_energy += totalshortfall
+
+    elseif acc.in_system_event
+        push!(acc.system_events[sampleid],
+              Results.ShortfallEvent(
+                  acc.system_event_start,
+                  t - 1,
+                  acc.system_event_energy))
+        acc.in_system_event = false
+        acc.system_event_start = 0
+        acc.system_event_energy = 0
+    end
+
+    return
+end
+
+function reset!(acc::Results.ShortfallEventsAccumulator, sampleid::Int)
+
+    if acc.in_system_event
+        push!(acc.system_events[sampleid],
+              Results.ShortfallEvent(
+                  acc.system_event_start,
+                  acc.nperiods,
+                  acc.system_event_energy))
+        acc.in_system_event = false
+        acc.system_event_start = 0
+        acc.system_event_energy = 0
+    end
+
+    for r in eachindex(acc.in_region_event)
+        if acc.in_region_event[r]
+            push!(acc.region_events[r, sampleid],
+                  Results.ShortfallEvent(
+                      acc.region_event_start[r],
+                      acc.nperiods,
+                      acc.region_event_energy[r]))
+            acc.in_region_event[r] = false
+            acc.region_event_start[r] = 0
+            acc.region_event_energy[r] = 0
+        end
+    end
+
+    return
+end

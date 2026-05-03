@@ -41,6 +41,19 @@
     @test_throws BoundsError result[r_bad, t]
     @test_throws BoundsError result[r_bad, t_bad]
 
+    # DemandResponses
+
+    result = PRASCore.Results.DemandResponseAvailabilityResult{N,1,Hour}(
+        DD.resourcenames, DD.periods, available)
+
+    @test length(result[r, t]) == DD.nsamples
+    @test result[r, t] ≈ vec(available[r_idx, t_idx, :])
+
+    @test_throws BoundsError result[r, t_bad]
+    @test_throws BoundsError result[r_bad, t]
+    @test_throws BoundsError result[r_bad, t_bad]
+
+
     # Lines
 
     result = PRASCore.Results.LineAvailabilityResult{N,1,Hour}(

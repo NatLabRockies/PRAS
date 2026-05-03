@@ -1,3 +1,17 @@
+"""
+    Regions{N,P<:PowerUnit}
+
+A struct representing regions within a power system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `P`: The power unit used for demand measurements, subtype of `PowerUnit`
+
+# Fields
+ - `names`: Name of region (unique)
+ - `load`: Aggregated electricity demand in each region for each timeperiod, in
+   `power_units` (`P`)
+"""
 struct Regions{N,P<:PowerUnit}
 
     names::Vector{String}
@@ -18,12 +32,34 @@ struct Regions{N,P<:PowerUnit}
 
 end
 
+# Single Regions constructor
+function Regions{N,P}(load::Vector{Int}) where {N,P}
+    return Regions{N,P}(["Region"], reshape(load, 1, :))
+end
+
 Base.:(==)(x::T, y::T) where {T <: Regions} =
     x.names == y.names &&
     x.load == y.load
 
 Base.length(r::Regions) = length(r.names)
 
+"""
+    Interfaces{N,P<:PowerUnit}
+
+A struct representing transmission interfaces between regions in a power system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `P`: The power unit used for interface limits, subtype of `PowerUnit`
+
+# Fields
+ - `regions_from`: Index of the first region connected by the interface
+ - `regions_to`: Index of the second region connected by the interface
+ - `limit_forward`: Maximum possible total power transfer from `regions_from` to
+   `regions_to`, for each interface in each timeperiod, in `power_units` (`P`)
+ - `limit_backward`: Maximum possible total power transfer from `regions_to` to
+   `regions_from`, for each interface in each timeperiod, in `power_units` (`P`)
+"""
 struct Interfaces{N,P<:PowerUnit}
 
     regions_from::Vector{Int}
@@ -48,6 +84,12 @@ struct Interfaces{N,P<:PowerUnit}
 
     end
 
+end
+
+# Empty Interfaces constructor
+function Interfaces{N,P}() where {N,P}
+    return Interfaces{N,P}(
+                Int[], Int[], zeros(Int, 0, N), zeros(Int, 0, N))
 end
 
 Base.:(==)(x::T, y::T) where {T <: Interfaces} =

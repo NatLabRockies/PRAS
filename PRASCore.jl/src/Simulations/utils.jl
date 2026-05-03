@@ -120,6 +120,60 @@ function update_energy!(
 
 end
 
+function update_dr_energy!(
+    drs_energy::Vector{Int},
+    drs_unservedenergy::Vector{Int},
+    drs::AbstractAssets,
+    t::Int
+)
+
+    for i in 1:length(drs_energy)
+
+        soc = drs_energy[i]
+        borrowed_energy_interest = drs.borrowed_energy_interest[i,t] + 1.0
+        maxenergy = drs.energy_capacity[i,t]
+
+        # Decay SoC
+        soc = round(Int, soc * borrowed_energy_interest)
+
+        unserved_energy_above_max_energy = max(0, soc - maxenergy)
+
+        # Shed SoC above current energy limit
+        drs_energy[i] = min(soc, maxenergy)
+
+        drs_unservedenergy[i] = unserved_energy_above_max_energy
+    end
+
+end
+
+function update_paybackcounter!(
+    payback_counter::Vector{Int},
+    drs_energy::Vector{Int},
+    drs::AbstractAssets,
+    t::Int
+)
+
+    for i in 1:length(payback_counter)
+        #if energy is zero or negative, set counter to -1 (to start counting new)
+        if drs_energy[i] <= 0
+            if payback_counter[i] >= 0
+                #if no energy borrowed and counter is positive, reset it to -1
+                payback_counter[i] = -1
+            end
+        elseif payback_counter[i] == -1
+            #if energy is borrowed and counter is -1, set it to payback window-start of counting
+            payback_counter[i] =  drs.allowable_payback_period[i,t]-1
+        elseif payback_counter[i] >= 0
+            #if counter is positive, decrement by one
+            payback_counter[i] -= 1
+        end
+
+
+    end
+
+end
+
+
 function maxtimetocharge_discharge(system::SystemModel)
 
     if length(system.storages) > 0
@@ -175,6 +229,38 @@ function maxtimetocharge_discharge(system::SystemModel)
     return (max(stor_charge_max, genstor_charge_max),
             max(stor_discharge_max, genstor_discharge_max))
 
+end
+
+function max_payback_window_dr(system::SystemModel)
+
+    if length(system.demandresponses) > 0
+        #no need to check for zero since allowable_payback_period is force to positive
+        maxpaybacktime_dr = maximum(system.demandresponses.allowable_payback_period)
+    else
+        maxpaybacktime_dr = 0
+    end
+
+    return maxpaybacktime_dr
+
+end
+
+function init_regionshortfall(
+    ::Type{S},
+    edges,
+    region) where {S <: Union{
+                            Results.Shortfall,
+                            Results.ShortfallSamples,
+                            Results.ShortfallEvents}}
+    return edges[region].flow
+end
+
+function init_regionshortfall(
+    ::Type{S},
+    edges,
+    region) where {S <: Union{
+                            Results.DemandResponseShortfall,
+                            Results.DemandResponseShortfallSamples}}
+    return 0
 end
 
 function utilization(f::MinCostFlows.Edge, b::MinCostFlows.Edge)

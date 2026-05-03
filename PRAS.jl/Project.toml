@@ -1,10 +1,10 @@
 name = "PRAS"
 uuid = "05348d26-1c52-11e9-35e3-9d51842d34b9"
 authors = [
-    "Gord Stephen <Gord.Stephen@nrel.gov>",
-    "Surya Chandan Dhulipala <SuryaChandan.Dhulipala@nrel.gov>",
-    "Hari Sundar <Hari.Sundar@nrel.gov>",
-    "Julian Florez <Julian.Florez@nrel.gov"
+    "Surya Chandan Dhulipala <SuryaChandan.Dhulipala@nlr.gov>",
+    "Srihari Sundar <Hari.Sundar@nlr.gov>",
+    "Julian Florez <Julian.Florez@nlr.gov>",
+    "Gord Stephen <g.stephen@imperial.ac.uk>"
 ]
 version = "0.8.0"
 
@@ -15,7 +15,7 @@ PRASFiles = "a2806276-6d43-4ef5-91c0-491704cd7cf1"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
-PRASCapacityCredits = "0.7"
+PRASCapacityCredits = "0.8.0"
 PRASCore = "0.8.0"
 PRASFiles = "0.8.0"
 Reexport = "1"

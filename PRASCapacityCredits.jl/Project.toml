@@ -1,7 +1,7 @@
 name = "PRASCapacityCredits"
 uuid = "2e1a2ed5-e89d-4cd3-bc86-c0e88a73d3a3"
-authors = ["Gord Stephen <gord.stephen@nrel.gov>"]
-version = "0.7.0"
+authors = ["Gord Stephen <g.stephen@imperial.ac.uk>"]
+version = "0.8.0"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"

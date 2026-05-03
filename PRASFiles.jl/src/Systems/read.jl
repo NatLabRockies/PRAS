@@ -50,6 +50,8 @@ function _systemmodel_core(f::File)
     P = powerunits[read(metadata["power_unit"])]
     E = energyunits[read(metadata["energy_unit"])]
 
+    type_params = (N,L,T,P,E)
+
     timestep = T(L)
     end_timestamp = start_timestamp + (N-1)*timestep
     timestamps = StepRange(start_timestamp, timestep, end_timestamp)
@@ -98,9 +100,7 @@ function _systemmodel_core(f::File)
 
     else
 
-        generators = Generators{N,L,T,P}(
-            String[], String[], zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N))
+        generators = Generators{N,L,T,P}()
 
         region_gen_idxs = fill(1:0, n_regions)
 
@@ -131,11 +131,7 @@ function _systemmodel_core(f::File)
 
     else
 
-        storages = Storages{N,L,T,P,E}(
-            String[], String[], 
-            zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N))
+        storages = Storages{N,L,T,P,E}()
 
         region_stor_idxs = fill(1:0, n_regions)
 
@@ -170,12 +166,7 @@ function _systemmodel_core(f::File)
 
     else
 
-        generatorstorages = GeneratorStorages{N,L,T,P,E}(
-            String[], String[], 
-            zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
-            zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N))
+        generatorstorages = GeneratorStorages{N,L,T,P,E}()
 
         region_genstor_idxs = fill(1:0, n_regions)
 
@@ -257,12 +248,9 @@ function _systemmodel_core(f::File)
 
     else
 
-        interfaces = Interfaces{N,P}(
-            Int[], Int[], zeros(Int, 0, N), zeros(Int, 0, N))
+        interfaces = Interfaces{N,P}()
 
-        lines = Lines{N,L,T,P}(
-            String[], String[], zeros(Int, 0, N), zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N))
+        lines = Lines{N,L,T,P}()
 
         interface_line_idxs = UnitRange{Int}[]
 
@@ -273,7 +261,7 @@ function _systemmodel_core(f::File)
             storages, region_stor_idxs,
             generatorstorages, region_genstor_idxs,
             lines, interface_line_idxs,
-            timestamps)
+            timestamps),type_params
 end
 
 """
@@ -281,7 +269,9 @@ Read a SystemModel from a PRAS file in version 0.5.x - 0.7.x format.
 """
 function systemmodel_0_5(f::File)
 
-    return SystemModel(_systemmodel_core(f)...)
+    systemmodel_0_5_objs, _ = _systemmodel_core(f)
+
+    return SystemModel(systemmodel_0_5_objs...)
 
 end
 
@@ -290,12 +280,47 @@ Read a SystemModel from a PRAS file in version 0.8.x format.
 """
 function systemmodel_0_8(f::File)
     
-    regions, interfaces,
+    (regions, interfaces,
     generators, region_gen_idxs,
     storages, region_stor_idxs,
     generatorstorages, region_genstor_idxs,
     lines, interface_line_idxs,
-    timestamps = _systemmodel_core(f)
+    timestamps), (N,L,T,P,E) = _systemmodel_core(f)
+
+    n_regions = length(regions)
+    regionlookup = Dict(n=>i for (i, n) in enumerate(regions.names))
+
+    if haskey(f, "demandresponses")
+
+
+        dr_core = read(f["demandresponses/_core"])
+        dr_names, dr_categories, dr_regionnames = readvector.(
+            Ref(dr_core), [:name, :category, :region])
+
+        dr_regions = getindex.(Ref(regionlookup), dr_regionnames)
+        region_order = sortperm(dr_regions)
+
+        demandresponses = DemandResponses{N,L,T,P,E}(
+            dr_names[region_order], dr_categories[region_order],
+            load_matrix(f["demandresponses/borrowcapacity"], region_order, Int),
+            load_matrix(f["demandresponses/paybackcapacity"], region_order, Int),
+            load_matrix(f["demandresponses/energycapacity"], region_order, Int),
+            load_matrix(f["demandresponses/borrowedenergyinterest"], region_order, Float64),
+            load_matrix(f["demandresponses/allowablepaybackperiod"], region_order, Int),
+            load_matrix(f["demandresponses/failureprobability"], region_order, Float64),
+            load_matrix(f["demandresponses/repairprobability"], region_order, Float64),
+            load_matrix(f["demandresponses/borrowefficiency"], region_order, Float64),
+            load_matrix(f["demandresponses/paybackefficiency"], region_order, Float64),
+        )
+
+        region_dr_idxs = makeidxlist(dr_regions[region_order], n_regions)
+
+    else
+        demandresponses = DemandResponses{N,L,T,P,E}()
+
+        region_dr_idxs = fill(1:0, n_regions)
+
+    end
 
     attrs = read_attrs(f)
 
@@ -304,6 +329,7 @@ function systemmodel_0_8(f::File)
         generators, region_gen_idxs,
         storages, region_stor_idxs,
         generatorstorages, region_genstor_idxs,
+        demandresponses, region_dr_idxs,
         lines, interface_line_idxs,
         timestamps, attrs)
     

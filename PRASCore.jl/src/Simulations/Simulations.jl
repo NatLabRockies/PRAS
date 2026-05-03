@@ -75,7 +75,7 @@ and return `resultspecs`.
 
   - `system::SystemModel`: PRAS data structure
   - `method::SequentialMonteCarlo`: method for PRAS analysis
-  - `resultspecs::ResultSpec...`: PRAS metric for metrics like [`Shortfall`](@ref) missing generation
+  - `resultspecs::ResultSpec...`: PRAS metric for metrics like [`Shortfall`](@ref PRASCore.Results.Shortfall) missing generation
 
 # Returns
 
@@ -176,12 +176,18 @@ function initialize!(
             system.generatorstorages, N)
 
         initialize_availability!(
+            rng, state.drs_available, state.drs_nexttransition,
+            system.demandresponses, N)
+
+        initialize_availability!(
             rng, state.lines_available, state.lines_nexttransition,
             system.lines, N)
 
         fill!(state.stors_energy, 0)
         fill!(state.genstors_energy, 0)
-
+        fill!(state.drs_energy, 0)
+        fill!(state.drs_unservedenergy, 0)
+        fill!(state.drs_paybackcounter, -1)
         return
 
 end
@@ -205,13 +211,22 @@ function advance!(
         system.generatorstorages, t, N)
 
     update_availability!(
+        rng, state.drs_available, state.drs_nexttransition,
+        system.demandresponses, t, N)
+
+    update_availability!(
         rng, state.lines_available, state.lines_nexttransition,
         system.lines, t, N)
 
     update_energy!(state.stors_energy, system.storages, t)
     update_energy!(state.genstors_energy, system.generatorstorages, t)
+    update_dr_energy!(state.drs_energy, state.drs_unservedenergy, system.demandresponses, t)
+
+    update_paybackcounter!(state.drs_paybackcounter,state.drs_energy, system.demandresponses,t)
+
 
     update_problem!(dispatchproblem, state, system, t)
+
 
 end
 

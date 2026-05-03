@@ -1,0 +1,40 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - main
+    tags: '*'
+  pull_request:
+
+jobs:
+  docs:
+    name: Documentation
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    runs-on: macOS-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: '1'
+      - name: Configure doc environment
+        run: |
+          julia --project=docs/ -e '
+            println(pwd());
+            using Pkg
+            # Develop all packages in workspace
+            Pkg.develop([
+                (path="PRASCore.jl",),
+                (path="PRASFiles.jl",),
+                (path="PRASCapacityCredits.jl",),
+                (path="PRAS.jl",)
+            ])
+            Pkg.instantiate()'
+      - name: Build and deploy docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: julia --project=docs/ --threads auto docs/make.jl deploy=true

@@ -37,6 +37,27 @@ function Base.show(io::IO, a::AbstractAssets)
     
 end
 
+"""
+    Generators{N,L,T<:Period,P<:PowerUnit}
+
+A struct representing generating assets within a power system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units 
+- `T`: The time period type used for temporal representation, subtype of `Period`
+- `P`: The power unit used for capacity measurements, subtype of `PowerUnit`
+
+# Fields
+ - `names`: Name of generator
+ - `categories`: Category of generator
+ - `capacity`: Maximum available generation capacity in each timeperiod, expressed 
+   in units given by the `power_units` (`P`) type parameter
+ - `λ` (failure probability): probability the generator transitions from 
+   operational to forced outage during a given simulation timestep (unitless)
+ - `μ` (repair probability): probability the generator transitions from forced 
+   outage to operational during a given simulation timestep (unitless)
+"""
 struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -68,6 +89,15 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     end
 
+end
+
+# Empty Generators constructor
+function Generators{N,L,T,P}() where {N,L,T,P}
+
+    return Generators{N,L,T,P}(
+            String[], String[], zeros(Int, 0, N),
+            zeros(Float64, 0, N), zeros(Float64, 0, N))
+    
 end
 
 Base.:(==)(x::T, y::T) where {T <: Generators} =
@@ -114,6 +144,41 @@ function Base.vcat(gs::Generators{N,L,T,P}...) where {N, L, T, P}
 
 end
 
+"""
+    Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+
+A struct representing storage devices in the system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units
+- `T`: The time period type used for temporal representation, subtype of `Period`
+- `P`: The power unit used for capacity measurements, subtype of `PowerUnit`
+- `E`: The energy unit used for energy storage, subtype of `EnergyUnit`
+
+# Fields
+ - `names`: Name of storage device
+ - `categories`: Category of storage device
+ - `charge_capacity`: Maximum available charging capacity for each storage unit in each
+   timeperiod, expressed in units given by the `power_units` (`P`) type parameter
+ - `discharge_capacity`: Maximum available discharging capacity for each storage unit in
+   each timeperiod, expressed in units given by the `power_units` (`P`) type parameter
+ - `energy_capacity`: Maximum available energy storage capacity for each storage unit in
+   each timeperiod, expressed in units given by the `energy_units` (`E`) type parameter
+ - `charge_efficiency`: Ratio of power injected into the storage device's reservoir to
+   power withdrawn from the grid, for each storage unit in each timeperiod. Unitless.
+ - `discharge_efficiency`: Ratio of power injected into the grid to power withdrawn from
+   the storage device's reservoir, for each storage unit in each timeperiod. Unitless.
+ - `carryover_efficiency`: Ratio of energy available in the storage device's reservoir at
+   the beginning of one period to energy retained at the end of the previous period, for
+   each storage unit in each timeperiod. Unitless.
+ - `λ` (failure probability): Probability the unit transitions from operational to forced
+   outage during a given simulation timestep, for each storage unit in each timeperiod.
+   Unitless.
+ - `μ` (repair probability): Probability the unit transitions from forced outage to
+   operational during a given simulation timestep, for each storage unit in each
+   timeperiod. Unitless.
+"""
 struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -168,6 +233,16 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
 
     end
 
+end
+
+# Empty Storages constructor
+function Storages{N,L,T,P,E}() where {N,L,T,P,E}
+
+    return Storages{N,L,T,P,E}(
+                String[], String[], 
+                zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
+                zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
+                zeros(Float64, 0, N), zeros(Float64, 0, N))
 end
 
 Base.:(==)(x::T, y::T) where {T <: Storages} =
@@ -236,6 +311,47 @@ function Base.vcat(stors::Storages{N,L,T,P,E}...) where {N, L, T, P, E}
 
 end
 
+"""
+    GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+
+A struct representing generator-storage hybrid devices within a power system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units
+- `T`: The time period type used for temporal representation, subtype of `Period`
+- `P`: The power unit used for capacity measurements, subtype of `PowerUnit`
+- `E`: The energy unit used for energy storage, subtype of `EnergyUnit`
+
+# Fields
+ - `names`: Name of generator-storage unit
+ - `categories`: Category of generator-storage unit
+ - `charge_capacity`: Maximum available charging capacity for each generator-storage
+   unit in each timeperiod, in `power_units` (`P`)
+ - `discharge_capacity`: Maximum available discharging capacity for each generator-storage
+   unit in each timeperiod, in `power_units` (`P`)
+ - `energy_capacity`: Maximum available energy storage capacity for each generator-storage
+   unit in each timeperiod, in `energy_units` (`E`)
+ - `charge_efficiency`: Ratio of power injected into the device's reservoir to power
+   withdrawn from the grid, for each generator-storage unit in each timeperiod. Unitless.
+ - `discharge_efficiency`: Ratio of power injected into the grid to power withdrawn from
+   the device's reservoir, for each generator-storage unit in each timeperiod. Unitless.
+ - `carryover_efficiency`: Ratio of energy available in the device's reservoir at the
+   beginning of one period to energy retained at the end of the previous period, for each
+   generator-storage unit in each timeperiod. Unitless.
+ - `inflow`: Exogenous power inflow available to each generator-storage unit in each
+   timeperiod, in `power_units` (`P`)
+ - `gridwithdrawal_capacity`: Maximum available capacity to withdraw power from the grid
+   for each generator-storage unit in each timeperiod, in `power_units` (`P`)
+ - `gridinjection_capacity`: Maximum available capacity to inject power to the grid for
+   each generator-storage unit in each timeperiod, in `power_units` (`P`)
+ - `λ` (failure probability): Probability the unit transitions from operational to forced
+   outage during a given simulation timestep, for each generator-storage unit in each
+   timeperiod. Unitless.
+ - `μ` (repair probability): Probability the unit transitions from forced outage to
+   operational during a given simulation timestep, for each generator-storage unit in each
+   timeperiod. Unitless.
+"""
 struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -309,6 +425,18 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
 
     end
 
+end
+
+# Empty GeneratorStorages constructor
+function GeneratorStorages{N,L,T,P,E}() where {N,L,T,P,E}
+
+    return GeneratorStorages{N,L,T,P,E}(
+                String[], String[], 
+                zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
+                zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
+                zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
+                zeros(Float64, 0, N), zeros(Float64, 0, N))
+    
 end
 
 Base.:(==)(x::T, y::T) where {T <: GeneratorStorages} =
@@ -390,6 +518,231 @@ function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P
 
 end
 
+"""
+    DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+
+A struct representing demand response devices in the system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units
+- `T`: The time period type used for temporal representation, subtype of `Period`
+- `P`: The power unit used for capacity measurements, subtype of `PowerUnit`
+- `E`: The energy unit used for energy storage, subtype of `EnergyUnit`
+
+# Fields
+ - `names`: Name of demand response device
+ - `categories`: Category of demand response device
+ - `borrow_capacity`: Maximum available borrowing capacity for each demand response unit in each
+   timeperiod, expressed in units given by the `power_units` (`P`) type parameter
+ - `payback_capacity`: Maximum available payback capacity for each demand response unit in
+   each timeperiod, expressed in units given by the `power_units` (`P`) type parameter
+ - `energy_capacity`: Maximum available energy capable of being held for each demand response unit in
+   each timeperiod, expressed in units given by the `energy_units` (`E`) type parameter
+ - `borrowed_energy_interest`: Growth or decay rate of borrowed energy in the demand response device
+   from the beginning of one period to energy retained at the end of the previous period, for
+   each demand response unit in each timeperiod. A `borrowed_energy_interest` of 0.0 has no growth or decay. Unitless.
+ - `allowable_payback_period`: Maximum number of time steps a demand response device can hold borrowed load.
+    Any energy still contained at the end of the period will be counted as unserved load for that hour.
+    If borrowed load is paid back before the end of the `allowable_payback_period`, counter is reset upn further use. (`T`) type parameter
+ - `λ` (failure probability): Probability the unit transitions from operational to forced
+   outage during a given simulation timestep, for each storage unit in each timeperiod.
+   Unitless.
+ - `μ` (repair probability): Probability the unit transitions from forced outage to
+   operational during a given simulation timestep, for each storage unit in each
+   timeperiod. Unitless.
+"""
+struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
+
+    names::Vector{String}
+    categories::Vector{String}
+
+    borrow_capacity::Matrix{Int} # power
+    payback_capacity::Matrix{Int} # power
+    energy_capacity::Matrix{Int} # energy
+
+    borrowed_energy_interest::Matrix{Float64}
+
+    allowable_payback_period::Matrix{Int}
+
+    λ::Matrix{Float64}
+    μ::Matrix{Float64}
+
+    borrow_efficiency::Matrix{Float64}
+    payback_efficiency::Matrix{Float64}
+
+    function DemandResponses{N,L,T,P,E}(
+        names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
+        borrowcapacity::Matrix{Int}, paybackcapacity::Matrix{Int},
+        energycapacity::Matrix{Int}, borrowedenergyinterest::Matrix{Float64},
+        allowablepaybackperiod::Matrix{Int},
+        λ::Matrix{Float64}, μ::Matrix{Float64},
+        borrowefficiency::Matrix{Float64},paybackefficiency::Matrix{Float64}
+    ) where {N,L,T,P,E}
+
+        n_drs = length(names)
+        @assert length(categories) == n_drs
+        @assert allunique(names)
+
+        
+        @assert size(borrowcapacity) == (n_drs, N)
+        @assert size(paybackcapacity) == (n_drs, N)
+        @assert size(energycapacity) == (n_drs, N)
+        @assert all(isnonnegative, borrowcapacity)
+        @assert all(isnonnegative, paybackcapacity)
+        @assert all(isnonnegative, energycapacity)
+
+        @assert size(borrowefficiency) == (n_drs, N)
+        @assert size(paybackefficiency) == (n_drs, N)
+        @assert size(borrowedenergyinterest) == (n_drs, N)
+        @assert all(isfractional, borrowefficiency)
+        @assert all(isfractional, paybackefficiency)
+        @assert all(borrowedenergyinterest .<= 1.0)
+        @assert all(borrowedenergyinterest .>= -1.0)
+
+        @assert size(allowablepaybackperiod) == (n_drs, N)
+        @assert all(ispositive, allowablepaybackperiod)
+
+
+        @assert size(λ) == (n_drs, N)
+        @assert size(μ) == (n_drs, N)
+        @assert all(isfractional, λ)
+        @assert all(isfractional, μ)
+
+        new{N,L,T,P,E}(string.(names), string.(categories),
+                       borrowcapacity, paybackcapacity, energycapacity,
+                      borrowedenergyinterest,
+                       allowablepaybackperiod,
+                       λ, μ,borrowefficiency, paybackefficiency,)
+    end
+end
+
+# second constructor if borrow and payback efficiencies are not provided
+function DemandResponses{N,L,T,P,E}(
+  names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
+  borrowcapacity::Matrix{Int}, paybackcapacity::Matrix{Int},
+  energycapacity::Matrix{Int}, borrowedenergyinterest::Matrix{Float64},
+  allowablepaybackperiod::Matrix{Int},
+  λ::Matrix{Float64}, μ::Matrix{Float64}
+) where {N,L,T,P,E}
+    return DemandResponses{N,L,T,P,E}(
+        names, categories,
+        borrowcapacity, paybackcapacity, energycapacity,
+        borrowedenergyinterest, allowablepaybackperiod,
+        λ, μ,
+        ones(Float64, size(borrowcapacity)), ones(Float64, size(paybackcapacity))
+    )
+end
+
+
+# Empty DemandResponses constructor
+function DemandResponses{N,L,T,P,E}() where {N,L,T,P,E}
+
+    return DemandResponses{N,L,T,P,E}(
+                String[], String[],
+                Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),
+                Matrix{Float64}(undef, 0, N),
+                Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),
+                Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N))
+end
+
+Base.:(==)(x::T, y::T) where {T <: DemandResponses} =
+    x.names == y.names &&
+    x.categories == y.categories &&
+    x.borrow_capacity == y.borrow_capacity &&
+    x.payback_capacity == y.payback_capacity &&
+    x.energy_capacity == y.energy_capacity &&
+    x.borrow_efficiency == y.borrow_efficiency &&
+    x.payback_efficiency == y.payback_efficiency &&
+    x.borrowed_energy_interest == y.borrowed_energy_interest &&
+    x.allowable_payback_period == y.allowable_payback_period &&
+    x.λ == y.λ &&
+    x.μ == y.μ
+
+Base.getindex(dr::DR, idxs::AbstractVector{Int}) where {DR <: DemandResponses} =
+    DR(dr.names[idxs], dr.categories[idxs],dr.borrow_capacity[idxs,:],
+      dr.payback_capacity[idxs, :],dr.energy_capacity[idxs, :],
+      dr.borrowed_energy_interest[idxs, :],dr.allowable_payback_period[idxs, :],dr.λ[idxs, :], dr.μ[idxs, :],
+      dr.borrow_efficiency[idxs, :], dr.payback_efficiency[idxs, :])
+
+function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
+
+    n_drs = sum(length(dr) for dr in drs)
+
+    names = Vector{String}(undef, n_drs)
+    categories = Vector{String}(undef, n_drs)
+
+    borrow_capacity = Matrix{Int}(undef, n_drs, N)
+    payback_capacity = Matrix{Int}(undef, n_drs, N)
+    energy_capacity = Matrix{Int}(undef, n_drs, N) 
+
+    borrow_efficiency = Matrix{Float64}(undef, n_drs, N)
+    payback_efficiency = Matrix{Float64}(undef, n_drs, N)
+    borrowed_energy_interest = Matrix{Float64}(undef, n_drs, N)
+
+    allowable_payback_period = Matrix{Int}(undef, n_drs, N)
+
+
+    λ = Matrix{Float64}(undef, n_drs, N)
+    μ = Matrix{Float64}(undef, n_drs, N)
+
+    last_idx = 0
+
+    for dr in drs
+
+        n = length(dr)
+        rows = last_idx .+ (1:n)
+
+        names[rows] = dr.names
+        categories[rows] = dr.categories
+
+        borrow_capacity[rows, :] = dr.borrow_capacity
+        payback_capacity[rows, :] = dr.payback_capacity
+        energy_capacity[rows, :] = dr.energy_capacity
+
+        borrow_efficiency[rows, :] = dr.borrow_efficiency
+        payback_efficiency[rows, :] = dr.payback_efficiency
+        borrowed_energy_interest[rows, :] = dr.borrowed_energy_interest
+
+        allowable_payback_period[rows, :] = dr.allowable_payback_period
+
+        λ[rows, :] = dr.λ
+        μ[rows, :] = dr.μ
+
+        last_idx += n
+
+    end
+
+    return DemandResponses{N,L,T,P,E}(names, categories, borrow_capacity, payback_capacity, energy_capacity,
+    borrowed_energy_interest,allowable_payback_period, λ, μ, borrow_efficiency, payback_efficiency)
+
+end
+
+"""
+    Lines{N,L,T<:Period,P<:PowerUnit}
+
+A struct representing individual transmission lines between regions in a power
+system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units
+- `T`: The time period type used for temporal representation, subtype of `Period`
+- `P`: The power unit used for capacity measurements, subtype of `PowerUnit`
+
+# Fields
+ - `names`: Name of line
+ - `categories`: Category of line
+ - `forward_capacity`: Maximum available power transfer capacity from `region_from` to
+   `region_to` along the line, for each line in each timeperiod, in `power_units` (`P`)
+ - `backward_capacity`: Maximum available power transfer capacity from `region_to` to
+   `region_from` along the line, for each line in each timeperiod, in `power_units` (`P`)
+ - `λ` (failure probability): Probability the line transitions from operational to forced
+   outage during a given simulation timestep, for each line in each timeperiod. Unitless.
+ - `μ` (repair probability): Probability the line transitions from forced outage to
+   operational during a given simulation timestep, for each line in each timeperiod.
+   Unitless.
+"""
 struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -425,6 +778,13 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     end
 
+end
+
+# Empty Lines constructor
+function Lines{N,L,T,P}() where {N,L,T,P}
+    return Lines{N,L,T,P}(
+            String[], String[], zeros(Int, 0, N), zeros(Int, 0, N),
+            zeros(Float64, 0, N), zeros(Float64, 0, N))
 end
 
 Base.:(==)(x::T, y::T) where {T <: Lines} =

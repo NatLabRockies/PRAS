@@ -39,6 +39,14 @@ function savemodel(
             process_generatorstorages!(f, sys, string_length, compression_level)
         end
 
+        verbose && @info "$(length(sys.demandresponses)) DemandResponses " *
+                         "found in the SystemModel."
+
+        if length(sys.demandresponses) > 0
+            verbose && @info "Processing DemandResponses for .pras file ..."
+            process_demandresponses!(f, sys, string_length, compression_level)
+        end
+
         if length(sys.regions) > 1
             verbose && @info "Processing Lines and Interfaces for .pras file ..."
             process_lines_interfaces!(f, sys, string_length, compression_level)
@@ -212,6 +220,51 @@ function process_generatorstorages!(
     return
 
 end
+
+function process_demandresponses!(
+    f::File, sys::SystemModel, strlen::Int, compression::Int)
+    
+    demandresponses = create_group(f, "demandresponses")
+
+    drs_core = Matrix{String}(undef, length(sys.demandresponses), 3)
+    drs_core_colnames = ["name", "category", "region"]
+
+    drs_core[:, 1] = sys.demandresponses.names
+    drs_core[:, 2] = sys.demandresponses.categories
+    drs_core[:, 3] = regionnames(
+        length(sys.demandresponses), sys.regions.names, sys.region_dr_idxs)
+
+    string_table!(demandresponses, "_core", drs_core_colnames, drs_core, strlen)
+
+    demandresponses["borrowcapacity", deflate = compression] =
+        sys.demandresponses.borrow_capacity
+
+    demandresponses["paybackcapacity", deflate = compression] =
+        sys.demandresponses.payback_capacity
+
+    demandresponses["energycapacity", deflate = compression] =
+        sys.demandresponses.energy_capacity
+
+    demandresponses["borrowefficiency", deflate = compression] =
+        sys.demandresponses.borrow_efficiency
+
+    demandresponses["paybackefficiency", deflate = compression] =
+        sys.demandresponses.payback_efficiency
+
+    demandresponses["borrowedenergyinterest", deflate = compression] =
+         sys.demandresponses.borrowed_energy_interest
+
+    demandresponses["allowablepaybackperiod", deflate = compression] =
+         sys.demandresponses.allowable_payback_period
+
+    demandresponses["failureprobability", deflate = compression] = sys.demandresponses.λ
+
+    demandresponses["repairprobability", deflate = compression] = sys.demandresponses.μ
+
+    return
+
+end
+
 
 function process_lines_interfaces!(
     f::File, sys::SystemModel, strlen::Int, compression::Int)

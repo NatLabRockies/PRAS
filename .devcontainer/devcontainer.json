@@ -1,0 +1,32 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/JuliaLang/devcontainer-templates/tree/main/src/julia
+{
+	"build": { "dockerfile": "Dockerfile" },
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		// A Feature to install Julia via juliaup. More info: https://github.com/JuliaLang/devcontainer-features/tree/main/src/julia.
+		"ghcr.io/julialang/devcontainer-features/julia:1": {
+			
+		},
+		"ghcr.io/devcontainers/features/git:1": {
+			"ppa": true,
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/git-lfs:1": {
+			"autoPull": true,
+			"version": "latest"
+		}
+	},
+
+	"postCreateCommand": "julia --project=PRAS.jl -e 'import Pkg; Pkg.develop([(path=\"PRASCore.jl\",),(path=\"PRASFiles.jl\",),(path=\"PRASCapacityCredits.jl\",)])'",
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Configure tool-specific properties.
+	// "customizations": {},
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}

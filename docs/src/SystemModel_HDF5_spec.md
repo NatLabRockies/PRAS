@@ -1,18 +1,20 @@
-_Note: A useful reference for HDF5 file structure concepts is the
-[HDF5 Glossary](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary).
-This document contains links to glossary entries to explain HDF5 terms when used
-for the first time._
-
-# `SystemModel` HDF5 representation specification
+# [`SystemModel` HDF5 representation specification](@id prasfile)
 
 This document specifies a representation of the PRAS `SystemModel` data
-structure in terms of
-[objects](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Object)
-in an HDF5 file. This specification is version-controlled in the same
+structure in terms of objects like 
+[groups](https://support.hdfgroup.org/documentation/hdf5/latest/_h5_g__u_g.html#subsec_group_descr), 
+[datatypes](https://support.hdfgroup.org/documentation/hdf5/latest/_h5_t__u_g.html#sec_datatype), and 
+[datasets](https://support.hdfgroup.org/documentation/hdf5/latest/_h5_d__u_g.html#sec_dataset)
+in an [HDF5 file](https://support.hdfgroup.org/documentation/hdf5/latest/_l_b_file_org.html). This specification is version-controlled in the same
 repository as the `SystemModel` source code: any time the `SystemModel`
 definition is changed, those updates are expected to be reconciled with this
 document as appropriate. The version of this specification should therefore be
 taken as the version of the package containing this file.
+
+_Note: A useful reference for HDF5 file structure concepts is the
+[HDF5 Glossary](https://support.hdfgroup.org/documentation/hdf5/latest/_g_l_s.html).
+This document contains links to documentation entries to explain HDF5 terms when used
+for the first time._
 
 ## Filename extension
 
@@ -24,9 +26,9 @@ will likely have ".h5" or ".hdf5" extensions), and is purely optional.
 ## PRAS terminology
 
 In the following specification, generators, generator-storage units, storage
-devices, and lines are sometimes refered to generically as "resources".
-Similarly, regions (a grouping of generators, generator-storage units, and
-storage devices) and interfaces (a grouping of lines) are sometimes referred
+devices, demand response devices, and lines are sometimes refered to generically as "resources".
+Similarly, regions (a grouping of generators, generator-storage units,
+storage, and demand response devices) and interfaces (a grouping of lines) are sometimes referred
 to generically as "resource collections".
 
 ## HDF5 File Structure
@@ -34,7 +36,7 @@ to generically as "resource collections".
 ### Root group attributes
 
 The HDF5 file must define seven
-[attributes](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Attribute)
+[attributes](https://support.hdfgroup.org/documentation/hdf5/latest/_h5_d_m__u_g.html#subsubsec_data_model_abstract_attr)
 on the
 [root group](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Rootgroup). 
 There can also be additional attributes describing the system, including data descriptors used 
@@ -139,7 +141,7 @@ take:
 ### Resource / resource collection data
 
 The file may define the following six
-[groups](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Group)
+[groups](https://support.hdfgroup.org/documentation/hdf5/latest/_h5_g__u_g.html)
 as children of the root group. At least two groups are mandatory.
 
 The file must include:
@@ -156,6 +158,7 @@ The file must include at least one of:
 The file may include (optional):
 
  - `storages`, containing datasets describing storage devices in the system
+ - `demandresponses`, containing datasets describing demand response devices in the system
  - `interfaces`, containing datasets describing collections of lines between
    regions in the system. This group **must** be included if `lines` is included
    and **must not** be included if `lines` is omitted.
@@ -169,7 +172,7 @@ paragraphs.
 
 Each group contains one `_core` dataset providing static parameters and/or relations
 for the group entities, in the form of a vector / one-dimensional array of
-[compound datatype](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Compounddatatype)
+[compound datatype](https://support.hdfgroup.org/documentation/hdf5/latest/_g_l_s.html)
 instances. These datasets may use HDF5's automatic compression features to
 reduce filesize.
 
@@ -258,11 +261,11 @@ and eight providing (potentially) time-varying data.
 The `_core` dataset should be a vector / one-dimensional array storing instances of
 a compound datatype with the following fields (in order):
 
- 1. `name`: 128-byte ASCII string. Stores the **unique** name of each generator.
- 2. `category`: 128-byte ASCII string. Stores the category of each generator.
- 3. `region`: 128-byte ASCII string. Stores the region of each generator.
+ 1. `name`: 128-byte ASCII string. Stores the **unique** name of each storage.
+ 2. `category`: 128-byte ASCII string. Stores the category of each storage.
+ 3. `region`: 128-byte ASCII string. Stores the region of each storage.
 
-Each generator in the system corresponds to a single instance of the compound
+Each storage in the system corresponds to a single instance of the compound
 datatype, so the vector should have as many elements as there are storages in
 the system.
 
@@ -358,6 +361,50 @@ generator-storage devices:
  - `repairprobability`, as 64-bit floats representing the probability the unit
    transitions from forced outage to operational during a given simulation
    timestep, for each generator-storage unit in each timeperiod. Unitless.
+
+#### `demandresponses` group
+
+Information relating to the demand response only devices of the represented system is
+stored in the `demandresponses` group inside the root group. This group should contain
+eight datasets, one (named `_core`) providing core static data about each region
+and seven providing (potentially) time-varying data.
+
+The `_core` dataset should be a vector / one-dimensional array storing instances of
+a compound datatype with the following fields (in order):
+
+ 1. `name`: 128-byte ASCII string. Stores the **unique** name of each demand response.
+ 2. `category`: 128-byte ASCII string. Stores the category of each demand response.
+ 3. `region`: 128-byte ASCII string. Stores the region of each demand response.
+
+Each demand response in the system corresponds to a single instance of the compound
+datatype, so the vector should have as many elements as there are demand response in
+the system.
+
+The `demandresponse` group should also contain the following datasets describing
+(potentially) time-varying properties of the system demand resposne devices:
+
+ - `borrowcapacity`, as unsigned 32-bit integers representing maximum available
+   borrowing capacity for each demand response unit in each timeperiod, expressed in
+   units given by the `power_units` attribute.
+ - `paybackcapacity`, as unsigned 32-bit integers representing maximum
+   available payback capacity for each demand response unit in each timeperiod,
+   expressed in units given by the `power_units` attribute.
+ - `energycapacity`, as unsigned 32-bit integers representing maximum
+   available borrowed load capacity for each demand response unit in each timeperiod,
+   expressed in units given by the `energy_units` attribute.
+ - `borrowed_energy_interest`, as 64-bit floats representing the interest borrowed load incurs
+   across each timestep for each demand response device. A value greater than zero is growth,
+   while a value less than zero is decay. Unitless.
+ - `allowablepaybackperiod`, as unsigned 32-bit integers representing the maximum number
+   of time steps a demand response device can hold borrowed load. Any energy still
+   contained at the end of the period will be counted as unserved load for that hour.
+   Expressed in units given by the `timestep_unit` attribute.
+ - `failureprobability`, as 64-bit floats representing the probability the unit
+   transitions from operational to forced outage during a given simulation
+   timestep, for each demand response unit in each timeperiod. Unitless.
+ - `repairprobability`, as 64-bit floats representing the probability the unit
+   transitions from forced outage to operational during a given simulation
+   timestep, for each demand response unit in each timeperiod. Unitless.
 
 #### `interfaces` group
 

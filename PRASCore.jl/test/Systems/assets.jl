@@ -131,6 +131,25 @@
         end
     end
 
+    @testset "DemandResponses" begin
+
+        DemandResponses{10,1,Hour,MW,MWh}(
+            names, categories, vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float, vals_float, vals_float)
+
+        @test_throws AssertionError DemandResponses{5,1,Hour,MW,MWh}(
+            names, categories, vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float, vals_float, vals_float,)
+
+        @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
+            names, categories[1:2], vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float,vals_float, vals_float)
+
+        @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
+            names[1:2], categories[1:2], vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float,vals_float, vals_float)
+    end
+
     @testset "Lines" begin
 
         lines = Lines{10,1,Hour,MW}(

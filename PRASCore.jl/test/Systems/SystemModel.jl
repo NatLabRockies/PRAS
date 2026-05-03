@@ -17,11 +17,18 @@
         rand(1:10, 1, 10), rand(1:10, 1, 10), rand(1:10, 1, 10),
         fill(0.1, 1, 10), fill(0.5, 1, 10))
 
+    demandresponses = DemandResponses{10,1,Hour,MW,MWh}(
+        ["S1", "S2"], ["HVAC", "Industrial"],
+        rand(1:10, 2, 10), rand(1:10, 2, 10), rand(1:10, 2, 10),
+        fill(0.99, 2, 10),
+        fill(4, 2, 10),fill(0.1, 2, 10), fill(0.5, 2, 10),
+        fill(0.9, 2, 10), fill(1.0, 2, 10))
+
     tz = tz"UTC"
     timestamps = ZonedDateTime(2020, 1, 1, 0, tz):Hour(1):ZonedDateTime(2020,1,1,9, tz)
     attrs = Dict("type" => "Single-Region System")
     single_reg_sys_wo_attrs = SystemModel(
-        generators, storages, generatorstorages, timestamps, rand(1:20, 10))
+        generators, storages, generatorstorages, demandresponses, timestamps, rand(1:20, 10))
 
     single_reg_sys_with_attrs = SystemModel(
         generators, storages, generatorstorages, timestamps, rand(1:20, 10), attrs)
@@ -56,6 +63,7 @@
     gen_regions = [1:1, 2:2]
     stor_regions = [1:0, 1:2]
     genstor_regions = [1:1, 2:1]
+    dr_regions =  [1:0, 1:2]
     line_interfaces = [1:2]
 
     # Multi-region constructor
@@ -63,6 +71,7 @@
         regions, interfaces,
         generators, gen_regions, storages, stor_regions,
         generatorstorages, genstor_regions,
+        demandresponses, dr_regions,
         lines, line_interfaces,
         timestamps)
   

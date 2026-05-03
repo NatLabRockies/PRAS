@@ -12,7 +12,7 @@ export
 
     # System assets
     Regions, Interfaces,
-    AbstractAssets, Generators, Storages, GeneratorStorages, Lines,
+    AbstractAssets, Generators, Storages, GeneratorStorages,DemandResponses, Lines,
 
     # Units
     Period, Minute, Hour, Day, Year,
@@ -21,7 +21,7 @@ export
     unitsymbol, unitsymbol_long, conversionfactor, powertoenergy, energytopower,
 
     # Main data structure
-    SystemModel,
+    SystemModel, get_params,
 
     # Convenience re-exports
     ZonedDateTime, @tz_str
