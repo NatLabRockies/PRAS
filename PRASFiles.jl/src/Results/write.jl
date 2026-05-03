@@ -162,8 +162,7 @@ end
         outfile::String,
     )
 
-Save `ShortfallEventsResult` in JSON format, including both summary event
-metrics and raw event records.
+Save `ShortfallEventsResult` summary metrics in JSON format, optionally raw event records.
 
 # Arguments
 

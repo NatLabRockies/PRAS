@@ -229,12 +229,8 @@ end
 """
     MeanEventDuration
 
-`MeanEventDuration` reports the expected average duration of shortfall
-events over a particular time period and regional extent.
-
-For each sample, the mean duration of all events in that sample
-is computed. Samples with no events are assigned a duration of 0. The final
-reported metric is the mean estimate across samples.
+`MeanEventDuration` reports the mean duration across all observed shortfall events.
+If no events are observed, the value is reported as zero.
 
 Contains both the estimated value itself as well as the standard error
 of that estimate, which can be extracted with `val` and `stderror`,
@@ -263,12 +259,8 @@ end
 """
     MaxEventDuration
 
-`MaxEventDuration` reports the expected maximum duration of shortfall
-events over a particular time period and regional extent.
-
-For each sample, the maximum duration of all events in that sample
-is computed. Samples with no events are assigned a duration of 0. The final
-reported metric is the mean estimate across samples.
+`MaxEventDuration` reports the maximum duration across all observed shortfall events.
+If no events are observed, the value is reported as zero.
 
 Contains both the estimated value itself as well as the standard error
 of that estimate, which can be extracted with `val` and `stderror`,
@@ -297,12 +289,8 @@ end
 """
     MeanEventEnergy
 
-`MeanEventEnergy` reports the expected average unserved energy of shortfall
-events over a particular time period and regional extent.
-
-For each sample, the mean energy of all events in that sample
-is computed. Samples with no events are assigned an energy of 0. The final
-reported metric is the mean estimate across samples.
+`MeanEventEnergy` reports the mean unserved energy across all observed shortfall events.
+If no events are observed, the value is reported as zero.
 
 Contains both the estimated value itself as well as the standard error
 of that estimate, which can be extracted with `val` and `stderror`,
@@ -329,12 +317,8 @@ end
 """
     MaxEventEnergy
 
-`MaxEventEnergy` reports the expected maximum unserved energy of shortfall
-events over a particular time period and regional extent.
-
-For each sample, the maximum event energy in that sample
-is computed. Samples with no events are assigned an energy of 0. The final
-reported metric is the mean estimate across samples.
+`MaxEventEnergy` reports the maximum unserved energy across all observed shortfall events.
+If no events are observed, the value is reported as zero.
 
 Contains both the estimated value itself as well as the standard error
 of that estimate, which can be extracted with `val` and `stderror`,

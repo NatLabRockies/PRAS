@@ -250,7 +250,7 @@ function get_eventrecords(
     events::ShortfallEventsResult{N,L,T,P,E},
     region::String,
 ) where {N,L,T,P,E}
-    i_r = findfirst(isequal(region), events.regions.names)
+    i_r = findfirstunique(events.regions.names, region)
     p2e = conversionfactor(L, T, P, E)
 
     records = EventRecord[]

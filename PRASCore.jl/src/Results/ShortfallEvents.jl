@@ -27,6 +27,11 @@ end
 
 duration_periods(ev::ShortfallEvent) = ev.end_idx - ev.start_idx + 1
 event_energy(ev::ShortfallEvent) = ev.energy
+_event_meanestimate(xs::AbstractVector{<:Real}) =
+    isempty(xs) ? MeanEstimate(0.0) : MeanEstimate(xs)
+
+_event_maxestimate(xs::AbstractVector{<:Real}) =
+    isempty(xs) ? MeanEstimate(0.0) : MeanEstimate(maximum(xs))
 
 mutable struct ShortfallEventsAccumulator{S} <: ResultAccumulator{ShortfallEvents}
 
@@ -142,79 +147,83 @@ function finalize(
 end
 
 function MeanEventDuration(x::ShortfallEventsResult{N,L,T}) where {N,L,T}
-    durations = Float64[
-        isempty(events) ? 0.0 : mean(duration_periods.(events))
+    durations = [
+        duration_periods(ev)
         for events in x.system_events
+        for ev in events
     ]
-    return MeanEventDuration{N,L,T}(MeanEstimate(durations))
+    return MeanEventDuration{N,L,T}(_event_meanestimate(durations))
 end
 
 function MeanEventDuration(x::ShortfallEventsResult{N,L,T}, r::AbstractString) where {N,L,T}
     i_r = findfirstunique(x.regions.names, r)
-    durations = Float64[
-        isempty(x.region_events[i_r, s]) ? 0.0 :
-            mean(duration_periods.(x.region_events[i_r, s]))
+    durations = [
+        duration_periods(ev)
         for s in axes(x.region_events, 2)
+        for ev in x.region_events[i_r, s]
     ]
-    return MeanEventDuration{N,L,T}(MeanEstimate(durations))
+    return MeanEventDuration{N,L,T}(_event_meanestimate(durations))
 end
 
 function MaxEventDuration(x::ShortfallEventsResult{N,L,T}) where {N,L,T}
-    durations = Float64[
-        isempty(events) ? 0.0 : maximum(duration_periods.(events))
+    durations = [
+        duration_periods(ev)
         for events in x.system_events
+        for ev in events
     ]
-    return MaxEventDuration{N,L,T}(MeanEstimate(durations))
+    return MaxEventDuration{N,L,T}(_event_maxestimate(durations))
 end
 
 function MaxEventDuration(x::ShortfallEventsResult{N,L,T}, r::AbstractString) where {N,L,T}
     i_r = findfirstunique(x.regions.names, r)
-    durations = Float64[
-        isempty(x.region_events[i_r, s]) ? 0.0 :
-            maximum(duration_periods.(x.region_events[i_r, s]))
+    durations = [
+        duration_periods(ev)
         for s in axes(x.region_events, 2)
+        for ev in x.region_events[i_r, s]
     ]
-    return MaxEventDuration{N,L,T}(MeanEstimate(durations))
+    return MaxEventDuration{N,L,T}(_event_maxestimate(durations))
 end
 
 function MeanEventEnergy(x::ShortfallEventsResult{N,L,T,P,E}) where {N,L,T,P,E}
     p2e = conversionfactor(L, T, P, E)
-    energies = Float64[
-        isempty(events) ? 0.0 : mean(p2e .* event_energy.(events))
+    energies = [
+        p2e * event_energy(ev)
         for events in x.system_events
+        for ev in events
     ]
-    return MeanEventEnergy{N,L,T,E}(MeanEstimate(energies))
+    return MeanEventEnergy{N,L,T,E}(_event_meanestimate(energies))
 end
 
 function MeanEventEnergy(x::ShortfallEventsResult{N,L,T,P,E}, r::AbstractString) where {N,L,T,P,E}
     i_r = findfirstunique(x.regions.names, r)
     p2e = conversionfactor(L, T, P, E)
-    energies = Float64[
-        isempty(x.region_events[i_r, s]) ? 0.0 :
-            mean(p2e .* event_energy.(x.region_events[i_r, s]))
+    energies = [
+        p2e * event_energy(ev)
         for s in axes(x.region_events, 2)
+        for ev in x.region_events[i_r, s]
     ]
-    return MeanEventEnergy{N,L,T,E}(MeanEstimate(energies))
+    return MeanEventEnergy{N,L,T,E}(_event_meanestimate(energies))
 end
 
 function MaxEventEnergy(x::ShortfallEventsResult{N,L,T,P,E}) where {N,L,T,P,E}
     p2e = conversionfactor(L, T, P, E)
-    energies = Float64[
-        isempty(events) ? 0.0 : maximum(p2e .* event_energy.(events))
+    energies = [
+        p2e * event_energy(ev)
         for events in x.system_events
+        for ev in events
     ]
-    return MaxEventEnergy{N,L,T,E}(MeanEstimate(energies))
+    return MaxEventEnergy{N,L,T,E}(_event_maxestimate(energies))
 end
 
 function MaxEventEnergy(x::ShortfallEventsResult{N,L,T,P,E}, r::AbstractString) where {N,L,T,P,E}
     i_r = findfirstunique(x.regions.names, r)
     p2e = conversionfactor(L, T, P, E)
-    energies = Float64[
-        isempty(x.region_events[i_r, s]) ? 0.0 :
-            maximum(p2e .* event_energy.(x.region_events[i_r, s]))
+    energies = [
+        p2e * event_energy(ev)
         for s in axes(x.region_events, 2)
+        for ev in x.region_events[i_r, s]
     ]
-    return MaxEventEnergy{N,L,T,E}(MeanEstimate(energies))
+    return MaxEventEnergy{N,L,T,E}(_event_maxestimate(energies))
 end
 
 
