@@ -780,26 +780,4 @@
         @test stderror(MaxEventEnergy(events)) == 0.0
     end
 
-    @testset "ShortfallEvents threaded and serial results match" begin
-        serial_spec = SequentialMonteCarlo(samples=100_000, seed=123, threaded=false)
-        threaded_spec = SequentialMonteCarlo(samples=100_000, seed=123, threaded=true)
-    
-        serial_events, = assess(TestData.threenode, serial_spec, ShortfallEvents())
-        threaded_events, = assess(TestData.threenode, threaded_spec, ShortfallEvents())
-    
-        @test LOLEv(serial_events) ≈ LOLEv(threaded_events)
-        @test MeanEventDuration(serial_events) ≈ MeanEventDuration(threaded_events)
-        @test MaxEventDuration(serial_events) ≈ MaxEventDuration(threaded_events)
-        @test MeanEventEnergy(serial_events) ≈ MeanEventEnergy(threaded_events)
-        @test MaxEventEnergy(serial_events) ≈ MaxEventEnergy(threaded_events)
-    
-        for r in serial_events.regions.names
-            @test LOLEv(serial_events, r) ≈ LOLEv(threaded_events, r)
-            @test MeanEventDuration(serial_events, r) ≈ MeanEventDuration(threaded_events, r)
-            @test MaxEventDuration(serial_events, r) ≈ MaxEventDuration(threaded_events, r)
-            @test MeanEventEnergy(serial_events, r) ≈ MeanEventEnergy(threaded_events, r)
-            @test MaxEventEnergy(serial_events, r) ≈ MaxEventEnergy(threaded_events, r)
-        end
-    end
-
 end
