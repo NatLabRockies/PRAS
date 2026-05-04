@@ -23,6 +23,7 @@ Order = [:function,:type]
 PRASCore.Results.LOLE
 PRASCore.Results.EUE
 PRASCore.Results.NEUE
+PRASCore.Results.LOLD
 PRASCore.Results.Shortfall
 PRASCore.Results.ShortfallSamples
 PRASCore.Results.Surplus
@@ -42,4 +43,10 @@ PRASCore.Results.DemandResponseAvailability
 PRASCore.Results.DemandResponseEnergy
 PRASCore.Results.DemandResponseEnergySamples
 PRASCore.Results.LineAvailability
+PRASCore.Results.ShortfallEvents
+PRASCore.Results.LOLEv
+PRASCore.Results.MeanEventDuration
+PRASCore.Results.MaxEventDuration
+PRASCore.Results.MeanEventEnergy
+PRASCore.Results.MaxEventEnergy
 ```

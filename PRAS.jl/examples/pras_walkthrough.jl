@@ -176,3 +176,28 @@ println("Surplus in")
 # performed on the subset of samples in which the event was observed, using the
 # `ShortfallSamples`, `UtilizationSamples`, and
 # `StorageEnergySamples` result specifications instead.
+
+
+# ## Export Aggregate Results
+
+# After exploring the simulation outputs, we may want to save the
+# aggregate results for reporting or further post-processing.
+
+# Rather than querying individual metrics (e.g., LOLE, EUE, NEUE)
+# one by one, PRAS provides a utility to export all aggregate
+# system-level and region-level results in a single step.
+
+using PRASFiles
+
+output_path = saveshortfall(shortfall, sys, "pras_output");
+println("Results exported to: ", output_path)
+
+# This creates a timestamped directory containing a `pras_results.json`
+# file with:
+# - system-level metrics (LOLE, EUE, NEUE)
+# - region-level metrics
+# - load and capacity summaries
+# - horizon timestamps
+
+# Note that only aggregate results are exported. Sample-level data
+# from the Monte Carlo simulation are not included.
