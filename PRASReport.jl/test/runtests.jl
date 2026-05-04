@@ -5,6 +5,8 @@ using PRASCore
 using PRASFiles
 using TimeZones
 using Suppressor
+using DuckDB
+using Tables
 
 # Test copperplate
 # Test get functions from database for wrong names

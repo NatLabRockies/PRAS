@@ -1,17 +1,35 @@
-@testset "Test get_stepranges" begin
-    timestamps = ZonedDateTime.(DateTime(2023,1,1,1):Hour(1):DateTime(2023,1,1,11), tz"UTC")
-    selected_times = [timestamps[2], timestamps[3], timestamps[5], timestamps[6], timestamps[7], timestamps[9]]
-    step_ranges = PRASReport.get_stepranges(selected_times, 1, Hour)
+@testset "ShortfallEvents are written to database" begin
+    sys = deepcopy(system)
+    sys.regions.load .+= 375
 
-    @test length(step_ranges) == 3
-    @test step_ranges[1] == (timestamps[2]:Hour(1):timestamps[3])
-    @test step_ranges[2] == (timestamps[5]:Hour(1):timestamps[7])
-    @test step_ranges[3] == (timestamps[9]:Hour(1):timestamps[9])
-end
+    conn = DuckDB.connect(DuckDB.open(":memory:"))
 
-@testset "Test get_events" begin
-    sf,flow = assess(system,SequentialMonteCarlo(samples=100),Shortfall(),Flow());
+    PRASReport.get_db(sys; conn=conn, samples=100, seed=1)
 
-    @test_throws "No shortfall events in this simulation" get_events(sf)
+    count_result = Tables.columntable(
+        DuckDB.execute(conn, "SELECT COUNT(*) AS n FROM shortfall_events")
+    )
 
+    @test first(count_result.n) > 0
+
+    scope_result = Tables.columntable(
+        DuckDB.execute(conn, "SELECT scope, COUNT(*) AS n FROM shortfall_events GROUP BY scope")
+    )
+
+    @test "system" in scope_result.scope
+    @test "region" in scope_result.scope
+
+    sanity_result = Tables.columntable(
+        DuckDB.execute(conn, """
+            SELECT
+                MIN(duration_periods) AS min_duration,
+                MIN(energy) AS min_energy
+            FROM shortfall_events
+        """)
+    )
+
+    @test first(sanity_result.min_duration) >= 1
+    @test first(sanity_result.min_energy) >= 0
+
+    DuckDB.DBInterface.close!(conn)
 end

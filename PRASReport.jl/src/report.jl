@@ -2,7 +2,6 @@
     create_pras_report(sf::ShortfallResult, flow::FlowResult;
                         report_name::String,
                         report_path::String,
-                        threshold::Int,
                         title::String)
 
 Create a HTML report from PRAS simulation results from 
@@ -11,19 +10,19 @@ ShortfallResult and FlowResult objects.
 # Arguments
 - `sf::ShortfallResult`: Simulation ShortfallResult 
 - `flow::FlowResult`: Simulation FlowResult
+- `events::ShortfallEventsResult`:
 - `report_name::String`: Base name for the generated HTML file (default: "report")
 - `report_path::String`: Directory path where the report will be saved (default: pwd())
-- `threshold::Int`: Event threshold for filtering events (default: 0)
 - `title::String`: Title to display in the report header (default: "Resource Adequacy Report")
 """
 function create_pras_report(sf::ShortfallResult,
-                            flow::FlowResult;
+                            flow::FlowResult,
+                            events::ShortfallEventsResult;
                             report_name::String="report",
                             report_path::String=pwd(),
-                            threshold::Int=0,
                             title::String="Resource Adequacy Report")
 
-    base64_db = _get_base64_db((sf,flow);threshold=threshold)
+    base64_db = _get_base64_db((sf,flow,events))
 
     return  _html_report(base64_db,
                             report_name=report_name,
@@ -35,7 +34,6 @@ end
                         samples,seed,
                         report_name::String="report",
                         report_path::String=pwd(),
-                        threshold::Int=0,
                         title::String="Resource Adequacy Report")
 
 Create a HTML report when a PRAS system and simulation parameters are provided.
@@ -49,10 +47,9 @@ function create_pras_report(system::SystemModel;
                             samples=1000,seed=1,
                             report_name::String="report",
                             report_path::String=pwd(),
-                            threshold::Int=0,
                             title::String="Resource Adequacy Report")
 
-    base64_db = _get_base64_db((system,);threshold=threshold,
+    base64_db = _get_base64_db((system,);
                                 samples=samples,seed=seed)
 
     return  _html_report(base64_db,
@@ -66,7 +63,6 @@ end
                         samples,seed,
                         report_name::String="report",
                         report_path::String=pwd(),
-                        threshold::Int=0,
                         title::String="Resource Adequacy Report")
 
 Create a HTML report when a path to the .pras system and simulation
@@ -79,10 +75,9 @@ function create_pras_report(system_path::String;
                             samples=1000,seed=1,
                             report_name::String="report",
                             report_path::String=pwd(),
-                            threshold::Int=0,
                             title::String="Resource Adequacy Report")
 
-    base64_db = _get_base64_db((system_path,);threshold=threshold,
+    base64_db = _get_base64_db((system_path,);
                                 samples=samples,seed=seed)
     
     return  _html_report(base64_db,
@@ -95,13 +90,12 @@ end
 Internal function to get events database for different types of inputs.
 """    
 function _get_base64_db(get_db_args; 
-                        samples=1000,seed=1,
-                        threshold::Int=0)
+                        samples=1000,seed=1)
 
     tempdb_path = tempname() * ".db"
     dbfile = DuckDB.open(tempdb_path)
     conn = DuckDB.connect(dbfile)    
-    conn = get_db(get_db_args...; conn, threshold=threshold,
+    conn = get_db(get_db_args...; conn,
                     samples=samples, seed=seed)
 
     DuckDB.DBInterface.close!(conn)

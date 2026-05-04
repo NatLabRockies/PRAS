@@ -456,7 +456,6 @@
                 <li><strong>System LOLE:</strong> <span id="system-lole">-</span></li>
                 <li><strong>System NEUE:</strong> <span id="system-neue">-</span></li>
                 <li><strong>Events:</strong> <span id="event-count">-</span></li>
-                <li><strong>Event threshold:</strong> <span id="event-threshold">-</span></li>
             </ul>
             <div class="card-footer centered">
                 <div class="glossary-link">
@@ -494,13 +493,13 @@
             <div id="charts-container-inner" class="charts-container active">
                 <div class="charts-grid">
                     <div class="chart-wrapper">
-                        <canvas id="eue-chart"></canvas>
+                        <div id="duration-histogram"></div>
                     </div>
                     <div class="chart-wrapper">
-                        <canvas id="lole-chart"></canvas>
+                        <div id="energy-scatter"></div>
                     </div>
                     <div class="chart-wrapper">
-                        <canvas id="neue-chart"></canvas>
+                        <div id="region-counts-chart"></div>
                     </div>
                 </div>
             </div>
@@ -512,9 +511,9 @@
                             <th id="start-time-header">Start Time</th>
                             <th id="end-time-header">End Time</th>
                             <th id="duration-header">Event Duration</th>
-                            <th id="eue-header">EUE</th>
-                            <th id="lole-header">LOLE</th>
-                            <th id="neue-header">NEUE</th>
+                            <th id="energy-header">Energy</th>
+                            <th id="scope-header">Scope</th>
+                            <th id="region-header">Region</th>
                         </tr>
                     </thead>
                     <tbody id="events-tbody">
@@ -550,18 +549,14 @@
 
                 <div class="glossary-term">
                     <h3>Resource Adequacy (RA) Event</h3>
-                    <p>A Resource Adequacy event in this report is a set of contiguous timeperiods where the system EUE in those timeperiods exceed the event threshold.</p>
+                    <p>A Resource Adequacy event in this report is a contiguous run of one or more simulation timesteps with positive shortfall, recorded directly from ShortfallEvents.</p>
                 </div>
 
-                <div class="glossary-term">
-                    <h3>Event Threshold</h3>
-                    <p>The minimum energy shortfall required for a time period to be considered part of a resource adequacy event.</p>
-                </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <script type="module">
         import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.30.0/+esm';
         
@@ -705,208 +700,68 @@
             }
         }
 
-        // Create bubble charts for EUE, LOLE, and NEUE
-        function createBubbleCharts(events, stepSize, energyUnit, timeUnit) {
-            const chartData = events.map((event, index) => {
-                const duration = (event.time_period_count || 0) * stepSize;
-                return {
-                    duration: duration,
-                    eue: event.eue || 0,
-                    lole: event.lole || 0,
-                    neue: event.neue || 0,
-                    eventId: event.id || index + 1,
-                    startTime: formatTimestamp(event.start_timestamp),
-                    endTime: formatTimestamp(event.end_timestamp)
-                };
-            }).filter(d => d.duration > 0); // Filter out events with no duration
+        // Create plots
+        function createEventPlots(events, stepSize, energyUnit, timeUnit) {
+            const systemEvents = events.filter(e => e.scope === "system");
+            const regionalEvents = events.filter(e => e.scope === "region");
 
-            // Common chart options
-            const commonOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        type: 'linear',
-                        position: 'bottom',
-                        title: {
-                            display: true,
-                            text: `Event Duration (${timeUnit})`
-                        },
-                        grid: {
-                            color: '#e2e8f0'
-                        }
-                    },
-                    y: {
-                        type: 'linear',
-                        title: {
-                            display: true
-                        },
-                        grid: {
-                            color: '#e2e8f0'
-                        }
-                    }
+            const durations = systemEvents.map(e => (e.duration_periods || 0) * stepSize);
+            const energies = systemEvents.map(e => e.energy || 0);
+
+            Plotly.newPlot("duration-histogram", [{
+                x: durations,
+                type: "histogram",
+                xbins: { size: stepSize },
+                hovertemplate: "Duration: %{x}<br>Count: %{y}<extra></extra>"
+            }], {
+                title: "System Event Duration Distribution",
+                xaxis: { title: `Duration (${timeUnit})` },
+                yaxis: { title: "Number of events" },
+                margin: { t: 50, l: 60, r: 20, b: 60 }
+            }, { responsive: true });
+
+            Plotly.newPlot("energy-scatter", [{
+                x: durations,
+                y: energies,
+                mode: "markers",
+                type: "scattergl",
+                marker: {
+                    size: 8,
+                    opacity: 0.8,
+                    color: energies,
+                    colorscale: "Viridis",
+                    showscale: true,
+                    colorbar: { title: energyUnit }
                 },
-                plugins: {
-                    title: {
-                        display: true,
-                        font: {
-                            size: 16,
-                            weight: 'bold'
-                        },
-                        color: '#667eea',
-                        padding: {
-                            top: 10,
-                            bottom: 20
-                        }
-                    },
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            title: function(context) {
-                                return `Event ${context[0].raw.eventId}`;
-                            },
-                            label: function(context) {
-                                const point = context.raw;
-                                return [
-                                    `Start: ${point.startTime || 'N/A'}`,
-                                    `End: ${point.endTime || 'N/A'}`,
-                                    `Duration: ${formatNumber(point.x)} ${timeUnit}`,
-                                    `Value: ${formatNumber(point.y, 3)}`
-                                ];
-                            }
-                        }
-                    }
-                }
-            };
+                text: systemEvents.map(e => `Sample ${e.sample_id}`),
+                hovertemplate:
+                    "%{text}<br>Duration: %{x}<br>Energy: %{y:.2f} " + energyUnit + "<extra></extra>"
+            }], {
+                title: "System Event Energy vs Duration",
+                xaxis: { title: `Duration (${timeUnit})` },
+                yaxis: { title: `Energy (${energyUnit})` },
+                margin: { t: 50, l: 70, r: 90, b: 60 }
+            }, { responsive: true });
 
-            // EUE Chart
-            const eueData = chartData.map(d => ({
-                x: d.duration,
-                y: d.eue,
-                eventId: d.eventId,
-                startTime: d.startTime,
-                endTime: d.endTime
-            }));
-
-            new Chart(document.getElementById('eue-chart'), {
-                type: 'bubble',
-                data: {
-                    datasets: [{
-                        label: 'EUE',
-                        data: eueData,
-                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
-                        borderColor: 'rgba(102, 126, 234, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    ...commonOptions,
-                    plugins: {
-                        ...commonOptions.plugins,
-                        title: {
-                            ...commonOptions.plugins.title,
-                            text: 'Expected Unserved Energy (EUE)'
-                        }
-                    },
-                    scales: {
-                        ...commonOptions.scales,
-                        y: {
-                            ...commonOptions.scales.y,
-                            title: {
-                                display: true,
-                                text: `EUE (${energyUnit}/event-duration)`
-                            }
-                        }
-                    }
-                }
+            const counts = {};
+            regionalEvents.forEach(e => {
+                const region = e.region_name || `Region ${e.region_id}`;
+                counts[region] = (counts[region] || 0) + 1;
             });
 
-            // LOLE Chart
-            const loleData = chartData.map(d => ({
-                x: d.duration,
-                y: d.lole,
-                eventId: d.eventId,
-                startTime: d.startTime,
-                endTime: d.endTime
-            }));
-
-            new Chart(document.getElementById('lole-chart'), {
-                type: 'bubble',
-                data: {
-                    datasets: [{
-                        label: 'LOLE',
-                        data: loleData,
-                        backgroundColor: 'rgba(34, 197, 94, 0.6)',
-                        borderColor: 'rgba(34, 197, 94, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    ...commonOptions,
-                    plugins: {
-                        ...commonOptions.plugins,
-                        title: {
-                            ...commonOptions.plugins.title,
-                            text: 'Loss-of-Load Expectation (LOLE)'
-                        }
-                    },
-                    scales: {
-                        ...commonOptions.scales,
-                        y: {
-                            ...commonOptions.scales.y,
-                            title: {
-                                display: true,
-                                text: `LOLE (event-${timeUnit}/event-duration)`
-                            }
-                        }
-                    }
-                }
-            });
-
-            // NEUE Chart
-            const neueData = chartData.map(d => ({
-                x: d.duration,
-                y: d.neue,
-                eventId: d.eventId,
-                startTime: d.startTime,
-                endTime: d.endTime
-            }));
-
-            new Chart(document.getElementById('neue-chart'), {
-                type: 'bubble',
-                data: {
-                    datasets: [{
-                        label: 'NEUE',
-                        data: neueData,
-                        backgroundColor: 'rgba(239, 68, 68, 0.6)',
-                        borderColor: 'rgba(239, 68, 68, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    ...commonOptions,
-                    plugins: {
-                        ...commonOptions.plugins,
-                        title: {
-                            ...commonOptions.plugins.title,
-                            text: 'Normalized EUE (NEUE)'
-                        }
-                    },
-                    scales: {
-                        ...commonOptions.scales,
-                        y: {
-                            ...commonOptions.scales.y,
-                            title: {
-                                display: true,
-                                text: `NEUE (ppm/event-duration)`
-                            }
-                        }
-                    }
-                }
-            });
+            Plotly.newPlot("region-counts-chart", [{
+                x: Object.keys(counts),
+                y: Object.values(counts),
+                type: "bar",
+                hovertemplate: "Region: %{x}<br>Events: %{y}<extra></extra>"
+            }], {
+                title: "Regional Event Counts",
+                xaxis: { title: "Region" },
+                yaxis: { title: "Number of events" },
+                margin: { t: 50, l: 60, r: 20, b: 60 }
+            }, { responsive: true });
         }
+        
 
         async function initializeDatabase() {
             try {
@@ -965,15 +820,14 @@
 
                 // Get parameters for units and calculations
                 // and system simulation results
-                let sampleCount, stepSize, timeUnit, energyUnit, timesteps, timezone, eventthreshold;
+                let sampleCount, stepSize, timeUnit, energyUnit, timesteps, timezone;
                 let startTimestamp, endTimestamp, loleMean, loleStderr, neueMean, neueStderr;
                 
                 try {
                     const paramsResult = await conn.query(`
                         SELECT n_samples, step_size, time_unit, energy_unit, timesteps,
                                 start_timestamp, end_timestamp, timezone,
-                                lole_mean, lole_stderr, neue_mean, neue_stderr,
-                                eventthreshold
+                                lole_mean, lole_stderr, neue_mean, neue_stderr
                         FROM report_db.systemsiminfo LIMIT 1
                     `);
                     const params = paramsResult.toArray();
@@ -986,7 +840,6 @@
                         startTimestamp = params[0].start_timestamp;
                         endTimestamp = params[0].end_timestamp;
                         timezone = params[0].timezone;
-                        eventthreshold = params[0].eventthreshold;
                         loleMean = params[0].lole_mean;
                         loleStderr = params[0].lole_stderr;
                         neueMean = params[0].neue_mean;
@@ -1000,13 +853,13 @@
                 document.getElementById('start-time-header').textContent = `Start Time (${timezone})`;
                 document.getElementById('end-time-header').textContent = `End Time (${timezone})`;
                 document.getElementById('duration-header').textContent = `Event Duration (${timeUnit})`;
-                document.getElementById('eue-header').textContent = `EUE`;
-                document.getElementById('lole-header').textContent = `LOLE`;
-                document.getElementById('neue-header').textContent = `NEUE`;
+                document.getElementById('energy-header').textContent = `Energy (${energyUnit})`;
+                document.getElementById('scope-header').textContent = `Scope`;
+                document.getElementById('region-header').textContent = `Region`;
+
 
                 // Update simulation summary stats
                 document.getElementById('sample-count').textContent = formatNumber(sampleCount, 0);
-                document.getElementById('event-threshold').textContent = eventthreshold !== undefined ? `${formatNumber(eventthreshold, 0)} ${energyUnit}` : '-';
                 
                 // Format simulation period
                 if (startTimestamp && endTimestamp) {
@@ -1033,17 +886,19 @@
 
                 // Get events with system shortfall metrics
                 const eventsQuery = `
-                    SELECT 
+                    SELECT
                         e.id,
+                        e.sample_id,
+                        e.scope,
+                        e.region_id,
+                        r.name AS region_name,
                         e.start_timestamp,
                         e.end_timestamp,
-                        e.time_period_count,
-                        ess.eue,
-                        ess.lole,
-                        ess.neue
-                    FROM report_db.events e
-                    LEFT JOIN report_db.event_system_shortfall ess ON e.id = ess.event_id
-                    ORDER BY e.start_timestamp
+                        e.duration_periods,
+                        e.energy
+                    FROM report_db.shortfall_events e
+                    LEFT JOIN report_db.regions r ON e.region_id = r.id
+                    ORDER BY e.scope, e.start_timestamp
                 `;
 
                 // showDebug('Executing events query...');
@@ -1054,43 +909,37 @@
                 // Update event count
                 document.getElementById('event-count').textContent = formatNumber(events.length, 0);
 
-                // Populate table
+                // // Populate table
                 const tbody = document.getElementById('events-tbody');
                 tbody.innerHTML = '';
 
+                const systemEventCount = events.filter(e => e.scope === "system").length;
+                document.getElementById('event-count').textContent = formatNumber(systemEventCount, 0);
+
                 events.forEach((event, index) => {
-                    // showDebug(`Event ${index}: ${JSON.stringify(event)}`);
-                    
-                    // Calculate actual duration: time_period_count * step_size
-                    const actualDuration = (event.time_period_count || 0) * stepSize;
-                    
+                    const actualDuration = (event.duration_periods || 0) * stepSize;
                     const startTime = formatTimestamp(event.start_timestamp);
                     const endTime = formatTimestamp(event.end_timestamp);
-                    
-                    // Format EUE with units showing rate per time unit
-                    const eueFormatted = event.eue ? `${formatNumber(event.eue, 1)} ${energyUnit}/${actualDuration} ${timeUnit}` : 'N/A';
-                    
-                    // Format LOLE: (number) event-(time_unit)/(event_duration_value)(time_unit)
-                    const loleFormatted = event.lole ? `${formatNumber(event.lole, 1)} event-${timeUnit}/${actualDuration} ${timeUnit}` : 'N/A';
-                    
-                    // Format NEUE: (number) ppm/(event_duration_value)(time_unit)
-                    const neueFormatted = event.neue ? `${formatNumber(event.neue, 1)} ppm/${actualDuration} ${timeUnit}` : 'N/A';
-                    
+                    const regionText = event.scope === "region"
+                        ? (event.region_name || `Region ${event.region_id}`)
+                        : "-";
+
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td class="numeric">${event.id || index + 1}</td>
                         <td>${startTime}</td>
                         <td>${endTime}</td>
                         <td class="numeric">${formatNumber(actualDuration, 1)}</td>
-                        <td class="numeric">${eueFormatted}</td>
-                        <td class="numeric">${loleFormatted}</td>
-                        <td class="numeric">${neueFormatted}</td>
+                        <td class="numeric">${formatNumber(event.energy, 1)} ${energyUnit}</td>
+                        <td>${event.scope}</td>
+                        <td>${regionText}</td>
                     `;
                     tbody.appendChild(row);
                 });
 
                 // Create charts
-                createBubbleCharts(events, stepSize, energyUnit, timeUnit);
+                // createBubbleCharts(events, stepSize, energyUnit, timeUnit);
+                createEventPlots(events, stepSize, energyUnit, timeUnit);
 
                 // Hide loading and show charts by default (table is ready but hidden)
                 document.getElementById('loading').style.display = 'none';
