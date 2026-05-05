@@ -1,14 +1,30 @@
+# Julia
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
-Manifest.toml
-*.DS_Store
-*.pras
-PRASFiles.jl/test/PRAS_Results_Export/
 
-# Any html and duckdb files generated during testing
-*.html 
-*.duckdb
+# Julia env
+Manifest.toml
+
+# OS files
+.DS_Store
+*.DS_Store
+
+# PRAS files
+*.pras
+
+# Generated docs
+docs/build/
+docs/site/
+
+# Docs
 docs/build/
 docs/site/
 docs/src/examples/
+
+# Generated PRASFiles test exports
+PRASFiles.jl/test/PRAS_Results_Export/
+
+# Generated reports/test artifacts
+*.html
+*.duckdb

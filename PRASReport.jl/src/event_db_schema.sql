@@ -47,3 +47,24 @@ CREATE TABLE shortfall_events (
     duration_periods INTEGER NOT NULL,
     energy REAL NOT NULL
 );
+
+CREATE TABLE event_metrics (
+    scope TEXT NOT NULL,
+    region_id INTEGER REFERENCES regions(id),
+    n_events INTEGER NOT NULL,
+
+    lolev_mean REAL NOT NULL,
+    lolev_stderr REAL NOT NULL,
+
+    mean_duration REAL NOT NULL,
+    mean_duration_stderr REAL NOT NULL,
+
+    max_duration REAL NOT NULL,
+    max_duration_stderr REAL NOT NULL,
+
+    mean_energy REAL NOT NULL,
+    mean_energy_stderr REAL NOT NULL,
+
+    max_energy REAL NOT NULL,
+    max_energy_stderr REAL NOT NULL
+);

@@ -92,6 +92,7 @@ function get_db(
     _write_db!(sf, flow, conn)
     _write_db!(sf.regions.names, conn)
     _write_db!(events, conn)
+    _write_db_event_metrics!(events, conn)
 
     if !isnothing(flow)
         _write_db!(flow.interfaces, conn)
@@ -255,6 +256,79 @@ function _write_db!(events::ShortfallEventsResult{N,L,T,P,E}, conn::DuckDB.Conne
                     id += 1
                 end
             end
+        end
+
+        DuckDB.flush(appender)
+    finally
+        DuckDB.close(appender)
+    end
+end
+
+function _write_db_event_metrics!(
+    events::ShortfallEventsResult,
+    conn::DuckDB.Connection
+)
+    region_ids = get_region_ids_ordered(events.regions.names, conn)
+
+    appender = DuckDB.Appender(conn, "event_metrics")
+
+    try
+        # System-level metrics
+        lolev = LOLEv(events)
+        mean_duration = MeanEventDuration(events)
+        max_duration = MaxEventDuration(events)
+        mean_energy = MeanEventEnergy(events)
+        max_energy = MaxEventEnergy(events)
+
+        DuckDB.append(appender, "system")
+        DuckDB.append(appender, missing)
+        DuckDB.append(appender, totalevents(events))
+
+        DuckDB.append(appender, val(lolev))
+        DuckDB.append(appender, stderror(lolev))
+
+        DuckDB.append(appender, val(mean_duration))
+        DuckDB.append(appender, stderror(mean_duration))
+
+        DuckDB.append(appender, val(max_duration))
+        DuckDB.append(appender, stderror(max_duration))
+
+        DuckDB.append(appender, val(mean_energy))
+        DuckDB.append(appender, stderror(mean_energy))
+
+        DuckDB.append(appender, val(max_energy))
+        DuckDB.append(appender, stderror(max_energy))
+
+        DuckDB.end_row(appender)
+
+        # Regional metrics
+        for (region_name, region_id) in zip(events.regions.names, region_ids)
+            lolev = LOLEv(events, region_name)
+            mean_duration = MeanEventDuration(events, region_name)
+            max_duration = MaxEventDuration(events, region_name)
+            mean_energy = MeanEventEnergy(events, region_name)
+            max_energy = MaxEventEnergy(events, region_name)
+
+            DuckDB.append(appender, "region")
+            DuckDB.append(appender, region_id)
+            DuckDB.append(appender, totalevents(events, region_name))
+
+            DuckDB.append(appender, val(lolev))
+            DuckDB.append(appender, stderror(lolev))
+
+            DuckDB.append(appender, val(mean_duration))
+            DuckDB.append(appender, stderror(mean_duration))
+
+            DuckDB.append(appender, val(max_duration))
+            DuckDB.append(appender, stderror(max_duration))
+
+            DuckDB.append(appender, val(mean_energy))
+            DuckDB.append(appender, stderror(mean_energy))
+
+            DuckDB.append(appender, val(max_energy))
+            DuckDB.append(appender, stderror(max_energy))
+
+            DuckDB.end_row(appender)
         end
 
         DuckDB.flush(appender)

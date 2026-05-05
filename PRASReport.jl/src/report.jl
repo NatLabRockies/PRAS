@@ -114,22 +114,37 @@ Internal function to create a HTML report from PRAS simulation results stored in
 base64-encoded DuckDB database string.
 """
 function _html_report(base64_db::String;
-                        report_name::String,
-                        report_path::String,
-                        title)
-    
+    report_name::String,
+    report_path::String,
+    title)
+
+    queries_js = read(joinpath(@__DIR__, "report_queries.js"), String)
+    plots_js = read(joinpath(@__DIR__, "report_plots.js"), String)
+
     report_html = read(joinpath(@__DIR__, "report_template.html"), String)
-    report_html = replace(report_html, 
-                            "        // Placeholder for base64 database - this will be replaced by Julia" => "")
-    report_html = replace(report_html, 
-                            "const BASE64_DB = \"{{BASE64_DB_PLACEHOLDER}}\"" => "const BASE64_DB = \"$(base64_db)\"")
-    report_html = replace(report_html, 
-                            "{{REPORT_TITLE_PLACEHOLDER}}" => title)
-    
+
+    report_html = replace(report_html,
+    "        // Placeholder for base64 database - this will be replaced by Julia" => "")
+
+    report_html = replace(report_html,
+    "const BASE64_DB = \"{{BASE64_DB_PLACEHOLDER}}\"" =>
+    "const BASE64_DB = \"$(base64_db)\"")
+
+    report_html = replace(report_html,
+    "{{REPORT_TITLE_PLACEHOLDER}}" => title)
+
+    report_html = replace(report_html,
+    "{{REPORT_QUERIES_JS_PLACEHOLDER}}" => "\nconsole.log('QUERIES JS INJECTED');\n" * queries_js)
+
+    report_html = replace(report_html,
+    "{{REPORT_PLOTS_JS_PLACEHOLDER}}" => plots_js)
+
+    @assert !contains(report_html, "{{REPORT_QUERIES_JS_PLACEHOLDER}}")
+    @assert !contains(report_html, "{{REPORT_PLOTS_JS_PLACEHOLDER}}")
+
     full_report_path = joinpath(report_path, report_name * ".html")
     println("Writing report to: ", full_report_path)
     write(full_report_path, report_html)
 
     return
-
-end                          
+end                    
