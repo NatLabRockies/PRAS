@@ -27,4 +27,5 @@ PRASFiles.jl/test/PRAS_Results_Export/
 
 # Generated reports/test artifacts
 *.html
+!PRASReport.jl/examples/example_rts_report.html
 *.duckdb

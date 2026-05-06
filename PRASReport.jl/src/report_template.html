@@ -1072,8 +1072,6 @@
 
         async function loadData() {
             try {
-                // showDebug('Loading data...');
-
                 // Get parameters for units and calculations
                 // and system simulation results
                 let sampleCount, stepSize, timeUnit, energyUnit, timesteps, timezone;
@@ -1131,20 +1129,6 @@
                 
                 // Calculate total simulation duration for rates
                 const totalDuration = timesteps * stepSize;
-                
-                // // Format system LOLE: mean ± stderr event-(timeunit)/(timesteps)*(stepsize)
-                // if (loleMean !== undefined && loleStderr !== undefined) {
-                //     const loleText = `${formatNumber(loleMean, 1)} ± ${formatNumber(loleStderr, 1)} event-${timeUnit}/${totalDuration} ${timeUnit}`;
-                //     document.getElementById('system-lole').textContent = loleText;
-                // }
-                
-                // // Format system NEUE: mean ± stderr ppm/(timesteps)*(stepsize)
-                // if (neueMean !== undefined && neueStderr !== undefined) {
-                //     const neueText = `${formatNumber(neueMean, 1)} ± ${formatNumber(neueStderr, 1)} ppm/${totalDuration} ${timeUnit}`;
-                //     document.getElementById('system-neue').textContent = neueText;
-                // }
-                
-                // showDebug(`Sample count: ${sampleCount}`);
 
                 // Get events with system shortfall metrics
                 const systemEvents = await window.loadSystemPlotEvents(conn);
@@ -1217,10 +1201,7 @@
                         "<p>Regional month-hour heatmaps are only shown for simulations containing all 12 months.</p>";
                 }
 
-                // // // Populate table
-                // document.getElementById('event-count').textContent = formatNumber(cachedSystemEventCount, 0);
-                // cachedSystemEvents = systemEvents;  
-
+                // Populate table
                 window._systemEvents = systemEvents;
                 window._stepSize = stepSize;
                 window._energyUnit = energyUnit;
@@ -1244,9 +1225,6 @@
                     timeUnit
                 );
                 logBenchmark("rendered regional plots");
-
-                // const regionalTbody = document.getElementById("regional-events-tbody");
-                // regionalTbody.innerHTML = "";
 
                 logBenchmark("finished loadData");
 
