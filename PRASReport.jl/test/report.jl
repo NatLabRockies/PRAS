@@ -1,43 +1,64 @@
-# @testset "String input to create_pras_report" begin
-#     system_path = joinpath(@__DIR__, "../../PRASFiles.jl/src/Systems/rts.pras")
+@testset "SystemModel input to create_pras_report" begin
+    sys = deepcopy(system)
+    sys.regions.load .+= 375
 
-#     string_test = @capture_out begin
-#         create_pras_report(system_path, samples=1000, seed=1, 
-#                             report_name="string_test")
-#     end
-#     string_test = strip(string_test)
-#     @test startswith(string_test,"Writing report to:")
-#     @test contains(string_test, "string_test.html")
-#     string_test = replace(string_test, r"Writing report to: " => "")
-#     @test isfile(string_test)
-#     rm(string_test; force=true)
-# end
+    report_dir = mktempdir()
 
-# @testset "SystemModel input to create_pras_report" begin
-#     string_test = @capture_out begin
-#         create_pras_report(system, samples=1000, seed=1, 
-#                             report_name="sysmodel_test")
-#     end
-#     string_test = strip(string_test)
-#     @test startswith(string_test,"Writing report to:")
-#     @test contains(string_test, "sysmodel_test.html")
-#     string_test = replace(string_test, r"Writing report to: " => "")
-#     @test isfile(string_test)
-#     rm(string_test, force=true)
-# end
+    output = @capture_out begin
+        create_pras_report(
+            sys;
+            samples=100,
+            seed=1,
+            report_name="sysmodel_test",
+            report_path=report_dir,
+            title="Test Report",
+        )
+    end
 
-# @testset "ShortfallResult, FlowResult input to create_pras_report" begin
-#     sf,flow = assess(system,SequentialMonteCarlo(samples=1000,seed=1),
-#                         Shortfall(),Flow())
-    
-#     string_test = @capture_out begin
-#         create_pras_report(sf,flow,  
-#                             report_name="sfflow_test")
-#     end
-#     string_test = strip(string_test)
-#     @test startswith(string_test,"Writing report to:")
-#     @test contains(string_test, "sfflow_test.html")
-#     string_test = replace(string_test, r"Writing report to: " => "")
-#     @test isfile(string_test)
-#     rm(string_test, force=true)
-# end
+    report_path = joinpath(report_dir, "sysmodel_test.html")
+
+    @test contains(output, "Writing report to:")
+    @test isfile(report_path)
+
+    html = read(report_path, String)
+    @test contains(html, "Test Report")
+    @test contains(html, "Monte Carlo Average Results")
+    @test contains(html, "RA Events - system level summary")
+    @test contains(html, "RA Events - regional summary")
+end
+
+@testset "Result input to create_pras_report" begin
+    sys = deepcopy(system)
+    sys.regions.load .+= 375
+
+    sf, flow, events = assess(
+        sys,
+        SequentialMonteCarlo(samples=100, seed=1),
+        Shortfall(),
+        Flow(),
+        ShortfallEvents(),
+    )
+
+    report_dir = mktempdir()
+
+    output = @capture_out begin
+        create_pras_report(
+            sf,
+            flow,
+            events;
+            report_name="results_test",
+            report_path=report_dir,
+            title="Results Test Report",
+        )
+    end
+
+    report_path = joinpath(report_dir, "results_test.html")
+
+    @test contains(output, "Writing report to:")
+    @test isfile(report_path)
+
+    html = read(report_path, String)
+    @test contains(html, "Results Test Report")
+    @test contains(html, "Monte Carlo Average Results")
+    @test contains(html, "Regional Mean Shortfall by Month and Hour")
+end
