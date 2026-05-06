@@ -5,7 +5,7 @@ import PRASCore.Systems: SystemModel, Regions, Interfaces,
                             timeunits, powerunits, energyunits, unitsymbol,
                             unitsymbol_long, conversionfactor
 import PRASCore.Simulations: assess, SequentialMonteCarlo
-import PRASCore.Results: EUE, LOLE, NEUE, 
+import PRASCore.Results: EUE, LOLE, NEUE,
                             Shortfall, Flow,
                             ShortfallResult, FlowResult,
                             ShortfallSamplesResult, AbstractShortfallResult, 

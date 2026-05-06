@@ -68,3 +68,19 @@ CREATE TABLE event_metrics (
     max_energy REAL NOT NULL,
     max_energy_stderr REAL NOT NULL
 );
+
+CREATE TABLE mc_regional_metrics (
+    region_id INTEGER REFERENCES regions(id),
+    eue_mean REAL NOT NULL,
+    eue_stderr REAL NOT NULL,
+    lole_mean REAL NOT NULL,
+    lole_stderr REAL NOT NULL,
+    neue_mean REAL NOT NULL,
+    neue_stderr REAL NOT NULL,
+);
+
+CREATE TABLE shortfall_mean_timeseries (
+    timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    region_id INTEGER REFERENCES regions(id),
+    mean_shortfall REAL NOT NULL
+);

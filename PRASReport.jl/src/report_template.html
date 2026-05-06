@@ -183,6 +183,22 @@
             gap: 2rem;
         }
 
+        .regional-heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .regional-heatmap {
+            height: 330px;
+        }
+
+        @media (max-width: 1000px) {
+            .regional-heatmap-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (min-width: 1200px) {
             .charts-grid {
                 grid-template-columns: 1fr 1fr 1fr;
@@ -463,9 +479,6 @@
             <ul class="summary-list">
                 <li><strong>Simulation Period:</strong> <span id="simulation-period">-</span></li>
                 <li><strong>Samples:</strong> <span id="sample-count">-</span></li>
-                <li><strong>System LOLE:</strong> <span id="system-lole">-</span></li>
-                <li><strong>System NEUE:</strong> <span id="system-neue">-</span></li>
-                <li><strong>Events:</strong> <span id="event-count">-</span></li>
             </ul>
             <div class="card-footer centered">
                 <div class="glossary-link">
@@ -480,7 +493,60 @@
             </div>
         </div>
 
+        <div id="mc-section" class="table-container">
+            <div class="table-header">
+                <span class="header-title">Monte Carlo Average Results</span>
+            </div>
+        
+            <div class="summary-card">
+                <h2>System Reliability Metrics</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>EUE</th>
+                            <th>LOLE</th>
+                            <th>NEUE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="mc-eue" class="numeric">-</td>
+                            <td id="mc-lole" class="numeric">-</td>
+                            <td id="mc-neue" class="numeric">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        
+            <div class="summary-card">
+                <h2>Regional Reliability Metrics</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Region</th>
+                            <th>EUE</th>
+                            <th>LOLE</th>
+                            <th>NEUE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mc-regional-metrics-tbody">
+                    </tbody>
+                </table>
+            </div>
 
+            <div class="summary-card">
+                <h2>System Mean Shortfall by Month and Hour</h2>
+                <div class="chart-wrapper" style="height: 500px;">
+                    <div id="system-shortfall-heatmap"></div>
+                </div>
+            </div>
+            
+            <div class="summary-card">
+                <h2>Regional Mean Shortfall by Month and Hour</h2>
+                <div id="regional-shortfall-heatmaps" class="regional-heatmap-grid"></div>
+            </div>
+
+        </div>
 
         <div id="loading" class="loading">
             <div class="spinner"></div>
@@ -987,6 +1053,22 @@
             });
         }
 
+        function populateRegionalMCMetricsTable(metrics, energyUnit, timeUnit) {
+            const tbody = document.getElementById("mc-regional-metrics-tbody");
+            tbody.innerHTML = "";
+
+            metrics.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${row.region_name}</td>
+                    <td class="numeric">${formatEstimate(row.eue_mean, row.eue_stderr, 2)} ${energyUnit}</td>
+                    <td class="numeric">${formatEstimate(row.lole_mean, row.lole_stderr, 2)} event-${timeUnit}</td>
+                    <td class="numeric">${formatEstimate(row.neue_mean, row.neue_stderr, 2)} ppm</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
 
         async function loadData() {
             try {
@@ -999,24 +1081,26 @@
                 
                 logBenchmark("start loadData");    
 
+                let simInfo = null;
+
                 try {
-                    const params = [await window.loadSimulationInfo(conn)];
-                    if (params.length > 0) {
-                        sampleCount = params[0].n_samples;
-                        stepSize = params[0].step_size;
-                        timeUnit = params[0].time_unit;
-                        energyUnit = params[0].energy_unit;
-                        timesteps = params[0].timesteps;
-                        startTimestamp = params[0].start_timestamp;
-                        endTimestamp = params[0].end_timestamp;
-                        timezone = params[0].timezone;
-                        loleMean = params[0].lole_mean;
-                        loleStderr = params[0].lole_stderr;
-                        neueMean = params[0].neue_mean;
-                        neueStderr = params[0].neue_stderr;
+                    simInfo = await window.loadSimulationInfo(conn);
+                    if (simInfo) {
+                        sampleCount = simInfo.n_samples;
+                        stepSize = simInfo.step_size;
+                        timeUnit = simInfo.time_unit;
+                        energyUnit = simInfo.energy_unit;
+                        timesteps = simInfo.timesteps;
+                        startTimestamp = simInfo.start_timestamp;
+                        endTimestamp = simInfo.end_timestamp;
+                        timezone = simInfo.timezone;
+                        loleMean = simInfo.lole_mean;
+                        loleStderr = simInfo.lole_stderr;
+                        neueMean = simInfo.neue_mean;
+                        neueStderr = simInfo.neue_stderr;
                     }
                 } catch (e) {
-                        showDebug(`Could not find parameters table: ${e.message}`);
+                    showDebug(`Could not find parameters table: ${e.message}`);
                 }
 
                 logBenchmark("loaded simulation info");
@@ -1026,6 +1110,14 @@
                 document.getElementById('end-time-header').textContent = `End Time (${timezone})`;
                 document.getElementById('duration-header').textContent = `Event Duration (${timeUnit})`;
                 document.getElementById('energy-header').textContent = `Energy (${energyUnit})`;
+                document.getElementById('mc-eue').textContent =
+                `${formatEstimate(simInfo.eue_mean, simInfo.eue_stderr, 2)} ${energyUnit}`;
+
+                document.getElementById('mc-lole').textContent =
+                    `${formatEstimate(loleMean, loleStderr, 2)} event-${timeUnit}`;
+
+                document.getElementById('mc-neue').textContent =
+                    `${formatEstimate(neueMean, neueStderr, 2)} ppm`;
 
 
                 // Update simulation summary stats
@@ -1040,17 +1132,17 @@
                 // Calculate total simulation duration for rates
                 const totalDuration = timesteps * stepSize;
                 
-                // Format system LOLE: mean ± stderr event-(timeunit)/(timesteps)*(stepsize)
-                if (loleMean !== undefined && loleStderr !== undefined) {
-                    const loleText = `${formatNumber(loleMean, 1)} ± ${formatNumber(loleStderr, 1)} event-${timeUnit}/${totalDuration} ${timeUnit}`;
-                    document.getElementById('system-lole').textContent = loleText;
-                }
+                // // Format system LOLE: mean ± stderr event-(timeunit)/(timesteps)*(stepsize)
+                // if (loleMean !== undefined && loleStderr !== undefined) {
+                //     const loleText = `${formatNumber(loleMean, 1)} ± ${formatNumber(loleStderr, 1)} event-${timeUnit}/${totalDuration} ${timeUnit}`;
+                //     document.getElementById('system-lole').textContent = loleText;
+                // }
                 
-                // Format system NEUE: mean ± stderr ppm/(timesteps)*(stepsize)
-                if (neueMean !== undefined && neueStderr !== undefined) {
-                    const neueText = `${formatNumber(neueMean, 1)} ± ${formatNumber(neueStderr, 1)} ppm/${totalDuration} ${timeUnit}`;
-                    document.getElementById('system-neue').textContent = neueText;
-                }
+                // // Format system NEUE: mean ± stderr ppm/(timesteps)*(stepsize)
+                // if (neueMean !== undefined && neueStderr !== undefined) {
+                //     const neueText = `${formatNumber(neueMean, 1)} ± ${formatNumber(neueStderr, 1)} ppm/${totalDuration} ${timeUnit}`;
+                //     document.getElementById('system-neue').textContent = neueText;
+                // }
                 
                 // showDebug(`Sample count: ${sampleCount}`);
 
@@ -1104,8 +1196,29 @@
                 populateRegionalEventMetricsTable(regionalEventMetrics, stepSize, timeUnit, energyUnit);
                 logBenchmark(`loaded regional event metrics table: ${regionalEventMetrics.length} rows`);
 
+                const regionalMCMetrics = await window.loadRegionalMCMetrics(conn);
+                populateRegionalMCMetricsTable(regionalMCMetrics, energyUnit, timeUnit);
+                logBenchmark(`loaded regional MC metrics table: ${regionalMCMetrics.length} rows`);
+
+                const hasFullYearHeatmapData = await window.hasFullYearShortfallHeatmapData(conn);
+                if (hasFullYearHeatmapData) {
+                    const systemHeatmapRows = await window.loadSystemShortfallHeatmap(conn);
+                    window.renderSystemShortfallHeatmap(systemHeatmapRows, energyUnit);
+                    logBenchmark(`rendered system shortfall heatmap: ${systemHeatmapRows.length} rows`);
+
+                    const regionalHeatmapRows = await window.loadRegionalShortfallHeatmaps(conn);
+                    window.renderRegionalShortfallHeatmaps(regionalHeatmapRows, energyUnit);
+                    logBenchmark(`rendered regional shortfall heatmaps: ${regionalHeatmapRows.length} rows`);
+                } else {
+                    document.getElementById("system-shortfall-heatmap").innerHTML =
+                        "<p>Month-hour heatmap is only shown for simulations containing all 12 months.</p>";
+
+                    document.getElementById("regional-shortfall-heatmaps").innerHTML =
+                        "<p>Regional month-hour heatmaps are only shown for simulations containing all 12 months.</p>";
+                }
+
                 // // // Populate table
-                document.getElementById('event-count').textContent = formatNumber(cachedSystemEventCount, 0);
+                // document.getElementById('event-count').textContent = formatNumber(cachedSystemEventCount, 0);
                 // cachedSystemEvents = systemEvents;  
 
                 window._systemEvents = systemEvents;

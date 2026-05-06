@@ -96,7 +96,11 @@ window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, t
         layout[xaxisName] = { domain: [x0, x1], anchor: yref };
         layout[yaxisName] = { domain: [yHist0, yHist1], anchor: xref, title: facetCol === 0 ? "Events" : "" };
 
-        layout[xaxisName2] = { domain: [x0, x1], anchor: yref2, title: `Duration (${timeUnit})` };
+        layout[xaxisName2] = {
+            domain: [x0, x1],
+            anchor: yref2,
+            title: (facetRow === facetRows - 1) ? `Duration (${timeUnit})` : ""
+        };
         layout[yaxisName2] = { domain: [yScat0, yScat1], anchor: xref2, title: facetCol === 0 ? `Energy (${energyUnit})` : "" };
 
         const data = regionalData.get(region);
@@ -133,15 +137,103 @@ window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, t
         });
 
         layout.annotations.push({
-            text: region,
+            text: `<b><u>${region}</u></b>`,
             x: (x0 + x1) / 2,
             y: yHist1 + 0.03,
             xref: "paper",
             yref: "paper",
             showarrow: false,
-            font: { size: 13 }
+            font: { size: 15 }
         });
     });
 
     Plotly.newPlot("regional-events-faceted-plot", traces, layout, { responsive: true });
+};
+
+function makeMonthHourMatrix(rows) {
+    const z = Array.from({ length: 12 }, () => Array(24).fill(0));
+
+    rows.forEach(row => {
+        const month = Number(row.month);
+        const hour = Number(row.hour);
+        if (month >= 1 && month <= 12 && hour >= 0 && hour <= 23) {
+            z[month - 1][hour] = Number(row.mean_shortfall || 0);
+        }
+    });
+
+    return z;
+}
+
+window.renderSystemShortfallHeatmap = function(rows, energyUnit) {
+    const z = makeMonthHourMatrix(rows);
+
+    Plotly.newPlot("system-shortfall-heatmap", [{
+        z: z,
+        x: Array.from({ length: 24 }, (_, i) => i),
+        y: Array.from({ length: 12 }, (_, i) => i + 1),
+        type: "heatmap",
+        colorscale: [
+            [0, "#ffffff"],
+            [0.5, "#fdae6b"],
+            [1, "#d7301f"]
+        ],
+        colorbar: { title: `Mean Shortfall (${energyUnit})` },
+        hovertemplate:
+            "Month: %{y}<br>Hour: %{x}<br>Mean shortfall: %{z:.3f} " + energyUnit + "<extra></extra>"
+    }], {
+        xaxis: { title: "Hour of day" },
+        yaxis: { title: "Month", autorange: "reversed" },
+        margin: { t: 20, l: 60, r: 80, b: 60 }
+    }, { responsive: true });
+};
+
+window.renderRegionalShortfallHeatmaps = function(rows, energyUnit) {
+    const container = document.getElementById("regional-shortfall-heatmaps");
+    container.innerHTML = "";
+
+    const byRegion = new Map();
+
+    rows.forEach(row => {
+        const region = row.region_name || "Unknown";
+        if (!byRegion.has(region)) {
+            byRegion.set(region, []);
+        }
+        byRegion.get(region).push(row);
+    });
+
+    [...byRegion.keys()].sort().forEach((region, idx) => {
+        const div = document.createElement("div");
+        const plotId = `regional-shortfall-heatmap-${idx}`;
+        div.id = plotId;
+        div.className = "regional-heatmap";
+        container.appendChild(div);
+
+        const z = makeMonthHourMatrix(byRegion.get(region));
+
+        Plotly.newPlot(plotId, [{
+            z: z,
+            x: Array.from({ length: 24 }, (_, i) => i),
+            y: Array.from({ length: 12 }, (_, i) => i + 1),
+            type: "heatmap",
+            colorscale: [
+                [0, "#ffffff"],
+                [0.5, "#fdae6b"],
+                [1, "#d7301f"]
+            ],
+            showscale: idx === byRegion.size - 1,
+            colorbar: idx === byRegion.size - 1
+                ? { title: `Mean Shortfall (${energyUnit})` }
+                : undefined,
+            hovertemplate:
+                "Region: " + region +
+                "<br>Month: %{y}<br>Hour: %{x}<br>Mean shortfall: %{z:.3f} " +
+                energyUnit +
+                "<extra></extra>"
+        }], {
+            title: { text: `<b><u>${region}</u></b>`, font: { size: 15 } },
+            xaxis: { title: "Hour" },
+            yaxis: { title: "Month", autorange: "reversed" },
+            margin: { t: 45, l: 45, r: idx === byRegion.size - 1 ? 80 : 20, b: 45 }
+        }, { responsive: true });
+    });
 };

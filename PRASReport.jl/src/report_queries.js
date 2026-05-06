@@ -2,7 +2,8 @@ window.loadSimulationInfo = async function(conn) {
     const result = await conn.query(`
         SELECT n_samples, step_size, time_unit, energy_unit, timesteps,
                start_timestamp, end_timestamp, timezone,
-               lole_mean, lole_stderr, neue_mean, neue_stderr
+               lole_mean, lole_stderr, neue_mean, neue_stderr,
+               eue_mean, eue_stderr
         FROM report_db.systemsiminfo
         LIMIT 1
     `);
@@ -190,4 +191,58 @@ window.loadRegionalEventMetricsTable = async function(conn) {
         ORDER BY r.name
     `);
     return result.toArray();
+};
+
+window.loadRegionalMCMetrics = async function(conn) {
+    const result = await conn.query(`
+        SELECT
+            r.name AS region_name,
+            m.eue_mean,
+            m.eue_stderr,
+            m.lole_mean,
+            m.lole_stderr,
+            m.neue_mean,
+            m.neue_stderr
+        FROM report_db.mc_regional_metrics m
+        LEFT JOIN report_db.regions r ON m.region_id = r.id
+        ORDER BY r.name
+    `);
+    return result.toArray();
+};
+
+window.loadSystemShortfallHeatmap = async function(conn) {
+    const result = await conn.query(`
+        SELECT
+            month(timestamp) AS month,
+            hour(timestamp) AS hour,
+            SUM(mean_shortfall) AS mean_shortfall
+        FROM report_db.shortfall_mean_timeseries
+        GROUP BY month, hour
+        ORDER BY month, hour
+    `);
+    return result.toArray();
+};
+
+window.loadRegionalShortfallHeatmaps = async function(conn) {
+    const result = await conn.query(`
+        SELECT
+            r.name AS region_name,
+            month(s.timestamp) AS month,
+            hour(s.timestamp) AS hour,
+            AVG(s.mean_shortfall) AS mean_shortfall
+        FROM report_db.shortfall_mean_timeseries s
+        LEFT JOIN report_db.regions r ON s.region_id = r.id
+        GROUP BY r.name, month, hour
+        ORDER BY r.name, month, hour
+    `);
+    return result.toArray();
+};
+
+window.hasFullYearShortfallHeatmapData = async function(conn) {
+    const result = await conn.query(`
+        SELECT COUNT(DISTINCT month(timestamp)) AS n_months
+        FROM report_db.shortfall_mean_timeseries
+    `);
+
+    return Number(result.toArray()[0].n_months) === 12;
 };

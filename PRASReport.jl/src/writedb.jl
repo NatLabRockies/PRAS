@@ -93,6 +93,8 @@ function get_db(
     _write_db!(sf.regions.names, conn)
     _write_db!(events, conn)
     _write_db_event_metrics!(events, conn)
+    _write_db_mc_regional_metrics!(sf, conn)
+    _write_db_shortfall_mean_timeseries!(sf, conn)
 
     if !isnothing(flow)
         _write_db!(flow.interfaces, conn)
@@ -210,6 +212,63 @@ function _write_db!(interfaces::Vector{Pair{String,String}}, conn::DuckDB.Connec
         
         DuckDB.flush(appender)
         
+    finally
+        DuckDB.close(appender)
+    end
+end
+
+function _write_db_mc_regional_metrics!(
+    sf::ShortfallResult,
+    conn::DuckDB.Connection
+)
+    region_ids = get_region_ids_ordered(sf.regions.names, conn)
+    appender = DuckDB.Appender(conn, "mc_regional_metrics")
+
+    try
+        for (region_name, region_id) in zip(sf.regions.names, region_ids)
+            eue = EUE(sf, region_name)
+            lole = LOLE(sf, region_name)
+            neue = NEUE(sf, region_name)
+
+            DuckDB.append(appender, region_id)
+
+            DuckDB.append(appender, val(eue))
+            DuckDB.append(appender, stderror(eue))
+
+            DuckDB.append(appender, val(lole))
+            DuckDB.append(appender, stderror(lole))
+
+            DuckDB.append(appender, val(neue))
+            DuckDB.append(appender, stderror(neue))
+
+            DuckDB.end_row(appender)
+        end
+
+        DuckDB.flush(appender)
+    finally
+        DuckDB.close(appender)
+    end
+end
+
+function _write_db_shortfall_mean_timeseries!(
+    sf::ShortfallResult{N,L,T,E},
+    conn::DuckDB.Connection
+) where {N,L,T,E}
+    region_ids = get_region_ids_ordered(sf.regions.names, conn)
+
+    appender = DuckDB.Appender(conn, "shortfall_mean_timeseries")
+
+    try
+        for (r, region_id) in enumerate(region_ids)
+            for t in eachindex(sf.timestamps)
+                DuckDB.append(appender, DateTime(sf.timestamps[t]))
+                DuckDB.append(appender, region_id)
+                DuckDB.append(appender, sf.shortfall_mean[r, t])
+                DuckDB.end_row(appender)
+            end
+        end
+
+        DuckDB.flush(appender)
     finally
         DuckDB.close(appender)
     end
