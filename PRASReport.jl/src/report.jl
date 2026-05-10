@@ -120,6 +120,7 @@ function _html_report(base64_db::String;
 
     queries_js = read(joinpath(@__DIR__, "report_queries.js"), String)
     plots_js = read(joinpath(@__DIR__, "report_plots.js"), String)
+    styles_css = read(joinpath(@__DIR__, "report_style.css"), String)
 
     report_html = read(joinpath(@__DIR__, "report_template.html"), String)
 
@@ -134,11 +135,15 @@ function _html_report(base64_db::String;
     "{{REPORT_TITLE_PLACEHOLDER}}" => title)
 
     report_html = replace(report_html,
+    "{{REPORT_STYLES_CSS_PLACEHOLDER}}" => styles_css)
+
+    report_html = replace(report_html,
     "{{REPORT_QUERIES_JS_PLACEHOLDER}}" => "\nconsole.log('QUERIES JS INJECTED');\n" * queries_js)
 
     report_html = replace(report_html,
     "{{REPORT_PLOTS_JS_PLACEHOLDER}}" => plots_js)
 
+    @assert !contains(report_html, "{{REPORT_STYLES_CSS_PLACEHOLDER}}")
     @assert !contains(report_html, "{{REPORT_QUERIES_JS_PLACEHOLDER}}")
     @assert !contains(report_html, "{{REPORT_PLOTS_JS_PLACEHOLDER}}")
 

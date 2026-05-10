@@ -14,7 +14,7 @@ CREATE TABLE systemsiminfo (
     lole_mean REAL NOT NULL,
     lole_stderr REAL NOT NULL,
     neue_mean REAL NOT NULL,
-    neue_stderr REAL NOT NULL,
+    neue_stderr REAL NOT NULL
     
     -- Constraint to ensure valid ISO 8601 duration units
     CONSTRAINT valid_time_unit CHECK (
@@ -76,7 +76,7 @@ CREATE TABLE mc_regional_metrics (
     lole_mean REAL NOT NULL,
     lole_stderr REAL NOT NULL,
     neue_mean REAL NOT NULL,
-    neue_stderr REAL NOT NULL,
+    neue_stderr REAL NOT NULL
 );
 
 CREATE TABLE shortfall_mean_timeseries (

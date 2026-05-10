@@ -1,688 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PRAS Report</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f5f5f5;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem 0;
-            margin-bottom: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        header h1 {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .summary-card {
-            background: white;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            border-left: 4px solid #667eea;
-        }
-
-        .summary-card h2 {
-            color: #667eea;
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-        }
-
-        .summary-card table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .summary-card th, .summary-card td {
-            padding: 8px 12px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .summary-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .summary-list li {
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .summary-list li:last-child {
-            border-bottom: none;
-        }
-
-        .summary-list strong {
-            color: #667eea;
-            margin-right: 0.5rem;
-        }
-
-        .card-footer {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 1rem;
-            color: #666;
-        }
-
-        .card-footer.centered {
-            justify-content: center;
-            gap: 4rem;
-        }
-
-        .card-footer a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .card-footer a:hover {
-            text-decoration: underline;
-        }
-
-        .glossary-link {
-            text-align: left;
-        }
-
-        .generated-with {
-            text-align: right;
-        }
-
-        .export-db-link {
-            text-align: center;
-        }
-
-        .view-toggle {
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-
-        .toggle-button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            margin: 0 0.25rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-
-        .toggle-button:hover {
-            background: #5a67d8;
-        }
-
-        .toggle-button.active {
-            background: #4c51bf;
-        }
-
-        .charts-container {
-            padding: 1rem;
-            display: none;
-        }
-
-        .charts-container.active {
-            display: block;
-        }
-
-        #table-wrapper {
-            background: white;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: 600px;
-        }
-
-        #table-wrapper[style*="display: none"] {
-            visibility: hidden;
-            position: absolute;
-            height: 0;
-            padding: 0;
-            margin: 0;
-            border: none;
-            box-shadow: none;
-        }
-
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-        }
-
-        .regional-heatmap-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-        }
-
-        .regional-heatmap {
-            height: 330px;
-        }
-
-        @media (max-width: 1000px) {
-            .regional-heatmap-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (min-width: 1200px) {
-            .charts-grid {
-                grid-template-columns: 1fr 1fr 1fr;
-            }
-        }
-
-        .chart-wrapper {
-            position: relative;
-            height: 450px;
-            padding: 0.5rem;
-        }
-
-        .table-container {
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-        }
-
-        .table-header {
-            background: #667eea;
-            color: white;
-            padding: 1rem;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-title {
-            flex: 1;
-        }
-
-        .table-header .view-toggle {
-            margin: 0;
-        }
-
-        .table-header .toggle-button {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            font-size: 0.9rem;
-            padding: 0.4rem 0.8rem;
-        }
-
-        .table-header .toggle-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .table-header .toggle-button.active {
-            background: rgba(255, 255, 255, 0.9);
-            color: #667eea;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-            position: relative;
-        }
-
-        th, td {
-            padding: 12px 16px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            color: #333;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        tr:hover {
-            background-color: #f8f9fa;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 3rem;
-            color: #666;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 1rem;
-            border-radius: 4px;
-            margin: 1rem 0;
-            border: 1px solid #f5c6cb;
-        }
-
-        .debug {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            padding: 1rem;
-            border-radius: 4px;
-            margin: 1rem 0;
-            border: 1px solid #bee5eb;
-            font-family: monospace;
-            white-space: pre-wrap;
-        }
-
-        .numeric {
-            text-align: right;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-        }
-
-        th.numeric {
-            text-align: center;
-        }
-
-        /* Scrollable table enhancements */
-        #table-wrapper::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        #table-wrapper::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        #table-wrapper::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 4px;
-        }
-
-        #table-wrapper::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
-
-        /* Add a subtle fade effect at the top when scrolled */
-        #table-wrapper {
-            position: relative;
-        }
-
-        #table-wrapper::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(to bottom, rgba(102, 126, 234, 0.1), transparent);
-            pointer-events: none;
-            z-index: 50;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        #table-wrapper.scrolled::before {
-            opacity: 1;
-        }
-
-        .event-name {
-            font-weight: 500;
-            color: #667eea;
-        }
-
-        .navigation-link {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 500;
-            margin-top: 1rem;
-            transition: background-color 0.2s;
-        }
-
-        .navigation-link:hover {
-            background: #5a67d8;
-            text-decoration: none;
-            color: white;
-        }
-
-        .page {
-            display: none;
-        }
-
-        .page.active {
-            display: block;
-        }
-
-        .glossary-term {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #eee;
-        }
-
-        .glossary-term:last-child {
-            border-bottom: none;
-        }
-
-        .glossary-term h3 {
-            color: #667eea;
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
-
-        .glossary-term p {
-            line-height: 1.7;
-            color: #555;
-        }
-
-        .back-link {
-            margin-bottom: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            header h1 {
-                font-size: 2rem;
-            }
-            
-            table {
-                font-size: 0.9rem;
-            }
-            
-            th, td {
-                padding: 8px 12px;
-            }
-
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .chart-wrapper {
-                height: 350px;
-            }
-
-            .card-footer.centered {
-                gap: 1rem;
-                flex-wrap: wrap;
-            }
-        }
+        {{REPORT_STYLES_CSS_PLACEHOLDER}}
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
             <h1>{{REPORT_TITLE_PLACEHOLDER}}</h1>
         </header>
 
-        <!-- Main Report Page -->
         <div id="main-page" class="page active">
-        <div class="summary-card">
-            <h2>Simulation Summary</h2>
-            <ul class="summary-list">
-                <li><strong>Simulation Period:</strong> <span id="simulation-period">-</span></li>
-                <li><strong>Samples:</strong> <span id="sample-count">-</span></li>
-            </ul>
-            <div class="card-footer centered">
-                <div class="glossary-link">
-                    <a href="#" onclick="showGlossary(); return false;">Glossary of Terms</a>
-                </div>
-                <div class="export-db-link">
-                    <a href="#" onclick="exportDatabase(); return false;">Export report DB</a>
-                </div>
-                <div class="generated-with">
-                    Generated with <a href="https://nrel.github.io/PRAS/" target="_blank" rel="noopener noreferrer"><b>PRAS</b></a>
-                </div>
-            </div>
-        </div>
-
-        <div id="mc-section" class="table-container">
-            <div class="table-header">
-                <span class="header-title">Monte Carlo Average Results</span>
-            </div>
-        
             <div class="summary-card">
-                <h2>System Reliability Metrics</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>EUE</th>
-                            <th>LOLE</th>
-                            <th>NEUE</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td id="mc-eue" class="numeric">-</td>
-                            <td id="mc-lole" class="numeric">-</td>
-                            <td id="mc-neue" class="numeric">-</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        
-            <div class="summary-card">
-                <h2>Regional Reliability Metrics</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Region</th>
-                            <th>EUE</th>
-                            <th>LOLE</th>
-                            <th>NEUE</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mc-regional-metrics-tbody">
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="summary-card">
-                <h2>System Mean Shortfall by Month and Hour</h2>
-                <div class="chart-wrapper" style="height: 500px;">
-                    <div id="system-shortfall-heatmap"></div>
-                </div>
-            </div>
-            
-            <div class="summary-card">
-                <h2>Regional Mean Shortfall by Month and Hour</h2>
-                <div id="regional-shortfall-heatmaps" class="regional-heatmap-grid"></div>
-            </div>
-
-        </div>
-
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Loading data...</p>
-        </div>
-
-        <div id="error" class="error" style="display: none;"></div>
-        <div id="debug" class="debug" style="display: none;"></div>
-
-        <div id="events-section" class="table-container">
-            <div class="table-header">
-                <div class="header-content">
-                    <span class="header-title">RA Events - system level summary</span>
-                    <div class="view-toggle">
-                        <button class="toggle-button active" onclick="showCharts()">View as Charts</button>
-                        <button class="toggle-button" onclick="showTable()">View as Table</button>
+                <h2>Simulation Summary</h2>
+                <ul class="summary-list">
+                    <li><strong>Simulation Period:</strong> <span id="simulation-period">-</span></li>
+                    <li><strong>Samples:</strong> <span id="sample-count">-</span></li>
+                </ul>
+                <div class="card-footer centered">
+                    <div class="glossary-link">
+                        <a href="#" onclick="showGlossary(); return false;">Glossary of Terms</a>
+                    </div>
+                    <div class="export-db-link">
+                        <a href="#" onclick="exportDatabase(); return false;">Export report DB</a>
+                    </div>
+                    <div class="generated-with">
+                        Generated with <a href="https://natlabrockies.github.io/PRAS/" target="_blank" rel="noopener noreferrer"><b>PRAS</b></a>
                     </div>
                 </div>
             </div>
-            <div id="charts-container-inner" class="charts-container active">
-                <div class="summary-card">
-                    <h2>System Event Metrics</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Number of Events</th>
-                                <th>LOLEv</th>
-                                <th>Mean Duration</th>
-                                <th>Max Duration</th>
-                                <th>Mean Energy</th>
-                                <th>Max Energy</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td id="event-metric-count" class="numeric">-</td>
-                                <td id="event-metric-lolev" class="numeric">-</td>
-                                <td id="event-metric-mean-duration" class="numeric">-</td>
-                                <td id="event-metric-max-duration" class="numeric">-</td>
-                                <td id="event-metric-mean-energy" class="numeric">-</td>
-                                <td id="event-metric-max-energy" class="numeric">-</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="charts-grid">
-                    <div class="chart-wrapper">
-                        <div id="duration-histogram"></div>
-                    </div>
-                    <div class="chart-wrapper">
-                        <div id="energy-scatter"></div>
-                    </div>
-                </div>
-            </div>
-            <div id="table-wrapper" style="display: none;">
-                <table id="events-table">
-                    <thead>
-                        <tr>
-                            <th>Event ID</th>
-                            <th>Sample</th>
-                            <th id="start-time-header">Start Time</th>
-                            <th id="end-time-header">End Time</th>
-                            <th id="duration-header">Event Duration</th>
-                            <th id="energy-header">Energy</th>
-                        </tr>
-                    </thead>
-                    <tbody id="events-tbody">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
 
-        <div id="regional-events-section" class="table-container">
-            <div class="table-header">
-                <div class="header-content">
-                    <span class="header-title">RA Events - regional summary</span>
-                    <div class="view-toggle">
-                        <button class="toggle-button active" onclick="showRegionalCharts()">View as Charts</button>
-                        <button class="toggle-button" onclick="showRegionalTable()">View as Table</button>
+            <div id="mc-section">
+                <div class="section-heading">
+                    <div class="section-title-row">
+                        <span class="section-number">1</span>
+                        <div>
+                            <h2>Monte Carlo Average Results</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-body">
+                    <div id="mc-system-subsection" class="subsection-group">
+                        <h3 class="subsection-group-title"><span>1.1</span> System-Level Results</h3>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">System Reliability Metrics</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>EUE</th>
+                                        <th>LOLE</th>
+                                        <th>NEUE</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td id="mc-eue" class="numeric">-</td>
+                                        <td id="mc-lole" class="numeric">-</td>
+                                        <td id="mc-neue" class="numeric">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">System Mean Shortfall by Month and Hour</h4>
+                            <div class="chart-wrapper" style="height: 500px;">
+                                <div id="system-shortfall-heatmap"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="mc-region-subsection" class="subsection-group">
+                        <h3 class="subsection-group-title"><span>1.2</span> Region-Level Results</h3>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">Regional Reliability Metrics</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Region</th>
+                                        <th>EUE</th>
+                                        <th>LOLE</th>
+                                        <th>NEUE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mc-regional-metrics-tbody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">Regional Mean Shortfall by Month and Hour</h4>
+                            <div id="regional-shortfall-heatmaps" class="regional-heatmap-grid"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        
-            <div id="regional-charts-container" class="charts-container active">
-                <div class="summary-card">
-                    <h2>Regional Event Metrics</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Region</th>
-                                <th>Number of Events</th>
-                                <th>LOLEv</th>
-                                <th>Mean Duration</th>
-                                <th>Max Duration</th>
-                                <th>Mean Energy</th>
-                                <th>Max Energy</th>
-                            </tr>
-                        </thead>
-                        <tbody id="regional-event-metrics-tbody">
-                        </tbody>
-                    </table>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading data...</p>
+            </div>
+
+            <div id="error" class="error" style="display: none;"></div>
+            <div id="debug" class="debug" style="display: none;"></div>
+
+            <div id="events-section">
+                <div class="section-heading">
+                    <div class="section-title-row">
+                        <span class="section-number">2</span>
+                        <div>
+                            <h2>Resource Adequacy Events</h2>
+                        </div>
+                    </div>
                 </div>
-                <div class="chart-wrapper" style="height: 900px;">
-                    <div id="regional-events-faceted-plot"></div>
+
+                <div class="section-body">
+                    <div id="events-system-subsection" class="subsection-group">
+                        <h3 class="subsection-group-title"><span>2.1</span> System-Level Events</h3>
+                    
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">System Event Metrics</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Number of Events</th>
+                                        <th>LOLEv</th>
+                                        <th>Mean Duration</th>
+                                        <th>Max Duration</th>
+                                        <th>Mean Energy</th>
+                                        <th>Max Energy</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td id="event-metric-count" class="numeric">-</td>
+                                        <td id="event-metric-lolev" class="numeric">-</td>
+                                        <td id="event-metric-mean-duration" class="numeric">-</td>
+                                        <td id="event-metric-max-duration" class="numeric">-</td>
+                                        <td id="event-metric-mean-energy" class="numeric">-</td>
+                                        <td id="event-metric-max-energy" class="numeric">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    
+                        <div class="subsection-part">
+                            <div class="subsection-part-header">
+                                <h4 class="subsection-part-title">System Event Visualizations</h4>
+                                <div class="view-toggle">
+                                    <button id="system-charts-button" class="toggle-button active" onclick="showCharts()">View as Charts</button>
+                                    <button id="system-table-button" class="toggle-button" onclick="showTable()">View as Table</button>
+                                </div>
+                            </div>
+                    
+                            <div id="charts-container-inner" class="charts-container active">
+                                <div class="charts-grid">
+                                    <div class="chart-wrapper">
+                                        <div id="duration-histogram"></div>
+                                    </div>
+                                    <div class="chart-wrapper">
+                                        <div id="energy-scatter"></div>
+                                    </div>
+                                </div>
+                            </div>
+                    
+                            <div id="table-wrapper" class="event-table-wrapper" style="display: none;">
+                                <table id="events-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Event ID</th>
+                                            <th>Sample</th>
+                                            <th id="start-time-header">Start Time</th>
+                                            <th id="end-time-header">End Time</th>
+                                            <th id="duration-header">Event Duration</th>
+                                            <th id="energy-header">Energy</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="events-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="events-region-subsection" class="subsection-group">
+                        <h3 class="subsection-group-title"><span>2.2</span> Region-Level Events</h3>
+                    
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">Regional Event Metrics</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Region</th>
+                                        <th>Number of Events</th>
+                                        <th>LOLEv</th>
+                                        <th>Mean Duration</th>
+                                        <th>Max Duration</th>
+                                        <th>Mean Energy</th>
+                                        <th>Max Energy</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="regional-event-metrics-tbody"></tbody>
+                            </table>
+                        </div>
+                    
+                        <div class="subsection-part">
+                            <div class="subsection-part-header">
+                                <h4 class="subsection-part-title">Regional Event Visualizations</h4>
+                                <div class="view-toggle">
+                                    <button id="regional-charts-button" class="toggle-button active" onclick="showRegionalCharts()">View as Charts</button>
+                                    <button id="regional-table-button" class="toggle-button" onclick="showRegionalTable()">View as Table</button>
+                                </div>
+                            </div>
+                    
+                            <div id="regional-charts-container" class="charts-container active">
+                                <div class="chart-wrapper" style="height: 900px;">
+                                    <div id="regional-events-faceted-plot"></div>
+                                </div>
+                            </div>
+                    
+                            <div id="regional-table-wrapper" class="event-table-wrapper" style="display: none;">
+                                <table id="regional-events-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Event ID</th>
+                                            <th>Sample</th>
+                                            <th>Region</th>
+                                            <th>Start Time</th>
+                                            <th>End Time</th>
+                                            <th>Duration</th>
+                                            <th>Energy</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="regional-events-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        
-            <div id="regional-table-wrapper" style="display: none;">
-                <table id="regional-events-table">
-                    <thead>
-                        <tr>
-                            <th>Event ID</th>
-                            <th>Sample</th>
-                            <th>Region</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Duration</th>
-                            <th>Energy</th>
-                        </tr>
-                    </thead>
-                    <tbody id="regional-events-tbody"></tbody>
-                </table>
-            </div>
-        </div>
         </div>
 
-        <!-- Glossary Page -->
         <div id="glossary-page" class="page">
             <div class="back-link">
                 <a href="#" class="navigation-link" onclick="showMainPage(); return false;">← Back to Report Homepage</a>
             </div>
-            
+
             <div class="summary-card">
                 <h2>Glossary of Terms</h2>
-                
+
                 <div class="glossary-term">
                     <h3>Expected Unserved Energy (EUE)</h3>
                     <p>Expected Unserved Energy (EUE) is the expected (average) total energy shortfall over the study period. It may be expressed in energy units (e.g. GWh per year).</p>
@@ -700,9 +273,8 @@
 
                 <div class="glossary-term">
                     <h3>Resource Adequacy (RA) Event</h3>
-                    <p>A Resource Adequacy event in this report is a contiguous run of one or more simulation timesteps with positive shortfall, recorded directly from ShortfallEvents.</p>
+                    <p>A Resource Adequacy event is a set of shortfall-periods that are contiguous at the highest available temporal resolution, recorded directly from ShortfallEvents.</p>
                 </div>
-
             </div>
         </div>
     </div>
@@ -725,6 +297,8 @@
         let cachedSystemEventCount = 0;
         let cachedRegionalEventCount = 0;
 
+        const ENABLE_EVENT_TABLES = true;
+
         function logBenchmark(label) {
             if (benchmarkStart === null) return;
 
@@ -739,6 +313,15 @@
             }
 
             console.log(`[PRASReport benchmark] ${label}: ${elapsed.toFixed(0)} ms, ${memoryText}`);
+        }
+
+        async function benchmarkStep(label, fn) {
+            const t0 = performance.now();
+            const result = await fn();
+            const dt = performance.now() - t0;
+            console.log(`[PRASReport benchmark step] ${label}: ${dt.toFixed(0)} ms`);
+            logBenchmark(label);
+            return result;
         }
 
         function showError(message) {
@@ -789,7 +372,25 @@
                 }
 
                 // Decode base64 database
-                const binaryData = Uint8Array.from(atob(BASE64_DB), c => c.charCodeAt(0));
+                // const binaryData = Uint8Array.from(atob(BASE64_DB), c => c.charCodeAt(0));
+                const base64SizeMB = BASE64_DB.length / 1024 / 1024;
+                console.log(`[PRASReport size] embedded base64 size: ${base64SizeMB.toFixed(2)} MB`);
+
+                const decodeStart = performance.now();
+                const binaryString = atob(BASE64_DB);
+                const decodeEnd = performance.now();
+
+                const binarySizeMB = binaryString.length / 1024 / 1024;
+                console.log(`[PRASReport size] decoded DuckDB size: ${binarySizeMB.toFixed(2)} MB`);
+                console.log(`[PRASReport benchmark step] base64 decode: ${(decodeEnd - decodeStart).toFixed(0)} ms`);
+
+                const bytesStart = performance.now();
+                const binaryData = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    binaryData[i] = binaryString.charCodeAt(i);
+                }
+                console.log(`[PRASReport benchmark step] bytes copy: ${(performance.now() - bytesStart).toFixed(0)} ms`);
+
                 
                 // Create blob and download link
                 const blob = new Blob([binaryData], { type: 'application/octet-stream' });
@@ -820,18 +421,27 @@
         function showCharts() {
             document.getElementById('charts-container-inner').classList.add('active');
             document.getElementById('table-wrapper').style.display = 'none';
-            document.querySelectorAll('.toggle-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.toggle-button')[0].classList.add('active');
+            document.getElementById('system-charts-button').classList.add('active');
+            document.getElementById('system-table-button').classList.remove('active');
         }
 
         async function showTable() {
             document.getElementById('charts-container-inner').classList.remove('active');
             document.getElementById('table-wrapper').style.display = 'block';
-            document.querySelectorAll('.toggle-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.toggle-button')[1].classList.add('active');
+            document.getElementById('system-charts-button').classList.remove('active');
+            document.getElementById('system-table-button').classList.add('active');
+            
+            if (ENABLE_EVENT_TABLES) {
+                // const tableEvents = await window.loadSystemTableEvents(conn, MAX_TABLE_ROWS);
+                const systemTableEvents = await benchmarkStep("query system table events", () =>
+                    window.loadSystemShortfallEvents(conn)
+                );
 
-            const tableEvents = await window.loadSystemTableEvents(conn, MAX_TABLE_ROWS);
-            populateSystemEventTable(tableEvents, cachedSystemEventCount);
+                // populateSystemEventTable(tableEvents, cachedSystemEventCount);
+                await benchmarkStep("render system event table", async () => {
+                    populateSystemEventTable(systemTableEvents, cachedSystemEventCount);
+                });
+            }
 
             setTimeout(setupTableScrollIndicator, 100);
         }
@@ -839,14 +449,27 @@
         function showRegionalCharts() {
             document.getElementById('regional-charts-container').classList.add('active');
             document.getElementById('regional-table-wrapper').style.display = 'none';
+            document.getElementById('regional-charts-button').classList.add('active');
+            document.getElementById('regional-table-button').classList.remove('active');
         }
 
         async function showRegionalTable() {
             document.getElementById('regional-charts-container').classList.remove('active');
             document.getElementById('regional-table-wrapper').style.display = 'block';
+            document.getElementById('regional-charts-button').classList.remove('active');
+            document.getElementById('regional-table-button').classList.add('active');
 
-            const tableEvents = await window.loadRegionalTableEvents(conn, MAX_TABLE_ROWS);
-            populateRegionalEventTable(tableEvents, cachedRegionalEventCount);
+            if (ENABLE_EVENT_TABLES) {
+                // const tableEvents = await window.loadRegionalTableEvents(conn, MAX_TABLE_ROWS);
+                const regionalTableEvents = await benchmarkStep("query regional table events", () =>
+                    window.loadRegionalShortfallEvents(conn)
+                );
+
+                // populateRegionalEventTable(tableEvents, cachedRegionalEventCount);
+                await benchmarkStep("render regional event table", async () => {
+                    populateRegionalEventTable(regionalTableEvents, cachedRegionalEventCount);
+                });
+            }
         }
 
         window.showRegionalCharts = showRegionalCharts;
@@ -861,8 +484,7 @@
 
         // Add scroll indicator for table
         function setupTableScrollIndicator() {
-            const tableWrapper = document.getElementById('table-wrapper');
-            if (tableWrapper) {
+            document.querySelectorAll('.event-table-wrapper').forEach(tableWrapper => {
                 tableWrapper.addEventListener('scroll', function() {
                     if (this.scrollTop > 10) {
                         this.classList.add('scrolled');
@@ -870,7 +492,7 @@
                         this.classList.remove('scrolled');
                     }
                 });
-            }
+            });
         }
 
         // Call setup when table is shown
@@ -939,8 +561,14 @@
                 // showDebug(`Database size: ${binaryData.length} bytes`);
                 
                 // Register the database
+                // await db.registerFileBuffer("report.db", binaryData);
+                const registerStart = performance.now();
                 await db.registerFileBuffer("report.db", binaryData);
+                console.log(`[PRASReport benchmark step] register DuckDB buffer: ${(performance.now() - registerStart).toFixed(0)} ms`);
+                // await conn.query("ATTACH 'report.db' AS report_db");
+                const attachStart = performance.now();
                 await conn.query("ATTACH 'report.db' AS report_db");
+                console.log(`[PRASReport benchmark step] attach DuckDB file: ${(performance.now() - attachStart).toFixed(0)} ms`);
                 logBenchmark("database attached");
                 // showDebug('Database attached successfully');
 
@@ -1131,11 +759,17 @@
                 const totalDuration = timesteps * stepSize;
 
                 // Get events with system shortfall metrics
-                const systemEvents = await window.loadSystemPlotEvents(conn);
+                // const systemEvents = await window.loadSystemPlotEvents(conn);
+                const systemEvents = await benchmarkStep("query system plot events", () =>
+                    window.loadSystemPlotEvents(conn)
+                );
                 cachedSystemEventCount = systemEvents.sample_id.length;
                 logBenchmark(`loaded system plot events: ${cachedSystemEventCount} rows`);
 
-                const regionalEvents = await window.loadRegionalPlotEvents(conn);
+                // const regionalEvents = await window.loadRegionalPlotEvents(conn);
+                const regionalEvents = await benchmarkStep("query regional plot events", () =>
+                    window.loadRegionalPlotEvents(conn)
+                );
                 cachedRegionalEventCount = [...regionalEvents.values()]
                     .reduce((sum, group) => sum + group.sample_id.length, 0);
                 logBenchmark(`loaded regional plot events: ${cachedRegionalEventCount} rows`);
@@ -1208,7 +842,10 @@
                 window._timeUnit = timeUnit;
 
                 // Create charts
-                window.renderEventPlots(systemEvents, stepSize, energyUnit, timeUnit);
+                // window.renderEventPlots(systemEvents, stepSize, energyUnit, timeUnit);
+                await benchmarkStep("render system event plots", async () => {
+                    window.renderEventPlots(systemEvents, stepSize, energyUnit, timeUnit);
+                });
                 logBenchmark("rendered system plots");
 
                 // Hide loading and show charts by default (table is ready but hidden)
@@ -1218,12 +855,15 @@
 
                 logBenchmark(`prepared plot events: system=${cachedSystemEventCount}, regional=${cachedRegionalEventCount}`);
 
-                window.renderRegionalEventPlots(
-                    regionalEvents,
-                    stepSize,
-                    energyUnit,
-                    timeUnit
-                );
+                // window.renderRegionalEventPlots(
+                //     regionalEvents,
+                //     stepSize,
+                //     energyUnit,
+                //     timeUnit
+                // );
+                await benchmarkStep("render regional event plots", async () => {
+                    window.renderRegionalEventPlots(regionalEvents, stepSize, energyUnit, timeUnit);
+                });
                 logBenchmark("rendered regional plots");
 
                 logBenchmark("finished loadData");
@@ -1247,4 +887,5 @@
         });
     </script>
 </body>
+
 </html>
