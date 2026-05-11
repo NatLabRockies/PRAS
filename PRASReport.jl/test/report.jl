@@ -23,8 +23,11 @@
     html = read(report_path, String)
     @test contains(html, "Test Report")
     @test contains(html, "Monte Carlo Average Results")
-    @test contains(html, "RA Events - system level summary")
-    @test contains(html, "RA Events - regional summary")
+    @test contains(html, "System-Level Results")
+    @test contains(html, "Region-Level Results")
+    @test contains(html, "Adequacy Events")
+    @test contains(html, "System-Level Events")
+    @test contains(html, "Region-Level Events")
 end
 
 @testset "Result input to create_pras_report" begin

@@ -7,11 +7,14 @@ window.renderEventPlots = function(systemData, stepSize, energyUnit, timeUnit) {
         x: durations,
         type: "histogram",
         xbins: { size: stepSize },
+        marker: {
+            color: "#b8c5d4"
+        },
         hovertemplate: "Duration: %{x}<br>Count: %{y}<extra></extra>"
     }], {
         title: "System Event Duration Distribution",
         xaxis: { title: `Duration (${timeUnit})` },
-        yaxis: { title: "Number of events" },
+        yaxis: { title: "Number of Events" },
         margin: { t: 50, l: 60, r: 20, b: 60 }
     }, { responsive: true });
 
@@ -27,15 +30,34 @@ window.renderEventPlots = function(systemData, stepSize, energyUnit, timeUnit) {
             color: energies,
             colorscale: "Viridis",
             showscale: true,
-            colorbar: { title: energyUnit }
+            colorbar: {
+                title: {
+                    text: energyUnit,
+                    side: "right",
+                    font: {
+                        size: 12
+                    }
+                },
+                len: 0.85,
+                thickness: 12,
+                outlinewidth: 0,
+                tickwidth: 0.5
+            }
         },
         hovertemplate:
             "Sample %{customdata}<br>Duration: %{x}<br>Energy: %{y:.2f} " + energyUnit + "<extra></extra>"
     }], {
         title: "System Event Energy vs Duration",
-        xaxis: { title: `Duration (${timeUnit})` },
-        yaxis: { title: `Energy (${energyUnit})` },
-        margin: { t: 50, l: 70, r: 90, b: 60 }
+        xaxis: {
+            title: `Duration (${timeUnit})`,
+            constrain: "domain"
+        },
+        yaxis: {
+            title: `Energy (${energyUnit})`,
+            showline: false,
+            zeroline: false
+        },
+        margin: { t: 60, l: 80, r: 140, b: 80 }
     }, { responsive: true });
 };
 
@@ -108,6 +130,9 @@ window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, t
         traces.push({
             x: data.duration,
             type: "histogram",
+            marker: {
+                color: "#b8c5d4"
+            },
             xaxis: xref,
             yaxis: yref,
             xbins: { size: stepSize },
@@ -129,7 +154,20 @@ window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, t
                 cmin: cmin,
                 cmax: cmax,
                 showscale: idx === regions.length - 1,
-                colorbar: idx === regions.length - 1 ? { title: energyUnit } : undefined
+                colorbar: idx === regions.length - 1
+                    ? {
+                        title: {
+                            text: energyUnit,
+                            side: "right",
+                            font: { size: 12 }
+                        },
+                        tickfont: { size: 12 },
+                        len: 0.85,
+                        thickness: 12,
+                        outlinewidth: 0,
+                        ticks: ""
+                    }
+                    : undefined
             },
             customdata: data.sample_id,
             hovertemplate:
@@ -137,55 +175,43 @@ window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, t
         });
 
         layout.annotations.push({
-            text: `<b><u>${region}</u></b>`,
+            text: `<b><span style="text-decoration: underline;">${region}</span></b>`,
             x: (x0 + x1) / 2,
-            y: yHist1 + 0.03,
+            y: yHist1 + 0.001,
             xref: "paper",
             yref: "paper",
+            xanchor: "center",
+            yanchor: "bottom",
+            align: "center",
             showarrow: false,
-            font: { size: 15 }
+            font: {
+                size: 14
+            }
         });
     });
 
     Plotly.newPlot("regional-events-faceted-plot", traces, layout, { responsive: true });
 };
 
-function makeMonthHourMatrix(rows) {
-    const z = Array.from({ length: 12 }, () => Array(24).fill(0));
+function wrapPlotTitle(text, maxChars = 18) {
+    const words = String(text).split(/\s+/);
+    const lines = [];
+    let line = "";
 
-    rows.forEach(row => {
-        const month = Number(row.month);
-        const hour = Number(row.hour);
-        if (month >= 1 && month <= 12 && hour >= 0 && hour <= 23) {
-            z[month - 1][hour] = Number(row.mean_shortfall || 0);
+    words.forEach(word => {
+        const candidate = line ? `${line} ${word}` : word;
+        if (candidate.length > maxChars && line) {
+            lines.push(line);
+            line = word;
+        } else {
+            line = candidate;
         }
     });
 
-    return z;
+    if (line) lines.push(line);
+
+    return lines.join("<br>");
 }
-
-window.renderSystemShortfallHeatmap = function(rows, energyUnit) {
-    const z = makeMonthHourMatrix(rows);
-
-    Plotly.newPlot("system-shortfall-heatmap", [{
-        z: z,
-        x: Array.from({ length: 24 }, (_, i) => i),
-        y: Array.from({ length: 12 }, (_, i) => i + 1),
-        type: "heatmap",
-        colorscale: [
-            [0, "#ffffff"],
-            [0.5, "#fdae6b"],
-            [1, "#d7301f"]
-        ],
-        colorbar: { title: `Mean Shortfall (${energyUnit})` },
-        hovertemplate:
-            "Month: %{y}<br>Hour: %{x}<br>Mean shortfall: %{z:.3f} " + energyUnit + "<extra></extra>"
-    }], {
-        xaxis: { title: "Hour of day" },
-        yaxis: { title: "Month", autorange: "reversed" },
-        margin: { t: 20, l: 60, r: 80, b: 60 }
-    }, { responsive: true });
-};
 
 window.renderRegionalShortfallHeatmaps = function(rows, energyUnit) {
     const container = document.getElementById("regional-shortfall-heatmaps");
@@ -208,13 +234,16 @@ window.renderRegionalShortfallHeatmaps = function(rows, energyUnit) {
         div.className = "regional-heatmap";
         container.appendChild(div);
 
-        const z = makeMonthHourMatrix(byRegion.get(region));
+        // const z = makeMonthHourMatrix(byRegion.get(region));
+        const z = makeMonthHourMatrix(byRegion.get(region), "mean_shortfall");
 
         Plotly.newPlot(plotId, [{
             z: z,
             x: Array.from({ length: 24 }, (_, i) => i),
             y: Array.from({ length: 12 }, (_, i) => i + 1),
             type: "heatmap",
+            xgap: 1,
+            ygap: 1,
             colorscale: [
                 [0, "#ffffff"],
                 [0.5, "#fdae6b"],
@@ -222,18 +251,149 @@ window.renderRegionalShortfallHeatmaps = function(rows, energyUnit) {
             ],
             showscale: idx === byRegion.size - 1,
             colorbar: idx === byRegion.size - 1
-                ? { title: `Mean Shortfall (${energyUnit})` }
+                ? {
+                    title: {
+                        text: `Mean Shortfall (${energyUnit})`,
+                        side: "right",
+                        font: {size: 11}
+                    },
+                    tickfont: {size: 11},
+                    len: 0.85,
+                    x: 1.08,
+                    thickness: 12,
+                    outlinewidth: 0,
+                    ticks: ""
+                }
                 : undefined,
             hovertemplate:
                 "Region: " + region +
-                "<br>Month: %{y}<br>Hour: %{x}<br>Mean shortfall: %{z:.3f} " +
+                "<br>Month: %{y}<br>Hour: %{x}<br>Mean Shortfall: %{z:.3f} " +
                 energyUnit +
                 "<extra></extra>"
         }], {
-            title: { text: `<b><u>${region}</u></b>`, font: { size: 15 } },
-            xaxis: { title: "Hour" },
-            yaxis: { title: "Month", autorange: "reversed" },
-            margin: { t: 45, l: 45, r: idx === byRegion.size - 1 ? 80 : 20, b: 45 }
+            title: {
+                text: `<b><u>${wrapPlotTitle(region, 18)}</u></b>`,
+                font: { size: 12 }
+            },
+            xaxis: {
+                title: {text: "Hour", font: {size: 11}},
+                tickfont: {size: 11},
+                showline: false,
+                zeroline: false
+            },
+            yaxis: {
+                title: {text: "Month", font: {size: 11}},
+                tickfont: {size: 11},
+                autorange: "reversed",
+                showline: false,
+                zeroline: false
+            },
+            plot_bgcolor: "#f5f5f5",
+            paper_bgcolor: "white",
+            margin: { t: 32, l: 32, r: 10, b: 32 }
         }, { responsive: true });
+    });
+};
+
+window.renderSystemShortfallTimeseries = function(rows, energyUnit) {
+    Plotly.newPlot("system-shortfall-timeseries", [{
+        x: rows.map(r => r.timestamp),
+        y: rows.map(r => Number(r.mean_shortfall || 0)),
+        type: "scatter",
+        mode: "lines",
+        hovertemplate:
+            "Time: %{x}<br>Mean Shortfall: %{y:.3f} " + energyUnit + "<extra></extra>"
+    }], {
+        xaxis: {
+            title: "",
+            showticklabels: false,
+            ticks: "",
+            showline: false,
+            zeroline: false
+        },
+        yaxis: {
+            title: `Mean Shortfall (${energyUnit})`,
+            showline: false,
+            zeroline: false
+        },
+        margin: { t: 20, l: 70, r: 30, b: 60 }
+    }, { responsive: true });
+};
+
+function makeMonthHourMatrix(rows, valueName) {
+    const z = Array.from({ length: 12 }, () => Array(24).fill(0));
+
+    rows.forEach(row => {
+        const month = Number(row.month);
+        const hour = Number(row.hour);
+
+        if (month >= 1 && month <= 12 && hour >= 0 && hour <= 23) {
+            z[month - 1][hour] = Number(row[valueName] || 0);
+        }
+    });
+
+    return z;
+}
+
+function renderSystemMonthHourHeatmap({
+    plotId,
+    rows,
+    valueName,
+    label,
+    unit,
+    precision = 3
+}) {
+    const z = makeMonthHourMatrix(rows, valueName);
+
+    Plotly.newPlot(plotId, [{
+        z: z,
+        x: Array.from({ length: 24 }, (_, i) => i),
+        y: Array.from({ length: 12 }, (_, i) => i + 1),
+        type: "heatmap",
+        xgap: 1,
+        ygap: 1,
+        colorscale: [
+            [0, "#ffffff"],
+            [0.5, "#fdae6b"],
+            [1, "#d7301f"]
+        ],
+        colorbar: {
+            title: {
+                text: `${label} (${unit})`,
+                side: "right"
+            },
+            len: 0.85,
+            thickness: 12,
+            outlinewidth: 0,
+            tickwidth: 0.5
+        },
+        hovertemplate:
+            `Month: %{y}<br>Hour: %{x}<br>${label}: %{z:.${precision}f} ${unit}<extra></extra>`
+    }], {
+        xaxis: { title: "Hour of day", showline: false, zeroline: false },
+        yaxis: { title: "Month", autorange: "reversed", showline: false, zeroline: false },
+        plot_bgcolor: "#f5f5f5",
+        paper_bgcolor: "white",
+        margin: { t: 20, l: 60, r: 120, b: 60 }
+    }, { responsive: true });
+}
+
+window.renderSystemShortfallHeatmap = function(rows, energyUnit) {
+    renderSystemMonthHourHeatmap({
+        plotId: "system-shortfall-heatmap",
+        rows: rows,
+        valueName: "mean_shortfall",
+        label: "Mean Shortfall",
+        unit: energyUnit
+    });
+};
+
+window.renderSystemNEUEHeatmap = function(rows) {
+    renderSystemMonthHourHeatmap({
+        plotId: "system-neue-heatmap",
+        rows: rows,
+        valueName: "neue",
+        label: "Mean NEUE",
+        unit: "ppm"
     });
 };

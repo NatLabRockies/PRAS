@@ -72,8 +72,22 @@
 
                         <div class="subsection-part">
                             <h4 class="subsection-part-title">System Mean Shortfall by Month and Hour</h4>
-                            <div class="chart-wrapper" style="height: 500px;">
+                            <div class="chart-wrapper system-heatmap-wrapper">
                                 <div id="system-shortfall-heatmap"></div>
+                            </div>
+                        </div>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">System Mean NEUE by Month and Hour</h4>
+                            <div class="chart-wrapper system-heatmap-wrapper">
+                                <div id="system-neue-heatmap"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">System Mean Shortfall Time Series</h4>
+                            <div class="chart-wrapper" style="height: 420px;">
+                                <div id="system-shortfall-timeseries"></div>
                             </div>
                         </div>
                     </div>
@@ -117,7 +131,7 @@
                     <div class="section-title-row">
                         <span class="section-number">2</span>
                         <div>
-                            <h2>Resource Adequacy Events</h2>
+                            <h2>Adequacy Events</h2>
                         </div>
                     </div>
                 </div>
@@ -162,11 +176,11 @@
                             </div>
                     
                             <div id="charts-container-inner" class="charts-container active">
-                                <div class="charts-grid">
+                                <div class="system-event-charts">
                                     <div class="chart-wrapper">
                                         <div id="duration-histogram"></div>
                                     </div>
-                                    <div class="chart-wrapper">
+                                    <div class="chart-wrapper" style="height: 520px;">
                                         <div id="energy-scatter"></div>
                                     </div>
                                 </div>
@@ -272,8 +286,8 @@
                 </div>
 
                 <div class="glossary-term">
-                    <h3>Resource Adequacy (RA) Event</h3>
-                    <p>A Resource Adequacy event is a set of shortfall-periods that are contiguous at the highest available temporal resolution, recorded directly from ShortfallEvents.</p>
+                    <h3>Adequacy Event</h3>
+                    <p>An adequacy event is a set of shortfall-periods that are contiguous at the highest available temporal resolution, recorded directly from ShortfallEvents.</p>
                 </div>
             </div>
         </div>
@@ -824,12 +838,36 @@
                     window.renderSystemShortfallHeatmap(systemHeatmapRows, energyUnit);
                     logBenchmark(`rendered system shortfall heatmap: ${systemHeatmapRows.length} rows`);
 
+                    // const systemNEUERows = await window.loadSystemNEUEHeatmap(conn);
+                    // window.renderSystemNEUEHeatmap(systemNEUERows);
+
+                    // const systemShortfallTimeseriesRows = await window.loadSystemShortfallTimeseries(conn);
+                    // window.renderSystemShortfallTimeseries(systemShortfallTimeseriesRows, energyUnit);
+                    const systemNEUERows = await benchmarkStep("query system NEUE heatmap", () =>
+                        window.loadSystemNEUEHeatmap(conn)
+                    );
+
+                    await benchmarkStep("render system NEUE heatmap", async () => {
+                        window.renderSystemNEUEHeatmap(systemNEUERows);
+                    });
+
+                    const systemShortfallTimeseriesRows = await benchmarkStep("query system shortfall timeseries", () =>
+                        window.loadSystemShortfallTimeseries(conn)
+                    );
+
+                    await benchmarkStep("render system shortfall timeseries", async () => {
+                        window.renderSystemShortfallTimeseries(systemShortfallTimeseriesRows, energyUnit);
+                    });
+
                     const regionalHeatmapRows = await window.loadRegionalShortfallHeatmaps(conn);
                     window.renderRegionalShortfallHeatmaps(regionalHeatmapRows, energyUnit);
                     logBenchmark(`rendered regional shortfall heatmaps: ${regionalHeatmapRows.length} rows`);
                 } else {
                     document.getElementById("system-shortfall-heatmap").innerHTML =
                         "<p>Month-hour heatmap is only shown for simulations containing all 12 months.</p>";
+
+                    document.getElementById("system-neue-heatmap").innerHTML =
+                    "<p>Month-hour heatmap is only shown for simulations containing all 12 months.</p>";
 
                     document.getElementById("regional-shortfall-heatmaps").innerHTML =
                         "<p>Regional month-hour heatmaps are only shown for simulations containing all 12 months.</p>";

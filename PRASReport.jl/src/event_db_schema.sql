@@ -84,3 +84,9 @@ CREATE TABLE shortfall_mean_timeseries (
     region_id INTEGER REFERENCES regions(id),
     mean_shortfall REAL NOT NULL
 );
+
+CREATE TABLE load_timeseries (
+    timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    region_id INTEGER REFERENCES regions(id),
+    load REAL NOT NULL
+);

@@ -95,6 +95,7 @@ function get_db(
     _write_db_event_metrics!(events, conn)
     _write_db_mc_regional_metrics!(sf, conn)
     _write_db_shortfall_mean_timeseries!(sf, conn)
+    _write_db_load_timeseries!(sf, conn)
 
     if !isnothing(flow)
         _write_db!(flow.interfaces, conn)
@@ -264,6 +265,30 @@ function _write_db_shortfall_mean_timeseries!(
                 DuckDB.append(appender, DateTime(sf.timestamps[t]))
                 DuckDB.append(appender, region_id)
                 DuckDB.append(appender, sf.shortfall_mean[r, t])
+                DuckDB.end_row(appender)
+            end
+        end
+
+        DuckDB.flush(appender)
+    finally
+        DuckDB.close(appender)
+    end
+end
+
+function _write_db_load_timeseries!(
+    sf::ShortfallResult{N,L,T,E},
+    conn::DuckDB.Connection
+) where {N,L,T,E}
+    region_ids = get_region_ids_ordered(sf.regions.names, conn)
+
+    appender = DuckDB.Appender(conn, "load_timeseries")
+
+    try
+        for (r, region_id) in enumerate(region_ids)
+            for t in eachindex(sf.timestamps)
+                DuckDB.append(appender, DateTime(sf.timestamps[t]))
+                DuckDB.append(appender, region_id)
+                DuckDB.append(appender, sf.regions.load[r, t])
                 DuckDB.end_row(appender)
             end
         end

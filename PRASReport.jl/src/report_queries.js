@@ -212,11 +212,18 @@ window.loadRegionalMCMetrics = async function(conn) {
 
 window.loadSystemShortfallHeatmap = async function(conn) {
     const result = await conn.query(`
+        WITH system_shortfall AS (
+            SELECT
+                timestamp,
+                SUM(mean_shortfall) AS mean_shortfall
+            FROM report_db.shortfall_mean_timeseries
+            GROUP BY timestamp
+        )
         SELECT
             month(timestamp) AS month,
             hour(timestamp) AS hour,
-            SUM(mean_shortfall) AS mean_shortfall
-        FROM report_db.shortfall_mean_timeseries
+            AVG(mean_shortfall) AS mean_shortfall
+        FROM system_shortfall
         GROUP BY month, hour
         ORDER BY month, hour
     `);
@@ -245,4 +252,49 @@ window.hasFullYearShortfallHeatmapData = async function(conn) {
     `);
 
     return Number(result.toArray()[0].n_months) === 12;
+};
+
+window.loadSystemNEUEHeatmap = async function(conn) {
+    const result = await conn.query(`
+        WITH system_by_timestamp AS (
+            SELECT
+                s.timestamp,
+                SUM(s.mean_shortfall) AS mean_shortfall,
+                SUM(l.load) AS load
+            FROM report_db.shortfall_mean_timeseries s
+            JOIN report_db.load_timeseries l
+                ON s.timestamp = l.timestamp
+               AND s.region_id = l.region_id
+            GROUP BY s.timestamp
+        ),
+        neue_by_timestamp AS (
+            SELECT
+                timestamp,
+                CASE
+                    WHEN load > 0 THEN mean_shortfall / (load / 1e6)
+                    ELSE 0
+                END AS neue
+            FROM system_by_timestamp
+        )
+        SELECT
+            month(timestamp) AS month,
+            hour(timestamp) AS hour,
+            AVG(neue) AS neue
+        FROM neue_by_timestamp
+        GROUP BY month, hour
+        ORDER BY month, hour
+    `);
+    return result.toArray();
+};
+
+window.loadSystemShortfallTimeseries = async function(conn) {
+    const result = await conn.query(`
+        SELECT
+            timestamp,
+            SUM(mean_shortfall) AS mean_shortfall
+        FROM report_db.shortfall_mean_timeseries
+        GROUP BY timestamp
+        ORDER BY timestamp
+    `);
+    return result.toArray();
 };
