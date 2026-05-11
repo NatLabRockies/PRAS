@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRAS Report</title>
+    <style>
+        {{REPORT_STYLES_CSS_PLACEHOLDER}}
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>{{REPORT_TITLE_PLACEHOLDER}}</h1>
+        </header>
+
+        <div id="main-page" class="page active">
+            <div class="summary-card">
+                <h2>Simulation Summary</h2>
+                <ul class="summary-list">
+                    <li><strong>Simulation Period:</strong> <span id="simulation-period">-</span></li>
+                    <li><strong>Samples:</strong> <span id="sample-count">-</span></li>
+                </ul>
+                <div class="card-footer centered">
+                    <div class="glossary-link">
+                        <a href="#" onclick="showGlossary(); return false;">Glossary of Terms</a>
+                    </div>
+                    <div class="export-db-link">
+                        <a href="#" onclick="exportDatabase(); return false;">Export report DB</a>
+                    </div>
+                    <div class="generated-with">
+                        Generated with <a href="https://natlabrockies.github.io/PRAS/" target="_blank" rel="noopener noreferrer"><b>PRAS</b></a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mc-section">
+                <div class="section-heading">
+                    <div class="section-title-row">
+                        <span class="section-number">1</span>
+                        <div>
+                            <h2>Monte Carlo Average Results</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-body">
+                    <div id="mc-system-subsection" class="subsection-group">
+                        <h3 class="subsection-group-title"><span>1.1</span> System-Level Results</h3>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">System Reliability Metrics</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>EUE</th>
+                                        <th>LOLE</th>
+                                        <th>NEUE</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td id="mc-eue" class="numeric">-</td>
+                                        <td id="mc-lole" class="numeric">-</td>
+                                        <td id="mc-neue" class="numeric">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">System Mean Shortfall by Month and Hour</h4>
+                            <div class="chart-wrapper system-heatmap-wrapper">
+                                <div id="system-shortfall-heatmap"></div>
+                            </div>
+                        </div>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">System Mean NEUE by Month and Hour</h4>
+                            <div class="chart-wrapper system-heatmap-wrapper">
+                                <div id="system-neue-heatmap"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">System Mean Shortfall Time Series</h4>
+                            <div class="chart-wrapper" style="height: 420px;">
+                                <div id="system-shortfall-timeseries"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="mc-region-subsection" class="subsection-group">
+                        <h3 class="subsection-group-title"><span>1.2</span> Region-Level Results</h3>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">Regional Reliability Metrics</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Region</th>
+                                        <th>EUE</th>
+                                        <th>LOLE</th>
+                                        <th>NEUE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mc-regional-metrics-tbody"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">Regional Mean Shortfall by Month and Hour</h4>
+                            <div id="regional-shortfall-heatmaps" class="regional-heatmap-grid"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading data...</p>
+            </div>
+
+            <div id="error" class="error" style="display: none;"></div>
+            <div id="debug" class="debug" style="display: none;"></div>
+
+            <div id="events-section">
+                <div class="section-heading">
+                    <div class="section-title-row">
+                        <span class="section-number">2</span>
+                        <div>
+                            <h2>Adequacy Events</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-body">
+                    <div id="events-system-subsection" class="subsection-group">
+                        <h3 class="subsection-group-title"><span>2.1</span> System-Level Events</h3>
+                    
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">System Event Metrics</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Number of Events</th>
+                                        <th>LOLEv</th>
+                                        <th>Mean Duration</th>
+                                        <th>Max Duration</th>
+                                        <th>Mean Energy</th>
+                                        <th>Max Energy</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td id="event-metric-count" class="numeric">-</td>
+                                        <td id="event-metric-lolev" class="numeric">-</td>
+                                        <td id="event-metric-mean-duration" class="numeric">-</td>
+                                        <td id="event-metric-max-duration" class="numeric">-</td>
+                                        <td id="event-metric-mean-energy" class="numeric">-</td>
+                                        <td id="event-metric-max-energy" class="numeric">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    
+                        <div class="subsection-part">
+                            <div class="subsection-part-header">
+                                <h4 class="subsection-part-title">System Event Visualizations</h4>
+                                <div class="view-toggle">
+                                    <button id="system-charts-button" class="toggle-button active" onclick="showCharts()">View as Charts</button>
+                                    <button id="system-table-button" class="toggle-button" onclick="showTable()">View as Table</button>
+                                </div>
+                            </div>
+                    
+                            <div id="charts-container-inner" class="charts-container active">
+                                <div class="system-event-charts">
+                                    <div class="chart-wrapper">
+                                        <div id="duration-histogram"></div>
+                                    </div>
+                                    <div class="chart-wrapper" style="height: 520px;">
+                                        <div id="energy-scatter"></div>
+                                    </div>
+                                </div>
+                            </div>
+                    
+                            <div id="table-wrapper" class="event-table-wrapper" style="display: none;">
+                                <table id="events-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Event ID</th>
+                                            <th>Sample</th>
+                                            <th id="start-time-header">Start Time</th>
+                                            <th id="end-time-header">End Time</th>
+                                            <th id="duration-header">Event Duration</th>
+                                            <th id="energy-header">Energy</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="events-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="events-region-subsection" class="subsection-group">
+                        <h3 class="subsection-group-title"><span>2.2</span> Region-Level Events</h3>
+                    
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">Regional Event Metrics</h4>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Region</th>
+                                        <th>Number of Events</th>
+                                        <th>LOLEv</th>
+                                        <th>Mean Duration</th>
+                                        <th>Max Duration</th>
+                                        <th>Mean Energy</th>
+                                        <th>Max Energy</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="regional-event-metrics-tbody"></tbody>
+                            </table>
+                        </div>
+                    
+                        <div class="subsection-part">
+                            <div class="subsection-part-header">
+                                <h4 class="subsection-part-title">Regional Event Visualizations</h4>
+                                <div class="view-toggle">
+                                    <button id="regional-charts-button" class="toggle-button active" onclick="showRegionalCharts()">View as Charts</button>
+                                    <button id="regional-table-button" class="toggle-button" onclick="showRegionalTable()">View as Table</button>
+                                </div>
+                            </div>
+                    
+                            <div id="regional-charts-container" class="charts-container active">
+                                <div class="chart-wrapper" style="height: 900px;">
+                                    <div id="regional-events-faceted-plot"></div>
+                                </div>
+                            </div>
+                    
+                            <div id="regional-table-wrapper" class="event-table-wrapper" style="display: none;">
+                                <table id="regional-events-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Event ID</th>
+                                            <th>Sample</th>
+                                            <th>Region</th>
+                                            <th>Start Time</th>
+                                            <th>End Time</th>
+                                            <th>Duration</th>
+                                            <th>Energy</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="regional-events-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="glossary-page" class="page">
+            <div class="back-link">
+                <a href="#" class="navigation-link" onclick="showMainPage(); return false;">← Back to Report Homepage</a>
+            </div>
+
+            <div class="summary-card">
+                <h2>Glossary of Terms</h2>
+
+                <div class="glossary-term">
+                    <h3>Expected Unserved Energy (EUE)</h3>
+                    <p>Expected Unserved Energy (EUE) is the expected (average) total energy shortfall over the study period. It may be expressed in energy units (e.g. GWh per year).</p>
+                </div>
+
+                <div class="glossary-term">
+                    <h3>Loss-of-Load Expectation (LOLE)</h3>
+                    <p>Loss-of-Load Expectation (LOLE) is the expected (average) count of periods experiencing shortfall over the study period. It is expressed in terms of event-periods (e.g. event-hours per year, event-days per year). When reported in terms of event-hours, LOLE is sometimes referred to as LOLH (loss-of-load hours).</p>
+                </div>
+
+                <div class="glossary-term">
+                    <h3>Normalized Expected Unserved Energy (NEUE)</h3>
+                    <p>Normalized Expected Unserved Energy (NEUE) is the Expected Unserved Energy normalized against the system's total energy demand and expressed as a fraction, typically shown as a percentage or in parts-per-million (ppm).</p>
+                </div>
+
+                <div class="glossary-term">
+                    <h3>Adequacy Event</h3>
+                    <p>An adequacy event is a set of shortfall-periods that are contiguous at the highest available temporal resolution, recorded directly from ShortfallEvents.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script type="module">
+        import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.30.0/+esm';
+        
+        // Make duckdb available globally
+        window.duckdb = duckdb;
+        
+        // Placeholder for base64 database - this will be replaced by Julia
+        const BASE64_DB = "{{BASE64_DB_PLACEHOLDER}}";
+        
+        let db = null;
+        let conn = null;
+        let benchmarkStart = null;
+
+        const MAX_TABLE_ROWS = 2000;
+        let cachedSystemEventCount = 0;
+        let cachedRegionalEventCount = 0;
+
+        const ENABLE_EVENT_TABLES = true;
+
+        function logBenchmark(label) {
+            if (benchmarkStart === null) return;
+
+            const elapsed = performance.now() - benchmarkStart;
+            let memoryText = "memory unavailable";
+
+            if (performance.memory) {
+                memoryText =
+                    `used=${(performance.memory.usedJSHeapSize / 1e6).toFixed(1)} MB, ` +
+                    `total=${(performance.memory.totalJSHeapSize / 1e6).toFixed(1)} MB, ` +
+                    `limit=${(performance.memory.jsHeapSizeLimit / 1e6).toFixed(1)} MB`;
+            }
+
+            console.log(`[PRASReport benchmark] ${label}: ${elapsed.toFixed(0)} ms, ${memoryText}`);
+        }
+
+        async function benchmarkStep(label, fn) {
+            const t0 = performance.now();
+            const result = await fn();
+            const dt = performance.now() - t0;
+            console.log(`[PRASReport benchmark step] ${label}: ${dt.toFixed(0)} ms`);
+            logBenchmark(label);
+            return result;
+        }
+
+        function showError(message) {
+            console.error('Error:', message);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('events-section').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = message;
+        }
+
+        function showDebug(message) {
+            console.log('Debug:', message);
+            const debugEl = document.getElementById('debug');
+            if (debugEl) {
+                debugEl.style.display = 'block';
+                debugEl.textContent += message + '\n';
+            }
+        }
+
+        function formatNumber(value, decimals = 2) {
+            if (value === null || value === undefined) return '-';
+            return Number(value).toLocaleString(undefined, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        function formatEstimate(mean, stderr, decimals = 2) {
+            return `${formatNumber(mean, decimals)} ± ${formatNumber(stderr, decimals)}`;
+        }
+
+        // Navigation functions
+        function showMainPage() {
+            document.getElementById('main-page').classList.add('active');
+            document.getElementById('glossary-page').classList.remove('active');
+        }
+
+        function showGlossary() {
+            document.getElementById('main-page').classList.remove('active');
+            document.getElementById('glossary-page').classList.add('active');
+        }
+
+        function exportDatabase() {
+            try {
+                if (BASE64_DB === "{{BASE64_DB_PLACEHOLDER}}") {
+                    showError("Database not available for export. Please generate the report with actual data.");
+                    return;
+                }
+
+                // Decode base64 database
+                // const binaryData = Uint8Array.from(atob(BASE64_DB), c => c.charCodeAt(0));
+                const base64SizeMB = BASE64_DB.length / 1024 / 1024;
+                console.log(`[PRASReport size] embedded base64 size: ${base64SizeMB.toFixed(2)} MB`);
+
+                const decodeStart = performance.now();
+                const binaryString = atob(BASE64_DB);
+                const decodeEnd = performance.now();
+
+                const binarySizeMB = binaryString.length / 1024 / 1024;
+                console.log(`[PRASReport size] decoded DuckDB size: ${binarySizeMB.toFixed(2)} MB`);
+                console.log(`[PRASReport benchmark step] base64 decode: ${(decodeEnd - decodeStart).toFixed(0)} ms`);
+
+                const bytesStart = performance.now();
+                const binaryData = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    binaryData[i] = binaryString.charCodeAt(i);
+                }
+                console.log(`[PRASReport benchmark step] bytes copy: ${(performance.now() - bytesStart).toFixed(0)} ms`);
+
+                
+                // Create blob and download link
+                const blob = new Blob([binaryData], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                
+                // Create temporary download link
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = 'pras_report.duckdb';
+                downloadLink.style.display = 'none';
+                
+                // Trigger download
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                
+                // Clean up
+                URL.revokeObjectURL(url);
+                
+                console.log('Database exported successfully');
+            } catch (error) {
+                console.error('Database export error:', error);
+                showError(`Database export failed: ${error.message}`);
+            }
+        }
+
+        // View toggle functions
+        function showCharts() {
+            document.getElementById('charts-container-inner').classList.add('active');
+            document.getElementById('table-wrapper').style.display = 'none';
+            document.getElementById('system-charts-button').classList.add('active');
+            document.getElementById('system-table-button').classList.remove('active');
+        }
+
+        async function showTable() {
+            document.getElementById('charts-container-inner').classList.remove('active');
+            document.getElementById('table-wrapper').style.display = 'block';
+            document.getElementById('system-charts-button').classList.remove('active');
+            document.getElementById('system-table-button').classList.add('active');
+            
+            if (ENABLE_EVENT_TABLES) {
+                // const tableEvents = await window.loadSystemTableEvents(conn, MAX_TABLE_ROWS);
+                const systemTableEvents = await benchmarkStep("query system table events", () =>
+                    window.loadSystemShortfallEvents(conn)
+                );
+
+                // populateSystemEventTable(tableEvents, cachedSystemEventCount);
+                await benchmarkStep("render system event table", async () => {
+                    populateSystemEventTable(systemTableEvents, cachedSystemEventCount);
+                });
+            }
+
+            setTimeout(setupTableScrollIndicator, 100);
+        }
+
+        function showRegionalCharts() {
+            document.getElementById('regional-charts-container').classList.add('active');
+            document.getElementById('regional-table-wrapper').style.display = 'none';
+            document.getElementById('regional-charts-button').classList.add('active');
+            document.getElementById('regional-table-button').classList.remove('active');
+        }
+
+        async function showRegionalTable() {
+            document.getElementById('regional-charts-container').classList.remove('active');
+            document.getElementById('regional-table-wrapper').style.display = 'block';
+            document.getElementById('regional-charts-button').classList.remove('active');
+            document.getElementById('regional-table-button').classList.add('active');
+
+            if (ENABLE_EVENT_TABLES) {
+                // const tableEvents = await window.loadRegionalTableEvents(conn, MAX_TABLE_ROWS);
+                const regionalTableEvents = await benchmarkStep("query regional table events", () =>
+                    window.loadRegionalShortfallEvents(conn)
+                );
+
+                // populateRegionalEventTable(tableEvents, cachedRegionalEventCount);
+                await benchmarkStep("render regional event table", async () => {
+                    populateRegionalEventTable(regionalTableEvents, cachedRegionalEventCount);
+                });
+            }
+        }
+
+        window.showRegionalCharts = showRegionalCharts;
+        window.showRegionalTable = showRegionalTable;
+
+        // Make navigation functions globally available
+        window.showMainPage = showMainPage;
+        window.showGlossary = showGlossary;
+        window.exportDatabase = exportDatabase;
+        window.showCharts = showCharts;
+        window.showTable = showTable;
+
+        // Add scroll indicator for table
+        function setupTableScrollIndicator() {
+            document.querySelectorAll('.event-table-wrapper').forEach(tableWrapper => {
+                tableWrapper.addEventListener('scroll', function() {
+                    if (this.scrollTop > 10) {
+                        this.classList.add('scrolled');
+                    } else {
+                        this.classList.remove('scrolled');
+                    }
+                });
+            });
+        }
+
+        // Call setup when table is shown
+        const originalShowTable = showTable;
+        showTable = function() {
+            originalShowTable();
+            setTimeout(setupTableScrollIndicator, 100); // Small delay to ensure DOM is ready
+        };
+
+        // Format timestamps from DuckDB TIMESTAMP WITHOUT TIME ZONE
+        // These come as naive timestamps that should be displayed as-is without timezone conversion
+        function formatTimestamp(timestamp) {
+
+            // If it's a number (timestamp in milliseconds), create Date and format
+            if (typeof timestamp === 'number') {
+                const date = new Date(timestamp);
+                const year = date.getUTCFullYear();
+                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                const hours = String(date.getUTCHours()).padStart(2, '0');
+                const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            }
+            if (typeof timestamp === 'string') return timestamp;
+        }
+        
+        {{REPORT_QUERIES_JS_PLACEHOLDER}}
+
+        {{REPORT_PLOTS_JS_PLACEHOLDER}}
+
+        async function initializeDatabase() {
+            try {
+                benchmarkStart = performance.now();
+                logBenchmark("start initializeDatabase");
+                // showDebug('Starting database initialization...');
+                
+                // Check if BASE64_DB is placeholder
+                if (BASE64_DB === "{{BASE64_DB_PLACEHOLDER}}") {
+                    throw new Error("Database not loaded. Please generate the report with actual data.");
+                }
+
+                // showDebug('Initializing DuckDB using JSDelivr bundles...');
+                
+                // Use the official recommended approach from npm documentation
+                const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
+                const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+
+                const worker_url = URL.createObjectURL(
+                    new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
+                );
+                
+                const worker = new Worker(worker_url);
+                const logger = new duckdb.ConsoleLogger();
+                db = new duckdb.AsyncDuckDB(logger, worker);
+                await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+                logBenchmark("duckdb instantiated");
+                URL.revokeObjectURL(worker_url);
+                
+                conn = await db.connect();
+                // showDebug('DuckDB initialized successfully');
+
+                // Decode base64 database
+                // showDebug('Decoding base64 database...');
+                const binaryData = Uint8Array.from(atob(BASE64_DB), c => c.charCodeAt(0));
+                // showDebug(`Database size: ${binaryData.length} bytes`);
+                
+                // Register the database
+                // await db.registerFileBuffer("report.db", binaryData);
+                const registerStart = performance.now();
+                await db.registerFileBuffer("report.db", binaryData);
+                console.log(`[PRASReport benchmark step] register DuckDB buffer: ${(performance.now() - registerStart).toFixed(0)} ms`);
+                // await conn.query("ATTACH 'report.db' AS report_db");
+                const attachStart = performance.now();
+                await conn.query("ATTACH 'report.db' AS report_db");
+                console.log(`[PRASReport benchmark step] attach DuckDB file: ${(performance.now() - attachStart).toFixed(0)} ms`);
+                logBenchmark("database attached");
+                // showDebug('Database attached successfully');
+
+                // List all tables to see what's available
+                const tablesResult = await conn.query("SELECT table_name FROM duckdb_tables() WHERE database_name='report_db'");
+                const tables = tablesResult.toArray();
+                // showDebug(`Available tables: ${tables.map(t => t.table_name).join(', ')}`);
+
+                logBenchmark("starting loadData");
+                await loadData();
+                
+            } catch (error) {
+                console.error('Database initialization error:', error);
+                showError(`Database initialization failed: ${error.message}`);
+            }
+        }
+
+        function populateSystemEventTable(systemEvents, totalEvents) {
+            const tbody = document.getElementById('events-tbody');
+            tbody.innerHTML = '';
+
+            const rowsToShow = systemEvents.slice(0, MAX_TABLE_ROWS);
+
+            rowsToShow.forEach((event, index) => {
+                const actualDuration = (event.duration_periods || 0) * window._stepSize;
+                const startTime = formatTimestamp(event.start_timestamp);
+                const endTime = formatTimestamp(event.end_timestamp);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="numeric">${event.id || index + 1}</td>
+                    <td class="numeric">${event.sample_id}</td>
+                    <td>${startTime}</td>
+                    <td>${endTime}</td>
+                    <td class="numeric">${formatNumber(actualDuration, 1)}</td>
+                    <td class="numeric">${formatNumber(event.energy, 1)} ${window._energyUnit}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            if (totalEvents > MAX_TABLE_ROWS) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="6">
+                        Showing first ${MAX_TABLE_ROWS.toLocaleString()} of ${totalEvents.toLocaleString()} system events.
+                        Export the report DB for the full event table.
+                    </td>
+                `;
+                tbody.appendChild(row);
+            }
+
+            logBenchmark(`populated system table: ${rowsToShow.length} rows`);
+        }
+
+        function populateRegionalEventTable(regionalEvents, totalEvents) {
+            const regionalTbody = document.getElementById("regional-events-tbody");
+            regionalTbody.innerHTML = "";
+
+            const rowsToShow = regionalEvents.slice(0, MAX_TABLE_ROWS);
+
+            rowsToShow.forEach((event, index) => {
+                const actualDuration = (event.duration_periods || 0) * window._stepSize;
+                const startTime = formatTimestamp(event.start_timestamp);
+                const endTime = formatTimestamp(event.end_timestamp);
+                const regionText = event.region_name || `Region ${event.region_id}`;
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td class="numeric">${event.id || index + 1}</td>
+                    <td class="numeric">${event.sample_id}</td>
+                    <td>${regionText}</td>
+                    <td>${startTime}</td>
+                    <td>${endTime}</td>
+                    <td class="numeric">${formatNumber(actualDuration, 1)} ${window._timeUnit}</td>
+                    <td class="numeric">${formatNumber(event.energy, 1)} ${window._energyUnit}</td>
+                `;
+                regionalTbody.appendChild(row);
+            });
+
+            if (totalEvents > MAX_TABLE_ROWS) {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td colspan="7">
+                        Showing first ${MAX_TABLE_ROWS.toLocaleString()} of ${totalEvents.toLocaleString()} regional events.
+                        Export the report DB for the full event table.
+                    </td>
+                `;
+                regionalTbody.appendChild(row);
+            }
+
+            logBenchmark(`populated regional table: ${rowsToShow.length} rows`);
+        }
+
+        function populateRegionalEventMetricsTable(metrics, stepSize, timeUnit, energyUnit) {
+            const tbody = document.getElementById("regional-event-metrics-tbody");
+            tbody.innerHTML = "";
+
+            metrics.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${row.region_name || `Region ${row.region_id}`}</td>
+                    <td class="numeric">${formatNumber(row.n_events, 0)}</td>
+                    <td class="numeric">${formatEstimate(row.lolev_mean, row.lolev_stderr, 2)}</td>
+                    <td class="numeric">${formatEstimate(row.mean_duration * stepSize, row.mean_duration_stderr * stepSize, 2)} ${timeUnit}</td>
+                    <td class="numeric">${formatEstimate(row.max_duration * stepSize, row.max_duration_stderr * stepSize, 2)} ${timeUnit}</td>
+                    <td class="numeric">${formatEstimate(row.mean_energy, row.mean_energy_stderr, 2)} ${energyUnit}</td>
+                    <td class="numeric">${formatEstimate(row.max_energy, row.max_energy_stderr, 2)} ${energyUnit}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function populateRegionalMCMetricsTable(metrics, energyUnit, timeUnit) {
+            const tbody = document.getElementById("mc-regional-metrics-tbody");
+            tbody.innerHTML = "";
+
+            metrics.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${row.region_name}</td>
+                    <td class="numeric">${formatEstimate(row.eue_mean, row.eue_stderr, 2)} ${energyUnit}</td>
+                    <td class="numeric">${formatEstimate(row.lole_mean, row.lole_stderr, 2)} event-${timeUnit}</td>
+                    <td class="numeric">${formatEstimate(row.neue_mean, row.neue_stderr, 2)} ppm</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+
+        async function loadData() {
+            try {
+                // Get parameters for units and calculations
+                // and system simulation results
+                let sampleCount, stepSize, timeUnit, energyUnit, timesteps, timezone;
+                let startTimestamp, endTimestamp, loleMean, loleStderr, neueMean, neueStderr;
+                
+                logBenchmark("start loadData");    
+
+                let simInfo = null;
+
+                try {
+                    simInfo = await window.loadSimulationInfo(conn);
+                    if (simInfo) {
+                        sampleCount = simInfo.n_samples;
+                        stepSize = simInfo.step_size;
+                        timeUnit = simInfo.time_unit;
+                        energyUnit = simInfo.energy_unit;
+                        timesteps = simInfo.timesteps;
+                        startTimestamp = simInfo.start_timestamp;
+                        endTimestamp = simInfo.end_timestamp;
+                        timezone = simInfo.timezone;
+                        loleMean = simInfo.lole_mean;
+                        loleStderr = simInfo.lole_stderr;
+                        neueMean = simInfo.neue_mean;
+                        neueStderr = simInfo.neue_stderr;
+                    }
+                } catch (e) {
+                    showDebug(`Could not find parameters table: ${e.message}`);
+                }
+
+                logBenchmark("loaded simulation info");
+                
+                // Update column headers with units and timezone
+                document.getElementById('start-time-header').textContent = `Start Time (${timezone})`;
+                document.getElementById('end-time-header').textContent = `End Time (${timezone})`;
+                document.getElementById('duration-header').textContent = `Event Duration (${timeUnit})`;
+                document.getElementById('energy-header').textContent = `Energy (${energyUnit})`;
+                document.getElementById('mc-eue').textContent =
+                `${formatEstimate(simInfo.eue_mean, simInfo.eue_stderr, 2)} ${energyUnit}`;
+
+                document.getElementById('mc-lole').textContent =
+                    `${formatEstimate(loleMean, loleStderr, 2)} event-${timeUnit}`;
+
+                document.getElementById('mc-neue').textContent =
+                    `${formatEstimate(neueMean, neueStderr, 2)} ppm`;
+
+
+                // Update simulation summary stats
+                document.getElementById('sample-count').textContent = formatNumber(sampleCount, 0);
+                
+                // Format simulation period
+                if (startTimestamp && endTimestamp) {
+                    const periodText = `${formatTimestamp(startTimestamp)} - ${formatTimestamp(endTimestamp)} (${timezone})`;
+                    document.getElementById('simulation-period').textContent = periodText;
+                }
+                
+                // Calculate total simulation duration for rates
+                const totalDuration = timesteps * stepSize;
+
+                // Get events with system shortfall metrics
+                // const systemEvents = await window.loadSystemPlotEvents(conn);
+                const systemEvents = await benchmarkStep("query system plot events", () =>
+                    window.loadSystemPlotEvents(conn)
+                );
+                cachedSystemEventCount = systemEvents.sample_id.length;
+                logBenchmark(`loaded system plot events: ${cachedSystemEventCount} rows`);
+
+                // const regionalEvents = await window.loadRegionalPlotEvents(conn);
+                const regionalEvents = await benchmarkStep("query regional plot events", () =>
+                    window.loadRegionalPlotEvents(conn)
+                );
+                cachedRegionalEventCount = [...regionalEvents.values()]
+                    .reduce((sum, group) => sum + group.sample_id.length, 0);
+                logBenchmark(`loaded regional plot events: ${cachedRegionalEventCount} rows`);
+
+                const eventMetrics = await window.loadSystemEventMetrics(conn);
+
+                document.getElementById('event-metric-count').textContent =
+                    formatNumber(eventMetrics.n_events, 0);
+
+                document.getElementById('event-metric-lolev').textContent =
+                    formatEstimate(eventMetrics.lolev_mean, eventMetrics.lolev_stderr, 2);
+
+                document.getElementById('event-metric-mean-duration').textContent =
+                    `${formatEstimate(
+                        eventMetrics.mean_duration * stepSize,
+                        eventMetrics.mean_duration_stderr * stepSize,
+                        2
+                    )} ${timeUnit}`;
+
+                document.getElementById('event-metric-max-duration').textContent =
+                    `${formatEstimate(
+                        eventMetrics.max_duration * stepSize,
+                        eventMetrics.max_duration_stderr * stepSize,
+                        2
+                    )} ${timeUnit}`;
+
+                document.getElementById('event-metric-mean-energy').textContent =
+                    `${formatEstimate(
+                        eventMetrics.mean_energy,
+                        eventMetrics.mean_energy_stderr,
+                        2
+                    )} ${energyUnit}`;
+
+                document.getElementById('event-metric-max-energy').textContent =
+                    `${formatEstimate(
+                        eventMetrics.max_energy,
+                        eventMetrics.max_energy_stderr,
+                        2
+                    )} ${energyUnit}`;
+
+                const regionalEventMetrics = await window.loadRegionalEventMetricsTable(conn);
+                populateRegionalEventMetricsTable(regionalEventMetrics, stepSize, timeUnit, energyUnit);
+                logBenchmark(`loaded regional event metrics table: ${regionalEventMetrics.length} rows`);
+
+                const regionalMCMetrics = await window.loadRegionalMCMetrics(conn);
+                populateRegionalMCMetricsTable(regionalMCMetrics, energyUnit, timeUnit);
+                logBenchmark(`loaded regional MC metrics table: ${regionalMCMetrics.length} rows`);
+
+                const hasFullYearHeatmapData = await window.hasFullYearShortfallHeatmapData(conn);
+                if (hasFullYearHeatmapData) {
+                    const systemHeatmapRows = await window.loadSystemShortfallHeatmap(conn);
+                    window.renderSystemShortfallHeatmap(systemHeatmapRows, energyUnit);
+                    logBenchmark(`rendered system shortfall heatmap: ${systemHeatmapRows.length} rows`);
+
+                    // const systemNEUERows = await window.loadSystemNEUEHeatmap(conn);
+                    // window.renderSystemNEUEHeatmap(systemNEUERows);
+
+                    // const systemShortfallTimeseriesRows = await window.loadSystemShortfallTimeseries(conn);
+                    // window.renderSystemShortfallTimeseries(systemShortfallTimeseriesRows, energyUnit);
+                    const systemNEUERows = await benchmarkStep("query system NEUE heatmap", () =>
+                        window.loadSystemNEUEHeatmap(conn)
+                    );
+
+                    await benchmarkStep("render system NEUE heatmap", async () => {
+                        window.renderSystemNEUEHeatmap(systemNEUERows);
+                    });
+
+                    const systemShortfallTimeseriesRows = await benchmarkStep("query system shortfall timeseries", () =>
+                        window.loadSystemShortfallTimeseries(conn)
+                    );
+
+                    await benchmarkStep("render system shortfall timeseries", async () => {
+                        window.renderSystemShortfallTimeseries(systemShortfallTimeseriesRows, energyUnit);
+                    });
+
+                    const regionalHeatmapRows = await window.loadRegionalShortfallHeatmaps(conn);
+                    window.renderRegionalShortfallHeatmaps(regionalHeatmapRows, energyUnit);
+                    logBenchmark(`rendered regional shortfall heatmaps: ${regionalHeatmapRows.length} rows`);
+                } else {
+                    document.getElementById("system-shortfall-heatmap").innerHTML =
+                        "<p>Month-hour heatmap is only shown for simulations containing all 12 months.</p>";
+
+                    document.getElementById("system-neue-heatmap").innerHTML =
+                    "<p>Month-hour heatmap is only shown for simulations containing all 12 months.</p>";
+
+                    document.getElementById("regional-shortfall-heatmaps").innerHTML =
+                        "<p>Regional month-hour heatmaps are only shown for simulations containing all 12 months.</p>";
+                }
+
+                // Populate table
+                window._systemEvents = systemEvents;
+                window._stepSize = stepSize;
+                window._energyUnit = energyUnit;
+                window._timeUnit = timeUnit;
+
+                // Create charts
+                // window.renderEventPlots(systemEvents, stepSize, energyUnit, timeUnit);
+                await benchmarkStep("render system event plots", async () => {
+                    window.renderEventPlots(systemEvents, stepSize, energyUnit, timeUnit);
+                });
+                logBenchmark("rendered system plots");
+
+                // Hide loading and show charts by default (table is ready but hidden)
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('events-section').style.display = 'block';
+                document.getElementById('charts-container-inner').classList.add('active');
+
+                logBenchmark(`prepared plot events: system=${cachedSystemEventCount}, regional=${cachedRegionalEventCount}`);
+
+                // window.renderRegionalEventPlots(
+                //     regionalEvents,
+                //     stepSize,
+                //     energyUnit,
+                //     timeUnit
+                // );
+                await benchmarkStep("render regional event plots", async () => {
+                    window.renderRegionalEventPlots(regionalEvents, stepSize, energyUnit, timeUnit);
+                });
+                logBenchmark("rendered regional plots");
+
+                logBenchmark("finished loadData");
+
+            } catch (error) {
+                console.error('Data loading error:', error);
+                showError(`Data loading failed: ${error.message}`);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // showDebug('DOM loaded, starting initialization...');
+            initializeDatabase();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (conn) conn.close();
+            if (db) db.terminate();
+        });
+    </script>
+</body>
+
+</html>

@@ -32,6 +32,8 @@
     shortfall2_1a, _, flow2_1a, util2_1a, _ =
         assess(TestData.singlenode_a, simspec, resultspecs...)
 
+    events_1a, = assess(TestData.singlenode_a, simspec, ShortfallEvents())
+
     assess(TestData.singlenode_a_5min, smallsample, resultspecs...)
     shortfall_1a5, _, flow_1a5, util_1a5,
     shortfall2_1a5, _, flow2_1a5, util2_1a5, _ =
@@ -52,6 +54,8 @@
            StorageAvailability(), GeneratorStorageAvailability(),DemandResponseAvailability(),
            StorageEnergy(), GeneratorStorageEnergy(),DemandResponseEnergy(),
            StorageEnergySamples(), GeneratorStorageEnergySamples(),DemandResponseEnergySamples())
+
+    events_3, = assess(TestData.threenode, simspec, ShortfallEvents())
 
     @testset "Shortfall Results" begin
 
@@ -590,5 +594,190 @@
         @test isapprox(sum(dr_shortfall_samples["Region 1",dts[5]])/1e4,TestData.threenode_dr_shortfall_samples/1e4, rtol=0.01)
     end
 
+    @testset "LOLD" begin
+        @testset "Whole-horizon equals sum over days" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                days = unique(Date.(x.timestamps))
+    
+                @test isapprox(
+                    val(LOLD(x)),
+                    sum(val(LOLD(x, d)) for d in days)
+                )
+    
+                for r in x.regions.names
+                    @test isapprox(
+                        val(LOLD(x, r)),
+                        sum(val(LOLD(x, r, d)) for d in days)
+                    )
+                end
+            end
+        end
+    
+        @testset "Single-day query matches direct sample calculation" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                days = unique(Date.(x.timestamps))
+    
+                # test first, middle, and last day
+                testdays = unique([first(days), days[cld(length(days), 2)], last(days)])
+    
+                for d in testdays
+                    mask = Date.(x.timestamps) .== d
+    
+                    # system-wide day event by sample:
+                    # did any region have any shortfall in any timestep of this day?
+                    manual_system = vec(any(dropdims(sum(x.shortfall[:, mask, :], dims=1), dims=1) .> 0, dims=1))
+                    expected_system = MeanEstimate(manual_system)
+    
+                    @test LOLD(x, d) ≈ LOLD{1}(expected_system)
+    
+                    for r in x.regions.names
+                        i_r = findfirst(isequal(r), x.regions.names)
+    
+                        # region-day event by sample:
+                        # did this region have any shortfall in any timestep of this day?
+                        manual_region = vec(any(x.shortfall[i_r, mask, :] .> 0, dims=1))
+                        expected_region = MeanEstimate(manual_region)
+    
+                        @test LOLD(x, r, d) ≈ LOLD{1}(expected_region)
+                    end
+                end
+            end
+        end
+    
+        @testset "Broadcast helpers match scalar calls" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                days = unique(Date.(x.timestamps))
+    
+                # region over all days
+                for r in x.regions.names
+                    @test all(LOLD(x, r, :) .≈ LOLD.(Ref(x), r, days))
+                end
+    
+                # all regions for one day
+                for d in (first(days), days[cld(length(days), 2)], last(days))
+                    @test all(LOLD(x, :, d) .≈ LOLD.(Ref(x), x.regions.names, d))
+                end
+    
+                # full region x day grid
+                @test all(LOLD(x, :, :) .≈ LOLD.(Ref(x), x.regions.names, permutedims(days)))
+            end
+        end
+    
+        @testset "System day risk dominates regional day risk" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                for d in unique(Date.(x.timestamps))
+                    system_val = val(LOLD(x, d))
+                    for r in x.regions.names
+                        @test system_val >= val(LOLD(x, r, d))
+                    end
+                end
+            end
+        end
+    
+        @testset "Invalid day throws useful error" begin
+            for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
+                bad_day = first(unique(Date.(x.timestamps))) - Day(1)
+        
+                err = try
+                    LOLD(x, bad_day)
+                    nothing
+                catch e
+                    e
+                end
+        
+                @test err isa ArgumentError
+                @test occursin("simulation horizon", sprint(showerror, err))
+        
+                err = try
+                    LOLD(x, first(x.regions.names), bad_day)
+                    nothing
+                catch e
+                    e
+                end
+        
+                @test err isa ArgumentError
+                @test occursin("simulation horizon", sprint(showerror, err))
+            end
+        end
+    end
+
+    @testset "Shortfall Event Metrics" begin
+        # Single-region system
+        @test val(LOLEv(events_1a)) >= 0
+        @test stderror(LOLEv(events_1a)) >= 0
+        @test val(MeanEventDuration(events_1a)) >= 0
+        @test stderror(MeanEventDuration(events_1a)) >= 0
+
+        @test LOLEv(events_1a) ≈ LOLEv(events_1a, "Region")
+        @test MeanEventDuration(events_1a) ≈ MeanEventDuration(events_1a, "Region")
+        @test MaxEventDuration(events_1a) ≈ MaxEventDuration(events_1a, "Region")
+        @test MeanEventEnergy(events_1a) ≈ MeanEventEnergy(events_1a, "Region")
+        @test MaxEventEnergy(events_1a) ≈ MaxEventEnergy(events_1a, "Region")
+
+        manual_lolev_1a = mean(length.(events_1a.system_events))
+        @test isapprox(val(LOLEv(events_1a)), manual_lolev_1a; rtol=1e-10)
+
+        durations_1a = [
+            Results.duration_periods(ev)
+            for evts in events_1a.system_events
+            for ev in evts
+        ]
+
+        manual_meandur_1a = isempty(durations_1a) ? 0.0 : mean(durations_1a)
+
+        @test isapprox(val(MeanEventDuration(events_1a)), manual_meandur_1a; rtol=1e-10)
+
+        manual_maxdur_1a = isempty(durations_1a) ? 0.0 : maximum(durations_1a)
+
+        @test isapprox(val(MaxEventDuration(events_1a)), manual_maxdur_1a; rtol=1e-10)
+
+        p2e_1a = PRASCore.Systems.conversionfactor(1, Hour, PRASCore.Systems.MW, PRASCore.Systems.MWh)
+
+        energies_1a = [
+            p2e_1a * Results.event_energy(ev)
+            for evts in events_1a.system_events
+            for ev in evts
+        ]
+
+        manual_meanenergy_1a = isempty(energies_1a) ? 0.0 : mean(energies_1a)
+
+        @test isapprox(val(MeanEventEnergy(events_1a)), manual_meanenergy_1a; rtol=1e-10)
+
+        manual_maxenergy_1a = isempty(energies_1a) ? 0.0 : maximum(energies_1a)
+
+        @test isapprox(val(MaxEventEnergy(events_1a)), manual_maxenergy_1a; rtol=1e-10)
+
+        # Multi-region system
+        @test val(LOLEv(events_3)) >= 0
+        @test val(MeanEventDuration(events_3)) >= 0
+        @test val(LOLEv(events_3, "Region A")) >= 0
+        @test val(MeanEventDuration(events_3, "Region A")) >= 0
+
+        @test val(LOLEv(events_3)) >= val(LOLEv(events_3, "Region A"))
+
+        @test Results.totalevents(events_1a) >= 0
+        @test Results.totalevents(events_3, "Region A") >= 0
+
+    end
+
+    @testset "Event metrics return zero when no events exist" begin
+        sys = deepcopy(TestData.singlenode_a)
+        sys.regions.load .= 0
+    
+        spec = SequentialMonteCarlo(samples=100, seed=42, threaded=false)
+        events, = assess(sys, spec, ShortfallEvents())
+    
+        @test Results.totalevents(events) == 0
+    
+        @test val(MeanEventDuration(events)) == 0.0
+        @test val(MaxEventDuration(events)) == 0.0
+        @test val(MeanEventEnergy(events)) == 0.0
+        @test val(MaxEventEnergy(events)) == 0.0
+    
+        @test stderror(MeanEventDuration(events)) == 0.0
+        @test stderror(MaxEventDuration(events)) == 0.0
+        @test stderror(MeanEventEnergy(events)) == 0.0
+        @test stderror(MaxEventEnergy(events)) == 0.0
+    end
 
 end

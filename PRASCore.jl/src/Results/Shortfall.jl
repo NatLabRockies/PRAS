@@ -292,6 +292,12 @@ function NEUE(x::ShortfallResult, r::AbstractString)
 
 end
 
+function NEUE(x::ShortfallResult{N,L,T,E}, r::AbstractString, t::ZonedDateTime) where {N,L,T,E}
+    i_r = findfirstunique(x.regions.names, r)
+    i_t = findfirstunique(x.timestamps, t)
+    return NEUE(div(MeanEstimate(x[r, t]..., x.nsamples),x.regions.load[i_r,i_t]/1e6))
+end
+
 function finalize(
     acc::ShortfallAccumulator{S},
     system::SystemModel{N,L,T,P,E},

@@ -5,6 +5,7 @@ import OnlineStats: Series
 import OnlineStatsBase: EqualWeight, Mean, Variance, value
 import Printf: @sprintf
 import StatsBase: mean, std, stderror
+import Dates: Date
 
 import ..Systems: SystemModel, ZonedDateTime, Period,
                   PowerUnit, EnergyUnit, conversionfactor,
@@ -12,7 +13,8 @@ import ..Systems: SystemModel, ZonedDateTime, Period,
 export
 
     # Metrics
-    ReliabilityMetric, LOLE, EUE, NEUE,
+    ReliabilityMetric, LOLE, EUE, NEUE, LOLD, LOLEv, 
+    MeanEventDuration, MaxEventDuration, MeanEventEnergy, MaxEventEnergy, 
     val, stderror,
 
     # Result specifications
@@ -25,7 +27,7 @@ export
     DemandResponseEnergy, DemandResponseEnergySamples,
     GeneratorAvailability, StorageAvailability,
     GeneratorStorageAvailability,DemandResponseAvailability,
-    LineAvailability
+    LineAvailability, ShortfallEvents
 
 include("utils.jl")
 include("metrics.jl")
@@ -74,11 +76,23 @@ EUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
 EUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
     EUE.(x, x.regions.names, permutedims(x.timestamps))
 
+NEUE(x::AbstractShortfallResult, ::Colon, t::ZonedDateTime) =
+    NEUE.(x, x.regions.names, t)
+
 NEUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
     NEUE.(x, r, x.timestamps)
 
 NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
     NEUE.(x, x.regions.names, permutedims(x.timestamps))
+
+LOLD(x::AbstractShortfallResult, ::Colon, d::Date) =
+    LOLD.(x, x.regions.names, d)
+
+LOLD(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
+    LOLD.(x, r, _unique_days(x.timestamps))
+
+LOLD(x::AbstractShortfallResult, ::Colon, ::Colon) =
+    LOLD.(x, x.regions.names, permutedims(_unique_days(x.timestamps)))
 
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
@@ -166,12 +180,15 @@ getindex(x::AbstractEnergyResult, name::String, ::Colon) =
 getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
     getindex.(x, names(x), permutedims(x.timestamps))
 
+abstract type AbstractShortfallEventResult{N,L,T} <: Result{N,L,T} end
+
 include("StorageEnergy.jl")
 include("GeneratorStorageEnergy.jl")
 include("DemandResponseEnergy.jl")
 include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
 include("DemandResponseEnergySamples.jl")
+include("ShortfallEvents.jl")
 
 function resultchannel(
     results::T, threads::Int
