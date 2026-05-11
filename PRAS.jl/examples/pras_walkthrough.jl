@@ -176,3 +176,32 @@ println("Surplus in")
 # performed on the subset of samples in which the event was observed, using the
 # `ShortfallSamples`, `UtilizationSamples`, and
 # `StorageEnergySamples` result specifications instead.
+
+## [Assess tail-risk metrics](@id assess_tail_risks)
+
+# PRAS can calculate the risk-tail adequacy metrics, which are useful when analyzing extreme
+# occurences of shortfall events. The Conditional Value at Risk (CVAR) measures the weighted 
+# average outcomes beyond a pre-defined percentile $\alpha$. Therefore, the CVAR calculates
+# the expected shortfalls in the worst $(1-\alpha)$ outcomes. 
+# In general, CVAR can be used for calculating tail-risk outcomes across any of the resource
+# adequacy planning dimensions (energy shortfall, duration, and magnitude).
+# Currently, PRAS implements only unserved energy CVAR. 
+
+# Start by defining the confidence level $\alpha$, which defines the tail threshold beyond which we
+# want measure the expected shortfall. Also, we want to define the CVAR unit type.
+# Only energy units are accepted (e.g., `kWh`, `MWh`, `GWh`, or `TWh`). 
+
+alpha = 0.95 # nth percentile for tail events
+energyunit = MWh # energy type
+
+# We can check the overall system unserved energy CVAR
+
+ue_cvar = CVAR(energyunit, shortfall, alpha)
+println("System CVAR: $(ue_cvar)")
+
+# And we can calculate the noramzlied CVAR (NCVAR)
+ue_ncvar = NCVAR(shortfall, ue_cvar)
+println("System CVAR: $(ue_cvar)")
+
+# We can also find the unserved energy CVAR by region
+regional_ue_cvar = CVAR.(energyunit, shortfall, alpha, sys.regions.names)
