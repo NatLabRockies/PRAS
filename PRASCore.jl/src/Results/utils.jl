@@ -40,3 +40,9 @@ function findfirstunique(a::AbstractVector{T}, i::T) where T
     i_idx === nothing && throw(BoundsError(a))
     return i_idx
 end
+
+function findlastunique(a::AbstractVector{T}, i::T) where T
+    i_idx = findlast(isequal(i), a)
+    i_idx === nothing && throw(BoundsError(a))
+    return i_idx
+end
