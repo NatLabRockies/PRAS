@@ -326,10 +326,50 @@ function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64) where 
 end
 
 
+function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64, t::StepRange{ZonedDateTime, P}) where {N,L,T,E,U<:EnergyUnit,P}
+
+    i_t0 = findfirstunique(x.timestamps, first(t))
+    i_tf = findlastunique(x.timestamps, last(t))
+    @info "Index for timestamp $t: $i_t0, $i_tf"
+    estimate = x.shortfall_samples[:, i_t0:i_tf]
+    @info "Shortfall samples for timestamp $t: $(estimate)"
+    var = quantile(estimate, alpha)
+    @info "VaR for timestamp $t: $var"
+    tail_losses = estimate[estimate .>= var]
+    @info "Tail losses for timestamp $t: $(tail_losses)"
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+
+    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
+  
+end
+
 function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString) where {N,L,T,E,U<:EnergyUnit}
 
     i_r = findfirstunique(x.regions.names, r)
     estimate = x.shortfall_region_samples[i_r, :]
+    var = quantile(estimate, alpha)
+    tail_losses = estimate[estimate .>= var]
+
+    cvar = if !isempty(tail_losses)
+        MeanEstimate(tail_losses)
+    else
+        MeanEstimate(0.)
+    end
+
+    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
+  
+end
+
+function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString, t::ZonedDateTime) where {N,L,T,E,U<:EnergyUnit}
+
+    i_r = findfirstunique(x.regions.names, r)
+    i_t = findfirstunique(x.timestamps, t)
+    estimate = x.shortfall_region_samples[i_r, i_t]
     var = quantile(estimate, alpha)
     tail_losses = estimate[estimate .>= var]
 
@@ -409,6 +449,6 @@ function finalize(
         ep_regionperiod_mean, ep_regionperiod_std,
         ue_regionperiod_mean, ue_total_std,
         ue_region_std, ue_period_std, ue_regionperiod_std,
-        ue_sample, ue_region_sample, )
+        ue_sample, ue_region_sample)
 
 end
