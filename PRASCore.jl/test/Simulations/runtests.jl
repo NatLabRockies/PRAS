@@ -590,5 +590,23 @@
         @test isapprox(sum(dr_shortfall_samples["Region 1",dts[5]])/1e4,TestData.threenode_dr_shortfall_samples/1e4, rtol=0.01)
     end
 
+    @testset "Threaded sample result partitioning" begin
+        simspec_serial = SequentialMonteCarlo(samples=10, seed=123, threaded=false)
+        simspec_threaded = SequentialMonteCarlo(samples=10, seed=123, threaded=true)
+    
+        serial_shortfall, serial_samples =
+            assess(TestData.singlenode_a, simspec_serial,
+                   Shortfall(), ShortfallSamples())
+    
+        threaded_shortfall, threaded_samples =
+            assess(TestData.singlenode_a, simspec_threaded,
+                   Shortfall(), ShortfallSamples())
+    
+        @test size(threaded_samples.shortfall) == size(serial_samples.shortfall)
+        @test length(threaded_samples[]) == simspec_threaded.nsamples
+    
+        @test LOLE(threaded_shortfall) ≈ LOLE(threaded_samples)
+        @test EUE(threaded_shortfall) ≈ EUE(threaded_samples)
+    end
 
 end

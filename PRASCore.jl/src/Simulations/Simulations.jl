@@ -4,8 +4,8 @@ import ..Systems: SystemModel, AbstractAssets, Generators, Lines,
                   conversionfactor, energytopower
 
 import ..Results
-import ..Results: ResultSpec, ResultAccumulator,
-                  accumulator, resultchannel, finalize
+import ..Results: ResultSpec,
+                  accumulator, finalize, issamplebased
 
 import Base: broadcastable
 import Base.Threads: nthreads, @spawn
@@ -40,7 +40,11 @@ It it recommended that you fix the random seed for reproducibility.
   - `samples::Int=10_000`: Number of samples
   - `seed::Integer=rand(UInt64)`: Random seed
   - `verbose::Bool=false`: Print progress
-  - `threaded::Bool=true`: Use multi-threading
+  - `threaded::Bool=true`: Enable threaded Monte Carlo simulation
+
+When `threaded=true`, sample-level result specifications are internally
+partitioned across threads during simulation and assembled into dense
+result arrays during finalization.
 
 # Returns
 
@@ -65,6 +69,36 @@ end
 
 broadcastable(x::SequentialMonteCarlo) = Ref(x)
 
+function sample_ranges(nsamples::Int, nworkers::Int)
+    base, rem = divrem(nsamples, nworkers)
+
+    ranges = UnitRange{Int}[]
+    start = 1
+
+    for i in 1:nworkers
+        len = base + (i <= rem ? 1 : 0)
+
+        if len > 0
+            stop = start + len - 1
+            push!(ranges, start:stop)
+            start = stop + 1
+        end
+    end
+
+    return ranges
+end
+
+function partition_recorders(
+    system::SystemModel,
+    nsamples::Int,
+    local_nsamples::Int,
+    resultspecs::Tuple{Vararg{ResultSpec}},
+)
+    return map(resultspecs) do spec
+        accumulator(system, issamplebased(spec) ? local_nsamples : nsamples, spec)
+    end
+end
+
 """
     assess(system::SystemModel, method::SequentialMonteCarlo, resultspecs::ResultSpec...)
 
@@ -79,7 +113,7 @@ and return `resultspecs`.
 
 # Returns
 
-  - `results::Tuple{Vararg{ResultAccumulator{SequentialMonteCarlo}}}`: PRAS metric results
+  - `results::Tuple`: PRAS metric results
 """
 function assess(
     system::SystemModel,
@@ -87,75 +121,81 @@ function assess(
     resultspecs::ResultSpec...
 )
 
-    threads = nthreads()
-    sampleseeds = Channel{Int}(2*threads)
-    results = resultchannel(resultspecs, threads)
+    threads = method.threaded ? nthreads() : 1
 
-    @spawn makeseeds(sampleseeds, method.nsamples)
-
-    if method.threaded
-
-        if (threads == 1)
-            @warn "It looks like you haven't configured JULIA_NUM_THREADS before you started the julia repl. \n If you want to use multi-threading, stop the execution and start your julia repl using : \n julia --project --threads auto"
-        end
-        
-        for _ in 1:threads
-            @spawn assess(system, method, sampleseeds, results, resultspecs...)
-        end
-    else
-        assess(system, method, sampleseeds, results, resultspecs...)
+    if method.threaded && threads == 1
+        @warn "It looks like you haven't configured JULIA_NUM_THREADS before you started the julia repl. \n If you want to use multi-threading, stop the execution and start your julia repl using : \n julia --project --threads auto"
     end
 
-    return finalize(results, system, method.threaded ? threads : 1)
+    ranges = sample_ranges(method.nsamples, threads)
+    actual_threads = length(ranges)
 
-end
+    results = Channel{Any}(actual_threads)
 
-function makeseeds(sampleseeds::Channel{Int}, nsamples::Int)
-
-    for s in 1:nsamples
-        put!(sampleseeds, s)
+    for sampleids in ranges
+        if method.threaded
+            @spawn assess(system, method, sampleids, results, resultspecs...)
+        else
+            assess(system, method, sampleids, results, resultspecs...)
+        end
     end
 
-    close(sampleseeds)
+    return finalize(results, system, actual_threads, method.nsamples, resultspecs)
 
 end
 
 function assess(
-    system::SystemModel{N}, method::SequentialMonteCarlo,
-    sampleseeds::Channel{Int},
-    results::Channel{<:Tuple{Vararg{ResultAccumulator}}},
+    system::SystemModel{N},
+    method::SequentialMonteCarlo,
+    sampleids::UnitRange{Int},
+    results::Channel,
     resultspecs::ResultSpec...
 ) where N
 
     dispatchproblem = DispatchProblem(system)
     systemstate = SystemState(system)
-    recorders = accumulator.(system, method.nsamples, resultspecs)
+
+    recorders = partition_recorders(
+        system,
+        method.nsamples,
+        length(sampleids),
+        resultspecs,
+    )
 
     # TODO: Test performance of Philox vs Threefry, choice of rounds
     # Also consider implementing an efficient Bernoulli trial with direct
     # mantissa comparison
     rng = Philox4x((0, 0), 10)
 
-    for s in sampleseeds
+    for (local_sampleid, global_sampleid) in enumerate(sampleids)
 
-        seed!(rng, (method.seed, s))
+        seed!(rng, (method.seed, global_sampleid))
         initialize!(rng, systemstate, system)
 
         for t in 1:N
-
             advance!(rng, systemstate, dispatchproblem, system, t)
             solve!(dispatchproblem, systemstate, system, t)
-            foreach(recorder -> record!(
-                        recorder, system, systemstate, dispatchproblem, s, t
-                    ), recorders)
 
+            foreach(recorders) do recorder
+                record!(
+                    recorder,
+                    system,
+                    systemstate,
+                    dispatchproblem,
+                    local_sampleid,
+                    t,
+                )
+            end
         end
 
-        foreach(recorder -> reset!(recorder, s), recorders)
-
+        foreach(recorders) do recorder
+            reset!(recorder, local_sampleid)
+        end
     end
 
-    put!(results, recorders)
+    put!(results, (recorders, sampleids))
+
+    return
 
 end
 
