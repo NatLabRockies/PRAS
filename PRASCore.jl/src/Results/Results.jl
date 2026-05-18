@@ -5,6 +5,7 @@ import OnlineStats: Series
 import OnlineStatsBase: EqualWeight, Mean, Variance, value
 import Printf: @sprintf
 import StatsBase: mean, std, stderror
+import Dates: Date
 
 import ..Systems: SystemModel, ZonedDateTime, Period,
                   PowerUnit, EnergyUnit, conversionfactor,
@@ -12,7 +13,8 @@ import ..Systems: SystemModel, ZonedDateTime, Period,
 export
 
     # Metrics
-    ReliabilityMetric, LOLE, EUE, NEUE,
+    ReliabilityMetric, LOLE, EUE, NEUE, LOLD, LOLEv, 
+    MeanEventDuration, MaxEventDuration, MeanEventEnergy, MaxEventEnergy, 
     val, stderror,
 
     # Result specifications
@@ -25,7 +27,7 @@ export
     DemandResponseEnergy, DemandResponseEnergySamples,
     GeneratorAvailability, StorageAvailability,
     GeneratorStorageAvailability,DemandResponseAvailability,
-    LineAvailability
+    LineAvailability, ShortfallEvents
 
 include("utils.jl")
 include("metrics.jl")
@@ -33,6 +35,8 @@ include("metrics.jl")
 abstract type ResultSpec end
 
 abstract type ResultAccumulator{R<:ResultSpec} end
+
+issamplebased(::ResultSpec) = false
 
 abstract type Result{
     N, # Number of timesteps simulated
@@ -166,12 +170,29 @@ getindex(x::AbstractEnergyResult, name::String, ::Colon) =
 getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
     getindex.(x, names(x), permutedims(x.timestamps))
 
+abstract type AbstractShortfallEventResult{N,L,T} <: Result{N,L,T} end
+
 include("StorageEnergy.jl")
 include("GeneratorStorageEnergy.jl")
 include("DemandResponseEnergy.jl")
 include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
 include("DemandResponseEnergySamples.jl")
+include("ShortfallEvents.jl")
+
+issamplebased(::ShortfallSamples) = true
+issamplebased(::DemandResponseShortfallSamples) = true
+issamplebased(::SurplusSamples) = true
+issamplebased(::FlowSamples) = true
+issamplebased(::UtilizationSamples) = true
+issamplebased(::StorageEnergySamples) = true
+issamplebased(::GeneratorStorageEnergySamples) = true
+issamplebased(::DemandResponseEnergySamples) = true
+issamplebased(::GeneratorAvailability) = true
+issamplebased(::StorageAvailability) = true
+issamplebased(::GeneratorStorageAvailability) = true
+issamplebased(::DemandResponseAvailability) = true
+issamplebased(::LineAvailability) = true
 
 function resultchannel(
     results::T, threads::Int
@@ -185,18 +206,52 @@ end
 merge!(xs::T, ys::T) where T <: Tuple{Vararg{ResultAccumulator}} =
     foreach(merge!, xs, ys)
 
+function copy_sample_partition!(
+    x::A,
+    y::A,
+    sampleids::UnitRange{Int},
+) where {A<:ResultAccumulator}
+
+    field = fieldnames(A)[1]
+    xarr = getfield(x, field)
+    yarr = getfield(y, field)
+
+    @views xarr[:, :, sampleids] .= yarr
+    return
+end
+
 function finalize(
-    results::Channel{<:Tuple{Vararg{ResultAccumulator}}},
+    results::Channel,
     system::SystemModel{N,L,T,P,E},
-    threads::Int
+    threads::Int,
+    nsamples::Int,
+    resultspecs::Tuple{Vararg{ResultSpec}},
 ) where {N,L,T,P,E}
 
-    total_result = take!(results)
+    first_recorders, first_sampleids = take!(results)
+
+    total_result = map(resultspecs, first_recorders) do spec, recorder
+        issamplebased(spec) ? accumulator(system, nsamples, spec) : recorder
+    end
+
+    for i in eachindex(total_result)
+        if issamplebased(resultspecs[i])
+            copy_sample_partition!(total_result[i], first_recorders[i], first_sampleids)
+        end
+    end
 
     for _ in 2:threads
-        thread_result = take!(results)
-        merge!(total_result, thread_result)
+        thread_recorders, sampleids = take!(results)
+
+        for i in eachindex(total_result)
+            if issamplebased(resultspecs[i])
+                copy_sample_partition!(total_result[i], thread_recorders[i], sampleids)
+            else
+                merge!(total_result[i], thread_recorders[i])
+            end
+        end
     end
+
     close(results)
 
     return finalize.(total_result, system)
