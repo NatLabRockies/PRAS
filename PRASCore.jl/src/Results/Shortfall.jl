@@ -270,13 +270,13 @@ end
 EUE(x::ShortfallResult{N,L,T,E}) where {N,L,T,E} =
     EUE{N,L,T,E}(MeanEstimate(x[]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E},r::AbstractString) where {N,L,T,E} =
+EUE(x::ShortfallResult{N,L,T,E}, r::AbstractString) where {N,L,T,E} =
     EUE{N,L,T,E}(MeanEstimate(x[r]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E},t::ZonedDateTime) where {N,L,T,E} =
+EUE(x::ShortfallResult{N,L,T,E}, t::ZonedDateTime) where {N,L,T,E} =
     EUE{1,L,T,E}(MeanEstimate(x[t]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E},r::AbstractString, t::ZonedDateTime) where {N,L,T,E} =
+EUE(x::ShortfallResult{N,L,T,E}, r::AbstractString, t::ZonedDateTime) where {N,L,T,E} =
     EUE{1,L,T,E}(MeanEstimate(x[r, t]..., x.nsamples))
 
 function NEUE(x::ShortfallResult)  
