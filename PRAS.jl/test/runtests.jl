@@ -11,8 +11,7 @@ using Test
     neue = NEUE(sf)
 
     alpha = 0.95
-    (timesteps,periodunit,periodunit,powerunit,energyunit) = get_params(rts_gmlc())
-    cvar = CVAR(energyunit, sf, alpha)
+    cvar = CVAR(:energy, sf, alpha)
     ncvar = NCVAR(sf, cvar)
 
     @test val(eue) isa Float64
@@ -36,8 +35,7 @@ end
     neue = NEUE(sf)
 
     alpha = 0.95
-    (timesteps,periodunit,periodunit,powerunit,energyunit) = get_params(rts_gmlc())
-    cvar = CVAR(energyunit, sf, alpha)
+    cvar = CVAR(:energy, sf, alpha)
     ncvar = NCVAR(sf, cvar)
 
     @test val(eue) isa Float64
