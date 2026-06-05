@@ -169,6 +169,13 @@ function Base.show(io::IO, x::NEUE)
 
 end
 
+const CVAR_METRICS = (:energy,)
+
+function _check_dim(dim::Symbol, valid::Tuple{Vararg{Symbol}}=CVAR_METRICS)
+    dim in valid ||
+        throw(ArgumentError("$dim is not a valid dim, use one of $valid"))
+end
+
 """
     CVAR
 
@@ -180,27 +187,21 @@ respectively.
 """
 struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
 
-    unit::Type{<:EnergyUnit}
+    dim::Symbol
     cvar::MeanEstimate
     alpha::Float64
     var::Float64
-    
-    function CVAR{N,L,T,E}(unit::U,
+
+    function CVAR{N,L,T,E}(dim::Symbol,
                            cvar::MeanEstimate,
                            alpha::Float64,
-                           var::Float64) where {
-                            N,
-                            L,
-                            T<:Period,
-                            E<:EnergyUnit,
-                            U<:Type{<:EnergyUnit},
-                            }
+                           var::Float64) where {N,L,T<:Period,E<:EnergyUnit}
+        _check_dim(dim)
         val(cvar) >= 0 || throw(DomainError(val(cvar),
             "$(val(cvar)) is not a valid CVAR"))
         0 <= alpha < 1 || throw(DomainError(alpha,
-         "$alpha is not a valid confidence level"))
-
-        new{N,L,T,E}(unit, cvar, alpha, var)
+            "$alpha is not a valid confidence level"))
+        new{N,L,T,E}(dim, cvar, alpha, var)
     end
 
 end
@@ -209,10 +210,8 @@ val(x::CVAR) = val(x.cvar)
 stderror(x::CVAR) = stderror(x.cvar)
 
 function Base.show(io::IO, x::CVAR{N,L,T,E}) where {N,L,T,E}
-    
     print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
-          unitsymbol(x.unit), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
-
+          unitsymbol(E), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
 end
 
 """
