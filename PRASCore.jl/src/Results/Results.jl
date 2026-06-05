@@ -30,6 +30,25 @@ export
 include("utils.jl")
 include("metrics.jl")
 
+function _cvar(estimate::AbstractVector{<:Real}, alpha::Float64)
+    var = quantile(estimate, alpha)
+    tail = estimate[estimate .> var]   
+    cvar = isempty(tail) ? MeanEstimate(0.) : MeanEstimate(tail)
+    return cvar, var
+end
+
+function _ncvar(cvar::CVAR, demand::Real)
+    if demand > 0
+        scale = demand / 1e6
+        ncvar = div(cvar.cvar, scale)
+        var = cvar.var / scale
+    else
+        ncvar = MeanEstimate(0.)
+        var = 0.0
+    end
+    return ncvar, var
+end
+
 abstract type ResultSpec end
 
 abstract type ResultAccumulator{R<:ResultSpec} end
@@ -80,14 +99,21 @@ NEUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
 NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
     NEUE.(x, x.regions.names, permutedims(x.timestamps))
 
-CVAR(unit::Type{U}, x::AbstractShortfallResult, alpha::Float64, ::Colon, t::ZonedDateTime) where {U<:EnergyUnit} =
-    CVAR.(unit, x, alpha, x.regions.names, t)
+CVAR(dim::Symbol, x::AbstractShortfallResult, alpha::Float64, args...) =
+    CVAR(Val(dim), x, alpha, args...)
 
-CVAR(unit::Type{U}, x::AbstractShortfallResult, alpha::Float64, r::AbstractString, ::Colon) where {U<:EnergyUnit} =
-    CVAR.(unit, x, alpha, r, x.timestamps)
+CVAR(dim::Symbol, x::AbstractShortfallResult, alpha::Float64, ::Colon, t::ZonedDateTime) =
+    CVAR.(dim, x, alpha, x.regions.names, t)
 
-CVAR(unit::Type{U}, x::AbstractShortfallResult, alpha::Float64, ::Colon, ::Colon) where {U<:EnergyUnit} =
-    CVAR.(unit, x, alpha, x.regions.names, permutedims(x.timestamps))
+CVAR(dim::Symbol, x::AbstractShortfallResult, alpha::Float64, r::AbstractString, ::Colon) =
+    CVAR.(dim, x, alpha, r, x.timestamps)
+
+CVAR(dim::Symbol, x::AbstractShortfallResult, alpha::Float64, ::Colon, ::Colon) =
+    CVAR.(dim, x, alpha, x.regions.names, permutedims(x.timestamps))
+
+function CVAR(::Val, ::AbstractShortfallResult, ::Float64, args...)
+    throw(ArgumentError("Invalid dim, use one of $CVAR_METRICS"))
+end
 
 NCVAR(x::AbstractShortfallResult, cvar::CVAR, ::Colon) =
     NCVAR.(x, cvar, x.regions.names)
