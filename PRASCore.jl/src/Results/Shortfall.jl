@@ -180,7 +180,7 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
         shortfall_regionperiod_std::Matrix{Float64},
         shortfall_samples::Vector{Float64},
         shortfall_region_samples::Matrix{Float64},
-    ) where {N,L,T<:Period,E<:EnergyUnit,S <: Union{Shortfall,DemandResponseShortfall}}
+    ) where {N,L,T<:Period,E<:EnergyUnit,S<:Union{Shortfall,DemandResponseShortfall}}
 
         isnothing(nsamples) || nsamples > 0 ||
             throw(DomainError("Sample count must be positive or `nothing`."))
@@ -270,13 +270,13 @@ end
 EUE(x::ShortfallResult{N,L,T,E}) where {N,L,T,E} =
     EUE{N,L,T,E}(MeanEstimate(x[]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E}, r::AbstractString) where {N,L,T,E} =
+EUE(x::ShortfallResult{N,L,T,E},r::AbstractString) where {N,L,T,E} =
     EUE{N,L,T,E}(MeanEstimate(x[r]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E}, t::ZonedDateTime) where {N,L,T,E} =
+EUE(x::ShortfallResult{N,L,T,E},t::ZonedDateTime) where {N,L,T,E} =
     EUE{1,L,T,E}(MeanEstimate(x[t]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E}, r::AbstractString, t::ZonedDateTime) where {N,L,T,E} =
+EUE(x::ShortfallResult{N,L,T,E},r::AbstractString, t::ZonedDateTime) where {N,L,T,E} =
     EUE{1,L,T,E}(MeanEstimate(x[r, t]..., x.nsamples))
 
 function NEUE(x::ShortfallResult)  
@@ -309,106 +309,47 @@ function NEUE(x::ShortfallResult, r::AbstractString)
 
 end
 
-function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64) where {N,L,T,E,U<:EnergyUnit}
-
-    estimate = x.shortfall_samples
-    var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end                                                           
-
-    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
-  
+function CVAR(::Val{:energy}, x::ShortfallResult{N,L,T,E},alpha::Float64) where {N,L,T,E}
+    cvar, var = _cvar(x.shortfall_samples, alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
 end
 
-
-function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64, t::StepRange{ZonedDateTime, P}) where {N,L,T,E,U<:EnergyUnit,P}
-
-    i_t0 = findfirstunique(x.timestamps, first(t))
-    i_tf = findlastunique(x.timestamps, last(t))
-    @info "Index for timestamp $t: $i_t0, $i_tf"
-    estimate = x.shortfall_samples[:, i_t0:i_tf]
-    @info "Shortfall samples for timestamp $t: $(estimate)"
-    var = quantile(estimate, alpha)
-    @info "VaR for timestamp $t: $var"
-    tail_losses = estimate[estimate .>= var]
-    @info "Tail losses for timestamp $t: $(tail_losses)"
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end
-
-    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
-  
-end
-
-function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString) where {N,L,T,E,U<:EnergyUnit}
-
+function CVAR(::Val{:energy}, x::ShortfallResult{N,L,T,E},alpha::Float64, r::AbstractString) where {N,L,T,E}
     i_r = findfirstunique(x.regions.names, r)
-    estimate = x.shortfall_region_samples[i_r, :]
-    var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end
-
-    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
-  
+    cvar, var = _cvar(x.shortfall_region_samples[i_r, :], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
 end
 
-function CVAR(unit::Type{U}, x::ShortfallResult{N,L,T,E}, alpha::Float64, r::AbstractString, t::ZonedDateTime) where {N,L,T,E,U<:EnergyUnit}
-
-    i_r = findfirstunique(x.regions.names, r)
-    i_t = findfirstunique(x.timestamps, t)
-    estimate = x.shortfall_region_samples[i_r, i_t]
-    var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end
-
-    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
-  
+function CVAR(::Val, ::ShortfallResult, ::Float64, ::StepRange{ZonedDateTime})
+    # To support this, add unservedload_period_sample::Matrix{Int} (N × nsamples)
+    # to ShortfallAccumulator, record it in recording.jl, and slice [i_t0:i_tf, :] here.
+    throw(ArgumentError(
+        "Time-sliced CVAR is not supported for ShortfallResult. " *
+        "Use ShortfallSamplesResult instead."))
 end
 
-function NCVAR(x::ShortfallResult{N,L,T,E}, cvar::CVAR) where {N,L,T,E}
+
+function CVAR(::Val, ::ShortfallResult, ::Float64, ::AbstractString, ::ZonedDateTime)
+    # To support this, add unservedload_regionperiod_sample::Array{Int,3} (nregions × N × nsamples)
+    # to ShortfallAccumulator, record it in recording.jl, and slice [i_r, i_t, :] here.
+    throw(ArgumentError(
+        "Region+timestep CVAR is not supported for ShortfallResult. " *
+        "Use ShortfallSamplesResult instead."))
+end
+
+function NCVAR(x::ShortfallResult{N,L,T,E},cvar::CVAR) where {N,L,T,E}
     demand = sum(x.regions.load)
 
-    if demand > 0
-        ncvar = div(cvar.cvar, demand/1e6)
-        var = div(cvar.var, demand/1e6)
-    else
-        ncvar = MeanEstimate(0.)
-        var = MeanEstimate(0.)
-    end
+    ncvar, var = _ncvar(cvar, demand)
 
     return NCVAR(ncvar, cvar.alpha, var)
-  
 end
 
-function NCVAR(x::ShortfallResult{N,L,T,E}, cvar::CVAR, r::AbstractString) where {N,L,T,E}
+function NCVAR(x::ShortfallResult{N,L,T,E},cvar::CVAR, r::AbstractString) where {N,L,T,E}
     i_r = findfirstunique(x.regions.names, r)
     demand = sum(x.regions.load[i_r, :])
 
-    if demand > 0
-        ncvar = div(cvar.cvar, demand/1e6)
-        var = div(cvar.var, demand/1e6)
-    else
-        ncvar = MeanEstimate(0.)
-        var = MeanEstimate(0.)
-    end
+    ncvar, var = _ncvar(cvar, demand)
 
     return NCVAR(ncvar, cvar.alpha, var)
   

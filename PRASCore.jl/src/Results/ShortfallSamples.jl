@@ -117,6 +117,25 @@ function getindex(
     return vec(p2e * x.shortfall[i_r, i_t, :])
 end
 
+function getindex(
+    x::ShortfallSamplesResult{N,L,T,P,E}, t::StepRange{ZonedDateTime}
+) where {N,L,T,P,E}
+    i_t0 = findfirstunique(x.timestamps, first(t))
+    i_tf = findlastunique(x.timestamps, last(t))
+    p2e = conversionfactor(L, T, P, E)
+    return vec(p2e * sum(x.shortfall[:, i_t0:i_tf, :], dims=1:2))
+end
+
+function getindex(
+    x::ShortfallSamplesResult{N,L,T,P,E}, r::AbstractString, t::StepRange{ZonedDateTime}
+) where {N,L,T,P,E}
+    i_r = findfirstunique(x.regions.names, r)
+    i_t0 = findfirstunique(x.timestamps, first(t))
+    i_tf = findlastunique(x.timestamps, last(t))
+    p2e = conversionfactor(L, T, P, E)
+    return vec(p2e * sum(x.shortfall[i_r, i_t0:i_tf, :], dims=1))
+end
+
 
 function LOLE(x::ShortfallSamplesResult{N,L,T}) where {N,L,T}
     eventperiods = sum(sum(x.shortfall, dims=1) .> 0, dims=2)
@@ -185,76 +204,35 @@ function NEUE(x::ShortfallSamplesResult, r::AbstractString)
 
 end
 
-function CVAR(unit::Type{U}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T,P,E,U<:EnergyUnit}
-    
-    estimate = x[]
-    var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end
-
-    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
-
+function CVAR(::Val{:energy}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T,P,E}
+    cvar, var = _cvar(x[], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
 end
 
-function CVAR(unit::Type{U}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString) where {N,L,T,P,E,U<:EnergyUnit}
-    estimate = x[r]
-    var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end
-
-    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
-
+function CVAR(::Val{:energy}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString) where {N,L,T,P,E}
+    cvar, var = _cvar(x[r], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
 end
 
-function CVAR(unit::Type{U}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, t::ZonedDateTime) where {N,L,T,P,E,U<:EnergyUnit}
-    estimate = x[t]
-    var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
-
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end
-
-    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
-
+function CVAR(::Val{:energy}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, t::StepRange{ZonedDateTime}) where {N,L,T,P,E}
+    cvar, var = _cvar(x[t], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
 end
 
-function CVAR(unit::Type{U}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString, t::ZonedDateTime) where {N,L,T,P,E,U<:EnergyUnit}
-    estimate = x[r, t]
-    var = quantile(estimate, alpha)
-    tail_losses = estimate[estimate .>= var]
+function CVAR(::Val{:energy}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString, t::ZonedDateTime) where {N,L,T,P,E}
+    cvar, var = _cvar(x[r, t], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
+end
 
-    cvar = if !isempty(tail_losses)
-        MeanEstimate(tail_losses)
-    else
-        MeanEstimate(0.)
-    end
-    
-    return CVAR{N,L,T,E}(unit, cvar, alpha, var)
+function CVAR(::Val{:energy}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString, t::StepRange{ZonedDateTime}) where {N,L,T,P,E}
+    cvar, var = _cvar(x[r, t], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
 end
 
 function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, cvar::CVAR) where {N,L,T,P}
     demand = sum(x.regions.load)
 
-    if demand > 0
-        ncvar = div(cvar.cvar, demand/1e6)
-        var = div(cvar.var, demand/1e6)
-    else
-        ncvar = MeanEstimate(0.)
-        var = MeanEstimate(0.)
-    end
+    ncvar, var = _ncvar(cvar, demand)
 
     return NCVAR(ncvar, cvar.alpha, var)
 
@@ -264,14 +242,7 @@ function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, cvar::CVAR, r::AbstractString
     i_r = findfirstunique(x.regions.names, r)
     demand = sum(x.regions.load[i_r, :])
 
-    if demand > 0
-        ncvar = div(cvar.cvar, demand/1e6)
-        var = div(cvar.var, demand/1e6)
-    else
-        ncvar = MeanEstimate(0.)
-        var = MeanEstimate(0.)
-    end
-    
+    ncvar, var = _ncvar(cvar, demand)
     return NCVAR(ncvar, cvar.alpha, var)
 
 end
