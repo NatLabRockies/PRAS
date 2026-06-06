@@ -74,13 +74,13 @@
   
     @testset "CVAR" begin
 
-        cvar1 = CVAR{2,1,Hour,MWh}(MWh,MeanEstimate(1.2), 0.95, 2.0)
+        cvar1 = CVAR{2,1,Hour,MWh}(:energy,MeanEstimate(1.2), 0.95, 2.0)
         @test string(cvar1) == "CVAR@0.95 = 1.20000 MWh/2h"
 
-        cvar2 = CVAR{1,2,Year,GWh}(GWh,MeanEstimate(17.2, 1.3), 0.95, 1.2)
+        cvar2 = CVAR{1,2,Year,GWh}(:energy,MeanEstimate(17.2, 1.3), 0.95, 1.2)
         @test string(cvar2) == "CVAR@0.95 = 17±1 GWh/2y"
 
-        @test_throws DomainError CVAR{1,1,Hour,MWh}(MWh,MeanEstimate(-1.2), 0.95, 1.2)
+        @test_throws DomainError CVAR{1,1,Hour,MWh}(:energy,MeanEstimate(-1.2), 0.95, 1.2)
 
     end    
 

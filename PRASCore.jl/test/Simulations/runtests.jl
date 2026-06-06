@@ -6,7 +6,6 @@
 
     nstderr_tol = 3
     alpha = 0.95
-    energyunit = MWh    
 
     simspec = SequentialMonteCarlo(samples=100_000, seed=1, threaded=false)
     smallsample = SequentialMonteCarlo(samples=10, seed=123, threaded=false)
@@ -68,7 +67,7 @@
                           TestData.singlenode_a_lole, nstderr_tol)
         @test withinrange(EUE(shortfall_1a),
                           TestData.singlenode_a_eue, nstderr_tol)
-        @test withinrange(CVAR(energyunit, shortfall_1a, alpha),
+        @test withinrange(CVAR(:energy, shortfall_1a, alpha),
                           TestData.singlenode_a_cvar, nstderr_tol)                          
         @test withinrange(LOLE(shortfall_1a, "Region"),
                           TestData.singlenode_a_lole, nstderr_tol)
@@ -138,13 +137,13 @@
                           TestData.singlenode_b_lole, nstderr_tol)
         @test withinrange(EUE(shortfall_1b),
                           TestData.singlenode_b_eue, nstderr_tol)
-        @test withinrange(CVAR(energyunit, shortfall_1b, alpha),
+        @test withinrange(CVAR(:energy, shortfall_1b, alpha),
                           TestData.singlenode_b_cvar, nstderr_tol)                          
         @test withinrange(LOLE(shortfall_1b, "Region"),
                           TestData.singlenode_b_lole, nstderr_tol)
         @test withinrange(EUE(shortfall_1b, "Region"),
                           TestData.singlenode_b_eue, nstderr_tol)
-        @test withinrange(CVAR(energyunit, shortfall_1b, alpha, "Region"),
+        @test withinrange(CVAR(:energy, shortfall_1b, alpha, "Region"),
                           TestData.singlenode_b_cvar, nstderr_tol)                                                    
 
         @test all(LOLE.(shortfall_1b, timestamps_b) .≈

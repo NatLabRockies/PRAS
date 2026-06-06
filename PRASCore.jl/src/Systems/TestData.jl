@@ -36,7 +36,7 @@ singlenode_a_lole = 0.355
 singlenode_a_lolps = [0.028, 0.271, 0.028, 0.028]
 singlenode_a_eue = 1.59
 singlenode_a_eues = [0.29, 0.832, 0.29, 0.178]
-singlenode_a_cvar = 11.84
+singlenode_a_cvar = 13.34
 
 ## Single-Region System A - 5 minute version
 
@@ -100,7 +100,7 @@ singlenode_b_lole = 0.96
 singlenode_b_lolps = [0.19, 0.19, 0.19, 0.1, 0.1, 0.19]
 singlenode_b_eue = 7.11
 singlenode_b_eues = [1.29, 1.29, 1.29, 0.85, 1.05, 1.34]
-singlenode_b_cvar = 30.44
+singlenode_b_cvar = 31.71
 
 
 # Single-Region System B, with storage

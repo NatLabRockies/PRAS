@@ -21,6 +21,7 @@ testinterface = interfacenames[testinterface_idx]
 notaninterface = "X"=>"Y"
 
 periods = ZonedDateTime(2012,4,1,0,tz):Hour(1):ZonedDateTime(2012,4,7,23,tz)
+badperiods = ZonedDateTime(2013,4,1,0,tz):Hour(1):ZonedDateTime(2013,4,7,23,tz)
 nperiods = length(periods)
 resource_vals = rand(0:999, nresources, nperiods)
 testperiod_idx = 29
