@@ -188,20 +188,18 @@ println("Surplus in")
 # Currently, PRAS implements only unserved energy CVAR. 
 
 # Start by defining the confidence level $\alpha$, which defines the tail threshold beyond which we
-# want measure the expected shortfall. Also, we want to define the CVAR unit type.
-# Only energy units are accepted (e.g., `kWh`, `MWh`, `GWh`, or `TWh`). 
+# want measure the expected shortfall.
 
 alpha = 0.95 # nth percentile for tail events
-energyunit = MWh # energy type
 
 # We can check the overall system unserved energy CVAR
 
-ue_cvar = CVAR(energyunit, shortfall, alpha)
+ue_cvar = CVAR(:energy, shortfall, alpha)
 println("System CVAR: $(ue_cvar)")
 
 # And we can calculate the noramzlied CVAR (NCVAR)
 ue_ncvar = NCVAR(shortfall, ue_cvar)
-println("System CVAR: $(ue_cvar)")
+println("System NCVAR: $(ue_ncvar)")
 
 # We can also find the unserved energy CVAR by region
-regional_ue_cvar = CVAR.(energyunit, shortfall, alpha, sys.regions.names)
+regional_ue_cvar = CVAR.(:energy, shortfall, alpha, sys.regions.names)

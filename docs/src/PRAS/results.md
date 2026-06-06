@@ -109,7 +109,7 @@ horizon can be extracted as:
 shortfall, = assess(sys, SequentialMonteCarlo(), Shortfall())
 eue_overall = EUE(shortfall)
 lole_overall = LOLE(shortfall)
-ue_cvar_overall = CVAR(MWh, shortfall, 0.95)
+ue_cvar_overall = CVAR(:energy, shortfall, 0.95)
 ```
 
 More specific metrics can be obtained as well:
