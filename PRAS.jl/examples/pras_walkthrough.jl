@@ -209,7 +209,7 @@ regional_ue_cvar = CVAR.(:energy, shortfall, alpha, sys.regions.names)
 # After exploring the simulation outputs, we may want to save the
 # aggregate results for reporting or further post-processing.
 
-# Rather than querying individual metrics (e.g., LOLE, EUE, NEUE)
+# Rather than querying individual metrics (e.g., LOLE, EUE)
 # one by one, PRAS provides a utility to export all aggregate
 # system-level and region-level results in a single step.
 
@@ -220,7 +220,7 @@ println("Results exported to: ", output_path)
 
 # This creates a timestamped directory containing a `pras_results.json`
 # file with:
-# - system-level metrics (LOLE, EUE, NEUE)
+# - system-level metrics (LOLE, EUE, NEUE, LOLD)
 # - region-level metrics
 # - load and capacity summaries
 # - horizon timestamps

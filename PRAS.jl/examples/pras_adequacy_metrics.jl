@@ -24,7 +24,6 @@
 #
 # - **LOLE** is the expected number of event-periods
 # - **LOLD** is the expected number of event-days
-# - **LOLEv** is the expected number of adequacy events
 #
 # These metrics are related, but they are not interchangeable.
 #
@@ -105,25 +104,6 @@
 # I_{d,s} =
 # \begin{cases}
 # 1 & \text{if } \exists t \in T(d) \text{ such that } \sum_r S_{r,t,s} > 0 \\
-# 0 & \text{otherwise}
-# \end{cases}
-# ```
-#
-#
-# ### LOLEv
-#
-# LOLEv counts the expected number of adequacy events:
-
-# ```math
-# \mathrm{LOLEv} = \mathbb{E}\left[\sum_e J_{e,s}\right]
-# ```
-#
-# where:
-
-# ```math
-# J_{e,s} =
-# \begin{cases}
-# 1 & \text{if adequacy event } e \text{ occurs in sample } s \\
 # 0 & \text{otherwise}
 # \end{cases}
 # ```
