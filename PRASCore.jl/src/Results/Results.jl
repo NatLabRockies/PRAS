@@ -102,14 +102,6 @@ NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
 CVAR(dim::Symbol, x::AbstractShortfallResult, alpha::Float64, args...) =
     CVAR(Val(dim), x, alpha, args...)
 
-CVAR(dim::Symbol, x::AbstractShortfallResult, alpha::Float64, ::Colon, t::ZonedDateTime) =
-    CVAR.(dim, x, alpha, x.regions.names, t)
-
-CVAR(dim::Symbol, x::AbstractShortfallResult, alpha::Float64, r::AbstractString, ::Colon) =
-    CVAR.(dim, x, alpha, r, x.timestamps)
-
-CVAR(dim::Symbol, x::AbstractShortfallResult, alpha::Float64, ::Colon, ::Colon) =
-    CVAR.(dim, x, alpha, x.regions.names, permutedims(x.timestamps))
 
 function CVAR(::Val, ::AbstractShortfallResult, ::Float64, args...)
     throw(ArgumentError("Invalid dim, use one of $CVAR_METRICS"))

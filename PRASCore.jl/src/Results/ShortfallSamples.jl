@@ -229,7 +229,10 @@ function CVAR(::Val{:energy}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float
     return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
 end
 
-function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, cvar::CVAR) where {N,L,T,P}
+CVAR(dim::Symbol, x::ShortfallSamplesResult, alpha::Float64, ::Colon, t::StepRange{ZonedDateTime}) =
+    CVAR.(dim, x, alpha, x.regions.names, Ref(t))
+
+function NCVAR(x::ShortfallSamplesResult, cvar::CVAR)
     demand = sum(x.regions.load)
 
     ncvar, var = _ncvar(cvar, demand)
@@ -238,7 +241,7 @@ function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, cvar::CVAR) where {N,L,T,P}
 
 end
 
-function NCVAR(x::ShortfallSamplesResult{N,L,T,P}, cvar::CVAR, r::AbstractString) where {N,L,T,P}
+function NCVAR(x::ShortfallSamplesResult, cvar::CVAR, r::AbstractString)
     i_r = findfirstunique(x.regions.names, r)
     demand = sum(x.regions.load[i_r, :])
 

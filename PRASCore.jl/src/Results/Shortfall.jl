@@ -336,7 +336,7 @@ function CVAR(::Val, ::ShortfallResult, ::Float64, ::AbstractString, ::ZonedDate
         "Use ShortfallSamplesResult instead."))
 end
 
-function NCVAR(x::ShortfallResult{N,L,T,E},cvar::CVAR) where {N,L,T,E}
+function NCVAR(x::ShortfallResult, cvar::CVAR)
     demand = sum(x.regions.load)
 
     ncvar, var = _ncvar(cvar, demand)
@@ -344,7 +344,7 @@ function NCVAR(x::ShortfallResult{N,L,T,E},cvar::CVAR) where {N,L,T,E}
     return NCVAR(cvar.dim, ncvar, cvar.alpha, var)
 end
 
-function NCVAR(x::ShortfallResult{N,L,T,E},cvar::CVAR, r::AbstractString) where {N,L,T,E}
+function NCVAR(x::ShortfallResult, cvar::CVAR, r::AbstractString)
     i_r = findfirstunique(x.regions.names, r)
     demand = sum(x.regions.load[i_r, :])
 
