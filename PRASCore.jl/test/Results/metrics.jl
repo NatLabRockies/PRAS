@@ -86,13 +86,13 @@
 
     @testset "NCVAR" begin
 
-        ncvar1 = NCVAR(MeanEstimate(1.2), 0.95, 1.2)
+        ncvar1 = NCVAR(:energy, MeanEstimate(1.2), 0.95, 1.2)
         @test string(ncvar1) == "NCVAR@0.95 = 1.20000 ppm"
 
-        ncvar2 = NCVAR(MeanEstimate(17.2, 1.3), 0.95, 1.3)
+        ncvar2 = NCVAR(:energy, MeanEstimate(17.2, 1.3), 0.95, 1.3)
         @test string(ncvar2) == "NCVAR@0.95 = 17±1 ppm"
 
-        @test_throws DomainError NCVAR(MeanEstimate(-1.2), 0.95, -1.2)
+        @test_throws DomainError NCVAR(:energy, MeanEstimate(-1.2), 0.95, -1.2)
 
     end
 

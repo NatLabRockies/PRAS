@@ -225,14 +225,17 @@ respectively.
 """
 struct NCVAR <: ReliabilityMetric
 
+    dim::Symbol
     ncvar::MeanEstimate
     alpha::Float64
     var::Float64
     
-    function NCVAR(ncvar::MeanEstimate, alpha::Float64, var::Float64)
+    function NCVAR(dim::Symbol, ncvar::MeanEstimate, alpha::Float64, var::Float64)
+
+        _check_dim(dim)
         val(ncvar) >= 0 || throw(DomainError(val(ncvar),
             "$(val(ncvar)) is not a valid NCVAR"))
-        new(ncvar, alpha, var)
+        new(dim, ncvar, alpha, var)
     end
 
 end

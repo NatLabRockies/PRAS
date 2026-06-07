@@ -328,7 +328,6 @@ function CVAR(::Val, ::ShortfallResult, ::Float64, ::StepRange{ZonedDateTime})
         "Use ShortfallSamplesResult instead."))
 end
 
-
 function CVAR(::Val, ::ShortfallResult, ::Float64, ::AbstractString, ::ZonedDateTime)
     # To support this, add unservedload_regionperiod_sample::Array{Int,3} (nregions × N × nsamples)
     # to ShortfallAccumulator, record it in recording.jl, and slice [i_r, i_t, :] here.
@@ -342,7 +341,7 @@ function NCVAR(x::ShortfallResult{N,L,T,E},cvar::CVAR) where {N,L,T,E}
 
     ncvar, var = _ncvar(cvar, demand)
 
-    return NCVAR(ncvar, cvar.alpha, var)
+    return NCVAR(cvar.dim, ncvar, cvar.alpha, var)
 end
 
 function NCVAR(x::ShortfallResult{N,L,T,E},cvar::CVAR, r::AbstractString) where {N,L,T,E}
@@ -351,7 +350,7 @@ function NCVAR(x::ShortfallResult{N,L,T,E},cvar::CVAR, r::AbstractString) where 
 
     ncvar, var = _ncvar(cvar, demand)
 
-    return NCVAR(ncvar, cvar.alpha, var)
+    return NCVAR(cvar.dim, ncvar, cvar.alpha, var)
   
 end
 
