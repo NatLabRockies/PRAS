@@ -60,6 +60,10 @@
 
 # This behavior is reflected in PRAS results, where LOLE and LOLD provide
 # complementary views of how shortfall events are distributed in time.
+#
+#md # !!! note
+#md #     LOLD is currently available only for `ShortfallSamples`. Calling LOLD on a `Shortfall` result 
+#md #     will raise an error.
 
 # ## Mathematical Interpretation
 #
@@ -127,9 +131,6 @@ shortfall_samples, = assess(
 println(LOLE(shortfall_samples))
 println(LOLD(shortfall_samples))
 
-# LOLE describes how many simulation periods experience shortfall, while LOLD
-# describes how many days contain at least one such period.
-#
 # In the RTS example above, the system has approximately 85 shortfall hours
 # but only 25.8 shortfall days. This indicates that shortfall events are
 # temporally clustered, meaning that multiple shortfall hours tend to occur within the
