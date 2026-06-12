@@ -23,9 +23,6 @@ export
     # Main data structure
     SystemModel, get_params,
 
-    # Non-contiguous time axis
-    SlicedTimestamps,
-
     # Convenience re-exports
     ZonedDateTime, @tz_str
 

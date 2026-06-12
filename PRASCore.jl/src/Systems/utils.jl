@@ -73,6 +73,17 @@ end
 
 Base.:(==)(x::SlicedTimestamps, y::SlicedTimestamps) = x.slices == y.slices
 
+Base.show(io::IO, ts::SlicedTimestamps) = show(io, ts.slices)
+
+function Base.show(io::IO, ::MIME"text/plain", ts::SlicedTimestamps)
+    print(io, "[")
+    for (k, s) in enumerate(ts.slices)
+        k == 1 || print(io, ",\n ")
+        show(io, s)
+    end
+    print(io, "]")
+end
+
 """
     timestep(ts) -> Period
 
