@@ -23,7 +23,9 @@ details on components of a system model.
 - `region_genstor_idxs`: Mapping of hybrid resources to their respective regions
 - `lines`: Collection of transmission lines connecting regions (Type - [Lines](@ref))
 - `interface_line_idxs`: Mapping of transmission lines to interfaces
-- `timestamps`: Time range for the simulation period
+- `timestamps`: Time axis for the simulation period. Either a contiguous
+  `StepRange` of timestamps (single time slice) or a non-contiguous axis built
+  from multiple slices (see the slice-vector constructor below)
 - `attrs`: Dictionary of system metadata and attributes
 
 # Constructors
@@ -42,6 +44,20 @@ Create a single-node system model with specified generators, storage, and load p
                 timestamps::StepRange{DateTime}, [attrs])
 
 Create a system model with `DateTime` timestamps (will be converted to UTC time zone).
+
+    SystemModel(regions, interfaces, generators, region_gen_idxs, storages, region_stor_idxs,
+                generatorstorages, region_genstor_idxs, lines, interface_line_idxs,
+                slices::Vector{<:StepRange{ZonedDateTime}}, [attrs])
+
+Create a system model with a **non-contiguous** time axis. Each element of
+`slices` is a contiguous `StepRange` of timestamps, and the gaps between slices
+make the overall axis non-contiguous (e.g. a representative summer week plus a
+representative winter week). All slices must share the same timestep and be
+strictly ordered and non-overlapping; the total number of timesteps across all
+slices must equal `N`.
+
+The time axis must be one of these forms: a flat `Vector` of individual
+timestamps is not accepted.
 """
 struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
     regions::Regions{N, P}
@@ -77,7 +93,7 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
         region_genstor_idxs::Vector{UnitRange{Int}},
         demandresponses::DemandResponses{N,L,T,P,E}, region_dr_idxs::Vector{UnitRange{Int}},
         lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
-        timestamps::AbstractVector{ZonedDateTime},
+        timestamps::Union{StepRange{ZonedDateTime}, SlicedTimestamps},
         attrs::Dict{String, String}=Dict{String, String}()
     ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
@@ -125,7 +141,7 @@ function SystemModel{}(
     generatorstorages::GeneratorStorages{N,L,T,P,E},
     region_genstor_idxs::Vector{UnitRange{Int}},
     lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
-    timestamps::AbstractVector{ZonedDateTime},
+    timestamps::Union{StepRange{ZonedDateTime}, SlicedTimestamps},
     attrs::Dict{String, String}=Dict{String, String}()
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
