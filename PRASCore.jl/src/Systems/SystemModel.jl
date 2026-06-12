@@ -80,7 +80,9 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
 
     # Either a contiguous `StepRange` (single time slice) or a `SlicedTimestamps`
     # (multiple non-contiguous slices). Both behave as a flat length-N vector.
-    timestamps::AbstractVector{ZonedDateTime}
+    # Kept as a concrete 2-member Union (not `AbstractVector`) so the field stays
+    # type-stable via union splitting.
+    timestamps::Union{StepRange{ZonedDateTime,T}, SlicedTimestamps{T}}
 
     attrs::Dict{String, String}
 
