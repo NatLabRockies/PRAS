@@ -3,6 +3,8 @@ using PRASFiles
 using Test
 using JSON3
 
+import PRASCore.Systems: SlicedTimestamps
+
 @testset verbose=true "PRASFiles" begin
 
     @testset "Roundtrip .pras files to/from disk" begin
