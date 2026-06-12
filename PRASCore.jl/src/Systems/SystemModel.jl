@@ -95,7 +95,7 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
         region_genstor_idxs::Vector{UnitRange{Int}},
         demandresponses::DemandResponses{N,L,T,P,E}, region_dr_idxs::Vector{UnitRange{Int}},
         lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
-        timestamps::Union{StepRange{ZonedDateTime}, SlicedTimestamps},
+        timestamps::Union{StepRange{ZonedDateTime,T}, SlicedTimestamps{T}},
         attrs::Dict{String, String}=Dict{String, String}()
     ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
@@ -143,7 +143,7 @@ function SystemModel{}(
     generatorstorages::GeneratorStorages{N,L,T,P,E},
     region_genstor_idxs::Vector{UnitRange{Int}},
     lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
-    timestamps::Union{StepRange{ZonedDateTime}, SlicedTimestamps},
+    timestamps::Union{StepRange{ZonedDateTime,T}, SlicedTimestamps{T}},
     attrs::Dict{String, String}=Dict{String, String}()
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 

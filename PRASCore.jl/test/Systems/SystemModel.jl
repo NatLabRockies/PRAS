@@ -205,5 +205,29 @@
         @test occursin("Slice 1:", text)
         @test occursin("Slice 2:", text)
     end
+
+    @testset "Mismatched timestep period type" begin
+
+        # The system assets use Hour units (T = Hour, L = 1). A contiguous range
+        # whose step is Minute(60) is *equal* in value to Hour(1) -- so it would
+        # pass the `timestep(timestamps) == T(L)` assertion -- but has a different
+        # period type. It must be rejected at dispatch (clean MethodError) rather
+        # than constructing or failing opaquely when assigned into the T-tied
+        # timestamps field.
+        minute_timestamps =
+            ZonedDateTime(2020, 1, 1, 0, tz):Minute(60):ZonedDateTime(2020, 1, 1, 9, tz)
+
+        @test step(minute_timestamps) == Hour(1)   # equal value...
+        @test step(minute_timestamps) isa Minute   # ...but different period type
+        @test length(minute_timestamps) == 10      # matches N, so length check would pass
+
+        @test_throws MethodError SystemModel(
+            regions, interfaces,
+            generators, gen_regions, storages, stor_regions,
+            generatorstorages, genstor_regions,
+            demandresponses, dr_regions,
+            lines, line_interfaces,
+            minute_timestamps)
+    end
 end
 
