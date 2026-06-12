@@ -27,7 +27,7 @@ struct LineAvailability <: ResultSpec end
 struct LineAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
 
     lines::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     available::Array{Bool,3}
 

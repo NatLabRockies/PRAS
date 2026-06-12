@@ -55,7 +55,7 @@ accumulatortype(::StorageAvailability) = StorAvailabilityAccumulator
 struct StorageAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
 
     storages::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     available::Array{Bool,3}
 

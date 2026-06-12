@@ -141,5 +141,69 @@
 
         @test_throws "Asset type Lines is not supported. Supported types are: Generators, Storages, GeneratorStorages" multi_region_sys_with_attrs["Region A", Lines]
     end
+
+    @testset "Non-contiguous (multi-slice) SystemModel" begin
+
+        # Two 5-hour slices (summer + winter) -> 10 timesteps total = N
+        slices = [
+            ZonedDateTime(2020, 1, 1, 0, tz):Hour(1):ZonedDateTime(2020, 1, 1, 4, tz),
+            ZonedDateTime(2020, 6, 1, 0, tz):Hour(1):ZonedDateTime(2020, 6, 1, 4, tz),
+        ]
+
+        sys = SystemModel(
+            regions, interfaces,
+            generators, gen_regions, storages, stor_regions,
+            generatorstorages, genstor_regions,
+            demandresponses, dr_regions,
+            lines, line_interfaces,
+            slices)
+
+        @test sys isa SystemModel
+        @test sys.timestamps isa SlicedTimestamps
+        @test length(sys.timestamps) == 10
+
+        # Flat 1:N indexing concatenates the slices
+        @test sys.timestamps[1] == first(slices[1])
+        @test sys.timestamps[5] == last(slices[1])
+        @test sys.timestamps[6] == first(slices[2])
+        @test sys.timestamps[10] == last(slices[2])
+        @test collect(sys.timestamps) == vcat(collect.(slices)...)
+
+        # Lookups by timestamp still work across the gap
+        @test findfirst(==(first(slices[2])), sys.timestamps) == 6
+
+        # Overlapping / out-of-order slices are rejected
+        overlapping = [
+            ZonedDateTime(2020, 1, 1, 0, tz):Hour(1):ZonedDateTime(2020, 1, 1, 4, tz),
+            ZonedDateTime(2020, 1, 1, 3, tz):Hour(1):ZonedDateTime(2020, 1, 1, 7, tz),
+        ]
+        @test_throws ArgumentError SystemModel(
+            regions, interfaces,
+            generators, gen_regions, storages, stor_regions,
+            generatorstorages, genstor_regions,
+            demandresponses, dr_regions,
+            lines, line_interfaces,
+            overlapping)
+
+        # Total slice length not matching N is rejected
+        wrong_length = [
+            ZonedDateTime(2020, 1, 1, 0, tz):Hour(1):ZonedDateTime(2020, 1, 1, 4, tz),
+            ZonedDateTime(2020, 6, 1, 0, tz):Hour(1):ZonedDateTime(2020, 6, 1, 3, tz),
+        ]
+        @test_throws AssertionError SystemModel(
+            regions, interfaces,
+            generators, gen_regions, storages, stor_regions,
+            generatorstorages, genstor_regions,
+            demandresponses, dr_regions,
+            lines, line_interfaces,
+            wrong_length)
+
+        io = IOBuffer()
+        show(io, "text/plain", sys)
+        text = String(take!(io))
+        @test occursin("across 2 slices", text)
+        @test occursin("Slice 1:", text)
+        @test occursin("Slice 2:", text)
+    end
 end
 

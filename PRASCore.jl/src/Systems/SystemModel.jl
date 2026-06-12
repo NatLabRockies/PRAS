@@ -62,7 +62,9 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
     lines::Lines{N,L,T,P}
     interface_line_idxs::Vector{UnitRange{Int}}
 
-    timestamps::StepRange{ZonedDateTime,T}
+    # Either a contiguous `StepRange` (single time slice) or a `SlicedTimestamps`
+    # (multiple non-contiguous slices). Both behave as a flat length-N vector.
+    timestamps::AbstractVector{ZonedDateTime}
 
     attrs::Dict{String, String}
 
@@ -75,7 +77,7 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
         region_genstor_idxs::Vector{UnitRange{Int}},
         demandresponses::DemandResponses{N,L,T,P,E}, region_dr_idxs::Vector{UnitRange{Int}},
         lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
-        timestamps::StepRange{ZonedDateTime,T},
+        timestamps::AbstractVector{ZonedDateTime},
         attrs::Dict{String, String}=Dict{String, String}()
     ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
@@ -98,7 +100,9 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
             1 <= interfaces.regions_from[i] < interfaces.regions_to[i] <= n_regions
             for i in 1:n_interfaces)
 
-        @assert step(timestamps) == T(L)
+        # `timestep` returns the uniform step `T(L)` for both a contiguous
+        # `StepRange` and a non-contiguous `SlicedTimestamps`.
+        @assert timestep(timestamps) == T(L)
         @assert length(timestamps) == N
 
         new{N,L,T,P,E}(
@@ -121,7 +125,7 @@ function SystemModel{}(
     generatorstorages::GeneratorStorages{N,L,T,P,E},
     region_genstor_idxs::Vector{UnitRange{Int}},
     lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
-    timestamps::StepRange{ZonedDateTime,T},
+    timestamps::AbstractVector{ZonedDateTime},
     attrs::Dict{String, String}=Dict{String, String}()
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
@@ -134,7 +138,56 @@ function SystemModel{}(
         lines, interface_line_idxs,
         timestamps, attrs)
 end
-    
+
+# Non-contiguous time axis constructors: accept a vector of slices, where each
+# slice is itself a contiguous `StepRange` and the gaps between slices make the
+# overall axis non-contiguous. The slices are wrapped in a `SlicedTimestamps`
+# before forwarding to the base constructors. The total number of timesteps
+# across all slices must equal N.
+
+# - demand responses included
+function SystemModel(
+    regions::Regions{N,P}, interfaces::Interfaces{N,P},
+    generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
+    storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
+    generatorstorages::GeneratorStorages{N,L,T,P,E}, region_genstor_idxs::Vector{UnitRange{Int}},
+    demandresponses::DemandResponses{N,L,T,P,E}, region_dr_idxs::Vector{UnitRange{Int}},
+    lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
+    slices::Vector{<:StepRange{ZonedDateTime}},
+    attrs::Dict{String, String}=Dict{String, String}()
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+
+    return SystemModel(
+        regions, interfaces,
+        generators, region_gen_idxs,
+        storages, region_stor_idxs,
+        generatorstorages, region_genstor_idxs,
+        demandresponses, region_dr_idxs,
+        lines, interface_line_idxs,
+        SlicedTimestamps(collect(slices)), attrs)
+end
+
+# - no demand responses
+function SystemModel(
+    regions::Regions{N,P}, interfaces::Interfaces{N,P},
+    generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
+    storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
+    generatorstorages::GeneratorStorages{N,L,T,P,E}, region_genstor_idxs::Vector{UnitRange{Int}},
+    lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
+    slices::Vector{<:StepRange{ZonedDateTime}},
+    attrs::Dict{String, String}=Dict{String, String}()
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+
+    return SystemModel(
+        regions, interfaces,
+        generators, region_gen_idxs,
+        storages, region_stor_idxs,
+        generatorstorages, region_genstor_idxs,
+        DemandResponses{N,L,T,P,E}(), repeat([1:0],length(regions)),
+        lines, interface_line_idxs,
+        SlicedTimestamps(collect(slices)), attrs)
+end
+
 # No time zone constructor - demand responses included
 function SystemModel(
     regions::Regions{N,P}, interfaces::Interfaces{N,P},
@@ -297,12 +350,21 @@ function Base.show(io::IO, ::MIME"text/plain", sys::SystemModel{N,L,T,P,E}) wher
     println(io, "  DemandResponses: $(length(sys.demandresponses)) units")
     println(io, "  Lines: $(length(sys.lines))")
     println(io, "\nTime series:")
-    println(io, "  Start time: $(first(sys.timestamps))")
-    println(io, "  Resolution: $L $time_unit")
-    println(io, "  Number of time steps: $(N)")
-    println(io, "  End time: $(last(sys.timestamps))")
+    if sys.timestamps isa SlicedTimestamps
+        slices = sys.timestamps.slices
+        println(io, "  Resolution: $L $time_unit")
+        println(io, "  Number of time steps: $(N) (across $(length(slices)) slices)")
+        for (k, slice) in enumerate(slices)
+            println(io, "    Slice $k: $(first(slice)) → $(last(slice)) ($(length(slice)) steps)")
+        end
+    else
+        println(io, "  Start time: $(first(sys.timestamps))")
+        println(io, "  Resolution: $L $time_unit")
+        println(io, "  Number of time steps: $(N)")
+        println(io, "  End time: $(last(sys.timestamps))")
+    end
     println(io, "  Time zone: $(TimeZone(first(sys.timestamps)))")
-    
+
     # Format attributes as key-value pairs
     sys_attributes = sys.attrs
     if !isempty(sys_attributes)

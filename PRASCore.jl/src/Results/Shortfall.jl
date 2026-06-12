@@ -137,7 +137,7 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
        AbstractShortfallResult{N, L, T}
     nsamples::Union{Int, Nothing}
     regions::Regions
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     eventperiod_mean::Float64
     eventperiod_std::Float64
@@ -164,7 +164,7 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
     function ShortfallResult{N,L,T,E,S}(
         nsamples::Union{Int,Nothing},
         regions::Regions,
-        timestamps::StepRange{ZonedDateTime,T},
+        timestamps::AbstractVector{ZonedDateTime},
         eventperiod_mean::Float64,
         eventperiod_std::Float64,
         eventperiod_region_mean::Vector{Float64},

@@ -72,8 +72,18 @@ function process_metadata!(
     attrs["power_unit"] = unitsymbol(P)
     attrs["energy_unit"] = unitsymbol(E)
 
-    attrs["start_timestamp"] = string(sys.timestamps.start);
+    attrs["start_timestamp"] = string(first(sys.timestamps));
     attrs["pras_dataversion"] = "v" * string(pkgversion(PRASFiles));
+
+    # Non-contiguous time axis: persist per-slice (start, length). Written only
+    # for multi-slice systems so single-slice .pras files stay byte-identical and
+    # remain readable by older PRAS versions.
+    if sys.timestamps isa SlicedTimestamps
+        slices = sys.timestamps.slices
+        attrs["n_slices"] = length(slices)
+        attrs["slice_start_timestamps"] = [string(first(s)) for s in slices]
+        attrs["slice_lengths"] = [length(s) for s in slices]
+    end
 
     # Existing system attributes
     sys_attributes = sys.attrs

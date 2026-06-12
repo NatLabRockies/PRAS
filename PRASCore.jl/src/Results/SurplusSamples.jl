@@ -57,7 +57,7 @@ accumulatortype(::SurplusSamples) = SurplusSamplesAccumulator
 struct SurplusSamplesResult{N,L,T<:Period,P<:PowerUnit} <: AbstractSurplusResult{N,L,T}
 
     regions::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     surplus::Array{Int,3}
 

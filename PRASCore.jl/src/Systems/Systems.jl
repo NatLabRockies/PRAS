@@ -23,12 +23,16 @@ export
     # Main data structure
     SystemModel, get_params,
 
+    # Non-contiguous time axis
+    SlicedTimestamps,
+
     # Convenience re-exports
     ZonedDateTime, @tz_str
 
 include("units.jl")
 include("collections.jl")
 include("assets.jl")
+include("utils.jl")
 include("SystemModel.jl")
 include("TestData.jl")
 

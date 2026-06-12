@@ -64,7 +64,7 @@ struct GeneratorStorageEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEner
 
     nsamples::Union{Int,Nothing}
     generatorstorages::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     energy_mean::Matrix{Float64}
 

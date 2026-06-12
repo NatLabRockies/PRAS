@@ -55,7 +55,7 @@ accumulatortype(::DemandResponseAvailability) = DRAvailabilityAccumulator
 struct DemandResponseAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
 
     demandresponses::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     available::Array{Bool,3}
 

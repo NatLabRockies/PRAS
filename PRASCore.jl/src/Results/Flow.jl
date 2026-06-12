@@ -68,7 +68,7 @@ struct FlowResult{N,L,T<:Period,P<:PowerUnit} <: AbstractFlowResult{N,L,T}
 
     nsamples::Union{Int,Nothing}
     interfaces::Vector{Pair{String,String}}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     flow_mean::Matrix{Float64}
 

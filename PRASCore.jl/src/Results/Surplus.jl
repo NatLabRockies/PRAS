@@ -61,7 +61,7 @@ struct SurplusResult{N,L,T<:Period,P<:PowerUnit} <: AbstractSurplusResult{N,L,T}
 
     nsamples::Union{Int,Nothing}
     regions::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     surplus_mean::Matrix{Float64}
 

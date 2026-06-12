@@ -61,7 +61,7 @@ struct DemandResponseEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergy
 
     nsamples::Union{Int,Nothing}
     demandresponses::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     energy_mean::Matrix{Float64}
 
