@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.0]
+
+- Add support for non-contiguous time axes: a `SystemModel` can be built from
+  multiple contiguous timestamp slices (e.g. representative weeks) separated by
+  gaps. See the [System Model Specification](@ref system_specification) and the
+  `.pras` file format's [Non-contiguous time axis](@ref) attributes.
+- `.pras` files remain backward compatible: single-slice systems are written and
+  read exactly as before, and the v0.8 reader transparently reads v0.9 files
+  (falling back to a contiguous axis when the slice metadata is absent).
+
 ## [0.8.0], 2025 - October
 
 - Add a demand response component which can model shift and shed type DR devices

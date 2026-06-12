@@ -56,8 +56,22 @@ These attributes are mandatory:
  - `power_unit`, providing the units for power-related data
  - `energy_unit`, providing the units for energy-related data
 
-There can be any number of optional attributes which need to also be defined as 
-key-value pairs and both the key and value are strings of characters.
+These attributes are optional and, when present, describe a **non-contiguous**
+time axis (a system whose timesteps are split into multiple contiguous slices
+with gaps between them, e.g. a representative summer week plus a representative
+winter week):
+
+ - `n_slices`, the number of contiguous time slices
+ - `slice_start_timestamps`, the starting timestamp of each slice
+   in ISO-8601 format
+ - `slice_lengths`, the number of timesteps in each slice
+
+These three attributes are written together or not at all, and only for systems
+with more than one slice. When they are absent the time axis is a single
+contiguous range, as in earlier versions of this specification.
+
+There can be any number of additional optional attributes which need to also be
+defined as key-value pairs and both the key and value are strings of characters.
 
 Each of the required attributes and their contents are explained in more
 detail below.
@@ -89,6 +103,10 @@ of the file's root group labelled `start_timestamp`, as a single
 `2020-12-31T23:59:59-07:00`, providing year, month, day, hour, minute, second,
 and timezone offset from UTC (in that order).
 
+For a non-contiguous time axis (see [Non-contiguous time axis](@ref)),
+`start_timestamp` is the first timestamp of the first slice, and equals the first
+entry of `slice_start_timestamps`.
+
 #### `timestep_count`
 
 The total number of timesteps in the simulation should be stored in an
@@ -96,6 +114,10 @@ attribute of the file's root group labelled `timestep_count`, as a single
 integer. The attribute value should match the number of rows
 (in C/HDF5 row-major format) in each property dataset in the various resource
 and resource collection groups.
+
+For a non-contiguous time axis, this is the *total* number of timesteps across
+all slices, i.e. the sum of `slice_lengths`. The property datasets are stored as
+a single flat axis of this length, with the slices concatenated in order.
 
 #### `timestep_length`
 
@@ -137,6 +159,40 @@ take:
  - `MWh` indicates power data is in units of megawatt-hours
  - `GWh` indicates power data is in units of gigawatt-hours
  - `TWh` indicates power data is in units of terawatt-hours
+
+### Non-contiguous time axis
+
+By default a PRAS system has a single, contiguous time axis: `timestep_count`
+evenly spaced timesteps starting at `start_timestamp`. A system may instead use a
+**non-contiguous** axis made up of several contiguous *slices* separated by gaps
+(for example a representative summer week and a representative winter week
+analyzed together). All slices share the same timestep (`timestep_length` /
+`timestep_unit`); only the gaps between them break contiguity.
+
+A non-contiguous axis is described by three optional root-group attributes, which
+are written together and only when there is more than one slice. When they are
+absent (the common case), readers must treat the axis as a single contiguous
+range and behave exactly as for earlier versions of this specification — this is
+what keeps single-slice `.pras` files readable by older PRAS versions.
+
+#### `n_slices`
+
+The number of contiguous time slices, stored as a single integer. Present only
+when greater than 1.
+
+#### `slice_start_timestamps`
+
+The starting timestamp of each slice, stored as a one-dimensional array of
+`n_slices` ISO-8601 ASCII strings in the same format as `start_timestamp`. The
+slices must be strictly ordered and non-overlapping, so
+`slice_start_timestamps[1]` equals `start_timestamp`.
+
+#### `slice_lengths`
+
+The number of timesteps in each slice, stored as a one-dimensional array of
+`n_slices` integers. Their sum must equal `timestep_count`. The end timestamp of
+slice `k` is `slice_start_timestamps[k] + (slice_lengths[k] - 1)` timesteps; the
+flat property-dataset axis is the slices concatenated in order.
 
 ### Resource / resource collection data
 

@@ -43,6 +43,39 @@ inter-annual variability of annual risk metrics using only the built-in
 methods -- while this is also possible with a single multi-year run, it
 requires some additional post-processing work.
 
+The time periods modelled need not be one continuous block. A `SystemModel`
+can instead be built over a **non-contiguous** time axis made up of several
+contiguous *slices* separated by gaps -- for example a representative summer
+week and a representative winter week analyzed together. Each slice is supplied
+as a contiguous `StepRange` of timestamps, and the constructor that accepts a
+vector of such ranges assembles them into a single axis:
+
+```julia
+summer = ZonedDateTime(2024, 7, 1, tz"UTC"):Hour(1):ZonedDateTime(2024, 7, 7, 23, tz"UTC")
+winter = ZonedDateTime(2024, 1, 1, tz"UTC"):Hour(1):ZonedDateTime(2024, 1, 7, 23, tz"UTC")
+# slices must share the same timestep and be strictly ordered and non-overlapping
+sys = SystemModel(regions, interfaces, generators, region_gen_idxs, storages,
+                  region_stor_idxs, generatorstorages, region_genstor_idxs,
+                  lines, interface_line_idxs, [winter, summer])
+```
+
+All time-varying resource data is then provided along the concatenated axis,
+whose total length is the sum of the slice lengths. Systems with a single slice
+behave, and are stored on disk, exactly as a contiguous system; the on-disk
+representation of the slices is described in the `.pras` file format's
+[Non-contiguous time axis](@ref) attributes.
+
+!!! tip "Get the time axis from `sys.timestamps`, don't rebuild it"
+    `sys.timestamps` is the true length-`N` vector of timestamps and can be used
+    directly -- for plotting, indexing, or lookups. When you need a plain
+    `Vector` (to build a `DataFrame`, align an external series, or post-process
+    results), use `collect(sys.timestamps)`. Do **not** reconstruct the axis from
+    `first(sys.timestamps)` and `length(sys.timestamps)` with a fixed timestep
+    (e.g. `first(sys.timestamps) .+ (0:length(sys.timestamps)-1) .* timestep`):
+    that assumes evenly spaced timestamps with no gaps and silently produces
+    *wrong* times for a non-contiguous system, filling in the gaps between
+    slices with times that are not actually in the system.
+
 PRAS represents a power system as one or more **regions**, each containing
 zero or more **generators**, **storages**,**generator-storages**, and 
 **demand responses**. **Interfaces** contain **lines** and

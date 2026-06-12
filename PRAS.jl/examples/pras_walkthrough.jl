@@ -35,9 +35,20 @@ sys["2"]
 
 # We can visualize a time series of the regional load in region "2":
 region_2_load = sys.regions.load[sys["2"].index,:]
-plot(sys.timestamps, region_2_load, 
-     xlabel="Time", ylabel="Region 2 load ($(powerunit))", 
+plot(sys.timestamps, region_2_load,
+     xlabel="Time", ylabel="Region 2 load ($(powerunit))",
      legend=false)
+
+# !!! tip "Get the time axis from `sys.timestamps`, don't rebuild it"
+#     The plot above passes `sys.timestamps` directly, which is exactly right:
+#     it is the true length-`N` vector of timestamps. If you need a plain
+#     `Vector` (e.g. for a `DataFrame` or to align an external series), use
+#     `collect(sys.timestamps)`. Either way, do **not** reconstruct the axis from
+#     `first(sys.timestamps)` and `length(sys.timestamps)` with a fixed timestep
+#     (e.g. `first(sys.timestamps) .+ (0:length(sys.timestamps)-1) .* timestep`):
+#     that assumes evenly spaced timestamps with no gaps, which is wrong for a
+#     non-contiguous (multi-slice) system -- it fills the gaps between slices
+#     with times that are not actually in the system.
 
 # We can find more information about all the Generators in the system by
 # retriving the `generators` in the SystemModel:
