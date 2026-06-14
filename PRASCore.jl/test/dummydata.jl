@@ -6,6 +6,7 @@ using TimeZones
 const tz = tz"UTC"
 
 nsamples = 100
+alpha = 0.95
 
 resourcenames = ["A", "B", "C"]
 nresources = length(resourcenames)
@@ -20,6 +21,7 @@ testinterface = interfacenames[testinterface_idx]
 notaninterface = "X"=>"Y"
 
 periods = ZonedDateTime(2012,4,1,0,tz):Hour(1):ZonedDateTime(2012,4,7,23,tz)
+badperiods = ZonedDateTime(2013,4,1,0,tz):Hour(1):ZonedDateTime(2013,4,7,23,tz)
 nperiods = length(periods)
 resource_vals = rand(0:999, nresources, nperiods)
 testperiod_idx = 29
@@ -32,6 +34,8 @@ d1 = rand()
 d1_resource = rand(nresources)
 d1_period = rand(nperiods)
 d1_resourceperiod = rand(nresources, nperiods)
+d1_sample = rand(nsamples) * 999
+d1_resourcesample = rand(nresources, nsamples) * 999
 
 d2 = rand()
 d2_resource = rand(nresources)

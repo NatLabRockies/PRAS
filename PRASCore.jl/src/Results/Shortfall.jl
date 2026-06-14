@@ -67,6 +67,10 @@ mutable struct ShortfallAccumulator{S} <: ResultAccumulator{Shortfall}
     unservedload_total_currentsim::Int
     unservedload_region_currentsim::Vector{Int}
 
+    # Sample-level UE for current simulation
+    unservedload_sample::Vector{Int}
+    unservedload_region_sample::Matrix{Int}
+
 end
 
 function accumulator(
@@ -90,6 +94,8 @@ function accumulator(
 
     unservedload_total_currentsim = 0
     unservedload_region_currentsim = zeros(Int, nregions)
+    unservedload_sample = zeros(Int, nsamples)
+    unservedload_region_sample = zeros(Int, nregions, nsamples)
 
     return ShortfallAccumulator{S}(
         periodsdropped_total, periodsdropped_region,
@@ -97,7 +103,8 @@ function accumulator(
         periodsdropped_total_currentsim, periodsdropped_region_currentsim,
         unservedload_total, unservedload_region,
         unservedload_period, unservedload_regionperiod,
-        unservedload_total_currentsim, unservedload_region_currentsim)
+        unservedload_total_currentsim, unservedload_region_currentsim,
+        unservedload_sample, unservedload_region_sample)
 
 end
 
@@ -114,6 +121,9 @@ function merge!(
     foreach(merge!, x.unservedload_region, y.unservedload_region)
     foreach(merge!, x.unservedload_period, y.unservedload_period)
     foreach(merge!, x.unservedload_regionperiod, y.unservedload_regionperiod)
+
+    x.unservedload_sample .+= y.unservedload_sample
+    x.unservedload_region_sample .+= y.unservedload_region_sample
 
     return
 
@@ -141,13 +151,15 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
     eventperiod_regionperiod_mean::Matrix{Float64}
     eventperiod_regionperiod_std::Matrix{Float64}
 
-
     shortfall_mean::Matrix{Float64} # r x t
 
     shortfall_std::Float64
     shortfall_region_std::Vector{Float64}
     shortfall_period_std::Vector{Float64}
     shortfall_regionperiod_std::Matrix{Float64}
+
+    shortfall_samples::Vector{Float64}
+    shortfall_region_samples::Matrix{Float64}
 
     function ShortfallResult{N,L,T,E,S}(
         nsamples::Union{Int,Nothing},
@@ -165,8 +177,10 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
         shortfall_std::Float64,
         shortfall_region_std::Vector{Float64},
         shortfall_period_std::Vector{Float64},
-        shortfall_regionperiod_std::Matrix{Float64}
-    ) where {N,L,T<:Period,E<:EnergyUnit,S <: Union{Shortfall,DemandResponseShortfall}}
+        shortfall_regionperiod_std::Matrix{Float64},
+        shortfall_samples::Vector{Float64},
+        shortfall_region_samples::Matrix{Float64},
+    ) where {N,L,T<:Period,E<:EnergyUnit,S<:Union{Shortfall,DemandResponseShortfall}}
 
         isnothing(nsamples) || nsamples > 0 ||
             throw(DomainError("Sample count must be positive or `nothing`."))
@@ -185,7 +199,9 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
         size(eventperiod_regionperiod_std) == (nregions, N) &&
         length(shortfall_region_std) == nregions &&
         length(shortfall_period_std) == N &&
-        size(shortfall_regionperiod_std) == (nregions, N) ||
+        size(shortfall_regionperiod_std) == (nregions, N) &&
+        size(shortfall_samples) == (nsamples,) &&
+        size(shortfall_region_samples) == (nregions, nsamples) ||
             error("Inconsistent input data sizes")
 
         new{N,L,T,E,S}(nsamples, regions, timestamps,
@@ -195,7 +211,8 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
             eventperiod_regionperiod_mean, eventperiod_regionperiod_std,
             shortfall_mean, shortfall_std,
             shortfall_region_std, shortfall_period_std,
-            shortfall_regionperiod_std)
+            shortfall_regionperiod_std, shortfall_samples,
+            shortfall_region_samples)
 
     end
 
@@ -292,6 +309,51 @@ function NEUE(x::ShortfallResult, r::AbstractString)
 
 end
 
+function CVAR(::Val{:energy}, x::ShortfallResult{N,L,T,E},alpha::Float64) where {N,L,T,E}
+    cvar, var = _cvar(x.shortfall_samples, alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
+end
+
+function CVAR(::Val{:energy}, x::ShortfallResult{N,L,T,E},alpha::Float64, r::AbstractString) where {N,L,T,E}
+    i_r = findfirstunique(x.regions.names, r)
+    cvar, var = _cvar(x.shortfall_region_samples[i_r, :], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
+end
+
+function CVAR(::Val, ::ShortfallResult, ::Float64, ::StepRange{ZonedDateTime})
+    # To support this, add unservedload_period_sample::Matrix{Int} (N × nsamples)
+    # to ShortfallAccumulator, record it in recording.jl, and slice [i_t0:i_tf, :] here.
+    throw(ArgumentError(
+        "Time-sliced CVAR is not supported for ShortfallResult. " *
+        "Use ShortfallSamplesResult instead."))
+end
+
+function CVAR(::Val, ::ShortfallResult, ::Float64, ::AbstractString, ::ZonedDateTime)
+    # To support this, add unservedload_regionperiod_sample::Array{Int,3} (nregions × N × nsamples)
+    # to ShortfallAccumulator, record it in recording.jl, and slice [i_r, i_t, :] here.
+    throw(ArgumentError(
+        "Region+timestep CVAR is not supported for ShortfallResult. " *
+        "Use ShortfallSamplesResult instead."))
+end
+
+function NCVAR(x::ShortfallResult, cvar::CVAR)
+    demand = sum(x.regions.load)
+
+    ncvar, var = _ncvar(cvar, demand)
+
+    return NCVAR(cvar.quantity, ncvar, cvar.alpha, var)
+end
+
+function NCVAR(x::ShortfallResult, cvar::CVAR, r::AbstractString)
+    i_r = findfirstunique(x.regions.names, r)
+    demand = sum(x.regions.load[i_r, :])
+
+    ncvar, var = _ncvar(cvar, demand)
+
+    return NCVAR(cvar.quantity, ncvar, cvar.alpha, var)
+  
+end
+
 function finalize(
     acc::ShortfallAccumulator{S},
     system::SystemModel{N,L,T,P,E},
@@ -317,6 +379,8 @@ function finalize(
     ue_region_std .*= p2e
     ue_period_std .*= p2e
     ue_regionperiod_std .*= p2e
+    ue_sample = float(acc.unservedload_sample .* p2e)
+    ue_region_sample = float(acc.unservedload_region_sample .* p2e)
 
     return ShortfallResult{N,L,T,E,S}(
         nsamples, system.regions, system.timestamps,
@@ -324,6 +388,7 @@ function finalize(
         ep_period_mean, ep_period_std,
         ep_regionperiod_mean, ep_regionperiod_std,
         ue_regionperiod_mean, ue_total_std,
-        ue_region_std, ue_period_std, ue_regionperiod_std)
+        ue_region_std, ue_period_std, ue_regionperiod_std,
+        ue_sample, ue_region_sample)
 
 end

@@ -117,6 +117,25 @@ function getindex(
     return vec(p2e * x.shortfall[i_r, i_t, :])
 end
 
+function getindex(
+    x::ShortfallSamplesResult{N,L,T,P,E}, t::StepRange{ZonedDateTime}
+) where {N,L,T,P,E}
+    i_t0 = findfirstunique(x.timestamps, first(t))
+    i_tf = findlastunique(x.timestamps, last(t))
+    p2e = conversionfactor(L, T, P, E)
+    return vec(p2e * sum(x.shortfall[:, i_t0:i_tf, :], dims=1:2))
+end
+
+function getindex(
+    x::ShortfallSamplesResult{N,L,T,P,E}, r::AbstractString, t::StepRange{ZonedDateTime}
+) where {N,L,T,P,E}
+    i_r = findfirstunique(x.regions.names, r)
+    i_t0 = findfirstunique(x.timestamps, first(t))
+    i_tf = findlastunique(x.timestamps, last(t))
+    p2e = conversionfactor(L, T, P, E)
+    return vec(p2e * sum(x.shortfall[i_r, i_t0:i_tf, :], dims=1))
+end
+
 
 function LOLE(x::ShortfallSamplesResult{N,L,T}) where {N,L,T}
     eventperiods = sum(sum(x.shortfall, dims=1) .> 0, dims=2)
@@ -182,6 +201,52 @@ function NEUE(x::ShortfallSamplesResult, r::AbstractString)
     end
 
     return NEUE(estimate)
+
+end
+
+function CVAR(::Val{:energy}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64) where {N,L,T,P,E}
+    cvar, var = _cvar(x[], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
+end
+
+function CVAR(::Val{:energy}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString) where {N,L,T,P,E}
+    cvar, var = _cvar(x[r], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
+end
+
+function CVAR(::Val{:energy}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, t::StepRange{ZonedDateTime}) where {N,L,T,P,E}
+    cvar, var = _cvar(x[t], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
+end
+
+function CVAR(::Val{:energy}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString, t::ZonedDateTime) where {N,L,T,P,E}
+    cvar, var = _cvar(x[r, t], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
+end
+
+function CVAR(::Val{:energy}, x::ShortfallSamplesResult{N,L,T,P,E}, alpha::Float64, r::AbstractString, t::StepRange{ZonedDateTime}) where {N,L,T,P,E}
+    cvar, var = _cvar(x[r, t], alpha)
+    return CVAR{N,L,T,E}(:energy, cvar, alpha, var)
+end
+
+CVAR(dim::Symbol, x::ShortfallSamplesResult, alpha::Float64, ::Colon, t::StepRange{ZonedDateTime}) =
+    CVAR.(dim, x, alpha, x.regions.names, Ref(t))
+
+function NCVAR(x::ShortfallSamplesResult, cvar::CVAR)
+    demand = sum(x.regions.load)
+
+    ncvar, var = _ncvar(cvar, demand)
+
+    return NCVAR(cvar.quantity, ncvar, cvar.alpha, var)
+
+end
+
+function NCVAR(x::ShortfallSamplesResult, cvar::CVAR, r::AbstractString)
+    i_r = findfirstunique(x.regions.names, r)
+    demand = sum(x.regions.load[i_r, :])
+
+    ncvar, var = _ncvar(cvar, demand)
+    return NCVAR(cvar.quantity, ncvar, cvar.alpha, var)
 
 end
 

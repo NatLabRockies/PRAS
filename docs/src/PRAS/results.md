@@ -100,7 +100,7 @@ the total shortfall across all regions and time periods.
 
 Shortfall results are unique among the built-in result types in that the raw
 results can also be converted to specific probabilistic risk metrics
-(**EUE** and **LOLE**). For sampling-based methods, both metric
+(**EUE**,  **LOLE**, or **CVAR**). For sampling-based methods, both metric
 estimates and the standard error of those estimates are provided. For example,
 after assessing the system, metrics across all regions and the full simulation
 horizon can be extracted as:
@@ -109,6 +109,7 @@ horizon can be extracted as:
 shortfall, = assess(sys, SequentialMonteCarlo(), Shortfall())
 eue_overall = EUE(shortfall)
 lole_overall = LOLE(shortfall)
+ue_cvar_overall = CVAR(:energy, shortfall, 0.95)
 ```
 
 More specific metrics can be obtained as well:

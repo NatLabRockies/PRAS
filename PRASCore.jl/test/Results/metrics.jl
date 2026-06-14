@@ -71,5 +71,29 @@
         @test_throws DomainError NEUE(MeanEstimate(-1.2))
 
     end
+  
+    @testset "CVAR" begin
+
+        cvar1 = CVAR{2,1,Hour,MWh}(:energy,MeanEstimate(1.2), 0.95, 2.0)
+        @test string(cvar1) == "CVAR@0.95 = 1.20000 MWh/2h"
+
+        cvar2 = CVAR{1,2,Year,GWh}(:energy,MeanEstimate(17.2, 1.3), 0.95, 1.2)
+        @test string(cvar2) == "CVAR@0.95 = 17±1 GWh/2y"
+
+        @test_throws DomainError CVAR{1,1,Hour,MWh}(:energy,MeanEstimate(-1.2), 0.95, 1.2)
+
+    end    
+
+    @testset "NCVAR" begin
+
+        ncvar1 = NCVAR(:energy, MeanEstimate(1.2), 0.95, 1.2)
+        @test string(ncvar1) == "NCVAR@0.95 = 1.20000 ppm"
+
+        ncvar2 = NCVAR(:energy, MeanEstimate(17.2, 1.3), 0.95, 1.3)
+        @test string(ncvar2) == "NCVAR@0.95 = 17±1 ppm"
+
+        @test_throws DomainError NCVAR(:energy, MeanEstimate(-1.2), 0.95, -1.2)
+
+    end
 
 end

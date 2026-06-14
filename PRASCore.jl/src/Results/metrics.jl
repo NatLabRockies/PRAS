@@ -22,7 +22,12 @@ MeanEstimate(mu::Real, sigma::Real, n::Int) = MeanEstimate(mu, sigma / sqrt(n))
 
 function MeanEstimate(xs::AbstractArray{<:Real})
     est = mean(xs)
-    return MeanEstimate(est, std(xs, mean=est), length(xs))
+    if length(xs) > 1
+        MeanEstimate(est, std(xs, mean=est), length(xs))
+    else
+        @warn "Only one sample provided; standard error will be zero"
+        MeanEstimate(est)
+    end
 end
 
 val(est::MeanEstimate) = est.estimate
@@ -162,5 +167,79 @@ stderror(x::NEUE) = stderror(x.neue)
 function Base.show(io::IO, x::NEUE)
 
     print(io, "NEUE = ", x.neue, " ppm")
+
+end
+
+const CVAR_QUANTITIES = (:energy,)
+
+_cvar_quantity_unitsymbol(::Val{:energy}, ::Type{E}, ::Type) where {E<:EnergyUnit} = unitsymbol(E)
+
+"""
+    CVAR
+
+`CVAR` reports conditional value at risk of shortfalls, for total unserved energy shortfalls.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
+
+    quantity::Symbol
+    cvar::MeanEstimate
+    alpha::Float64
+    var::Float64
+
+    function CVAR{N,L,T,E}(quantity::Symbol,
+                           cvar::MeanEstimate,
+                           alpha::Float64,
+                           var::Float64) where {N,L,T<:Period,E<:EnergyUnit}
+        val(cvar) >= 0 || throw(DomainError(val(cvar),
+            "$(val(cvar)) is not a valid CVAR"))
+        0 <= alpha < 1 || throw(DomainError(alpha,
+            "$alpha is not a valid confidence level"))
+        new{N,L,T,E}(quantity, cvar, alpha, var)
+    end
+
+end
+
+val(x::CVAR) = val(x.cvar)
+stderror(x::CVAR) = stderror(x.cvar)
+
+function Base.show(io::IO, x::CVAR{N,L,T,E}) where {N,L,T,E}
+    print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
+          _cvar_quantity_unitsymbol(Val(x.quantity), E, T), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
+end
+
+"""
+    NCVAR
+
+`NCVAR` reports normalized conditional value at risk of shortfalls, for total unserved energy shortfalls.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct NCVAR <: ReliabilityMetric
+
+    quantity::Symbol
+    ncvar::MeanEstimate
+    alpha::Float64
+    var::Float64
+    
+    function NCVAR(quantity::Symbol, ncvar::MeanEstimate, alpha::Float64, var::Float64)
+
+        val(ncvar) >= 0 || throw(DomainError(val(ncvar),
+            "$(val(ncvar)) is not a valid NCVAR"))
+        new(quantity, ncvar, alpha, var)
+    end
+
+end
+
+val(x::NCVAR) = val(x.ncvar)
+stderror(x::NCVAR) = stderror(x.ncvar)
+
+function Base.show(io::IO, x::NCVAR)
+    print(io, "NCVAR@$(x.alpha) = ", x.ncvar, " ppm")
 
 end

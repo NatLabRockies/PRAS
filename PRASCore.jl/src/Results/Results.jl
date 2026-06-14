@@ -4,7 +4,7 @@ import Base: broadcastable, getindex, merge!
 import OnlineStats: Series
 import OnlineStatsBase: EqualWeight, Mean, Variance, value
 import Printf: @sprintf
-import StatsBase: mean, std, stderror
+import StatsBase: mean, std, stderror, quantile
 
 import ..Systems: SystemModel, ZonedDateTime, Period,
                   PowerUnit, EnergyUnit, conversionfactor,
@@ -13,7 +13,7 @@ export
 
     # Metrics
     ReliabilityMetric, LOLE, EUE, NEUE,
-    val, stderror,
+    val, stderror, CVAR, NCVAR,
 
     # Result specifications
     Shortfall, ShortfallSamples,
@@ -27,8 +27,8 @@ export
     GeneratorStorageAvailability,DemandResponseAvailability,
     LineAvailability
 
-include("utils.jl")
 include("metrics.jl")
+include("utils.jl")
 
 abstract type ResultSpec end
 
@@ -80,6 +80,15 @@ NEUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
 NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
     NEUE.(x, x.regions.names, permutedims(x.timestamps))
 
+CVAR(dim::Symbol, x::AbstractShortfallResult, alpha::Float64, args...) =
+    CVAR(Val(dim), x, alpha, args...)
+
+function CVAR(::Val, ::AbstractShortfallResult, ::Float64, args...)
+    throw(ArgumentError("Invalid quantity, use one of $CVAR_QUANTITIES"))
+end
+
+NCVAR(x::AbstractShortfallResult, cvar::CVAR, ::Colon) =
+    NCVAR.(x, cvar, x.regions.names)
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
 
