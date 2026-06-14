@@ -25,6 +25,7 @@ function MeanEstimate(xs::AbstractArray{<:Real})
     if length(xs) > 1
         MeanEstimate(est, std(xs, mean=est), length(xs))
     else
+        @warn "Only one sample provided; standard error will be zero"
         MeanEstimate(est)
     end
 end
@@ -171,6 +172,7 @@ end
 
 const CVAR_QUANTITIES = (:energy,)
 
+_cvar_quantity_unitsymbol(::Val{:energy}, ::Type{E}, ::Type) where {E<:EnergyUnit} = unitsymbol(E)
 
 """
     CVAR
@@ -206,7 +208,7 @@ stderror(x::CVAR) = stderror(x.cvar)
 
 function Base.show(io::IO, x::CVAR{N,L,T,E}) where {N,L,T,E}
     print(io, "CVAR@$(x.alpha) = ", x.cvar, " ",
-          unitsymbol(E), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
+          _cvar_quantity_unitsymbol(Val(x.quantity), E, T), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
 end
 
 """
