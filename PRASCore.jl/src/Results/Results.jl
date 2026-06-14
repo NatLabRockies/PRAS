@@ -27,27 +27,8 @@ export
     GeneratorStorageAvailability,DemandResponseAvailability,
     LineAvailability
 
-include("utils.jl")
 include("metrics.jl")
-
-function _cvar(estimate::AbstractVector{<:Real}, alpha::Float64)
-    var = quantile(estimate, alpha)
-    tail = estimate[estimate .> var]   
-    cvar = isempty(tail) ? MeanEstimate(0.) : MeanEstimate(tail)
-    return cvar, var
-end
-
-function _ncvar(cvar::CVAR, demand::Real)
-    if demand > 0
-        scale = demand / 1e6
-        ncvar = div(cvar.cvar, scale)
-        var = cvar.var / scale
-    else
-        ncvar = MeanEstimate(0.)
-        var = 0.0
-    end
-    return ncvar, var
-end
+include("utils.jl")
 
 abstract type ResultSpec end
 
@@ -101,7 +82,6 @@ NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
 
 CVAR(dim::Symbol, x::AbstractShortfallResult, alpha::Float64, args...) =
     CVAR(Val(dim), x, alpha, args...)
-
 
 function CVAR(::Val, ::AbstractShortfallResult, ::Float64, args...)
     throw(ArgumentError("Invalid dim, use one of $CVAR_METRICS"))
