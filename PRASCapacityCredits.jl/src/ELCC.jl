@@ -106,33 +106,4 @@ function assess(sys_baseline::S, sys_augmented::S,
 
 end
 
-function copy_load(
-    sys::SystemModel{N,L,T,P,E},
-    region_shares::Vector{Tuple{String,Float64}}
-) where {N,L,T,P,E}
 
-    region_allocations = allocate_regions(sys.regions.names, region_shares)
-
-    new_regions = Regions{N,P}(sys.regions.names, copy(sys.regions.load))
-
-    return region_allocations, sys.regions.load, SystemModel(
-        new_regions, sys.interfaces,
-        sys.generators, sys.region_gen_idxs,
-        sys.storages, sys.region_stor_idxs,
-        sys.generatorstorages, sys.region_genstor_idxs,
-        sys.lines, sys.interface_line_idxs, sys.timestamps)
-
-end
-
-function update_load!(
-    sys::SystemModel,
-    region_shares::Vector{Tuple{Int,Float64}},
-    load_base::Matrix{Int},
-    load_increase::Int
-)
-    for (r, share) in region_shares
-        sys.regions.load[r, :] .= load_base[r, :] .+
-                                  round(Int, share * load_increase)
-    end
-
-end

@@ -61,6 +61,18 @@ import PRASCore.Systems: TestData
 
     end
 
+    @testset "EFC_Secant" begin
+
+        cc = assess(sys_before, sys_after, EFC_Secant{EUE}(10, "Region"), smc)
+        # Bisection found [8, 9], Secant returns a point (bound_low == bound_high)
+        @test 8 <= minimum(cc) <= 9
+
+        cc = assess(TestData.threenode, threenode2, EFC_Secant{EUE}(10, "Region A"), smc)
+        # Bisection found [3, 4]
+        @test 3 <= minimum(cc) <= 4
+
+    end
+
     @testset "ELCC" begin
 
         cc = assess(sys_before, sys_after, ELCC{EUE}(10, "Region"), smc)
@@ -68,6 +80,18 @@ import PRASCore.Systems: TestData
 
         cc = assess(TestData.threenode, threenode2, ELCC{EUE}(10, "Region A"), smc)
         @test extrema(cc) == (3, 4)
+
+    end
+
+    @testset "ELCC_Secant" begin
+
+        cc = assess(sys_before, sys_after, ELCC_Secant{EUE}(10, "Region"), smc)
+        # Bisection found [7, 8]
+        @test 7 <= minimum(cc) <= 8
+
+        cc = assess(TestData.threenode, threenode2, ELCC_Secant{EUE}(10, "Region A"), smc)
+        # Bisection found [3, 4]
+        @test 3 <= minimum(cc) <= 4
 
     end
 
