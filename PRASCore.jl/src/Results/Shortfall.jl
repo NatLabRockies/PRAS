@@ -341,7 +341,7 @@ function NCVAR(x::ShortfallResult, cvar::CVAR)
 
     ncvar, var = _ncvar(cvar, demand)
 
-    return NCVAR(cvar.dim, ncvar, cvar.alpha, var)
+    return NCVAR(cvar.quantity, ncvar, cvar.alpha, var)
 end
 
 function NCVAR(x::ShortfallResult, cvar::CVAR, r::AbstractString)
@@ -350,7 +350,7 @@ function NCVAR(x::ShortfallResult, cvar::CVAR, r::AbstractString)
 
     ncvar, var = _ncvar(cvar, demand)
 
-    return NCVAR(cvar.dim, ncvar, cvar.alpha, var)
+    return NCVAR(cvar.quantity, ncvar, cvar.alpha, var)
   
 end
 

@@ -237,7 +237,7 @@ function NCVAR(x::ShortfallSamplesResult, cvar::CVAR)
 
     ncvar, var = _ncvar(cvar, demand)
 
-    return NCVAR(cvar.dim, ncvar, cvar.alpha, var)
+    return NCVAR(cvar.quantity, ncvar, cvar.alpha, var)
 
 end
 
@@ -246,7 +246,7 @@ function NCVAR(x::ShortfallSamplesResult, cvar::CVAR, r::AbstractString)
     demand = sum(x.regions.load[i_r, :])
 
     ncvar, var = _ncvar(cvar, demand)
-    return NCVAR(cvar.dim, ncvar, cvar.alpha, var)
+    return NCVAR(cvar.quantity, ncvar, cvar.alpha, var)
 
 end
 

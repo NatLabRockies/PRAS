@@ -84,7 +84,7 @@ CVAR(dim::Symbol, x::AbstractShortfallResult, alpha::Float64, args...) =
     CVAR(Val(dim), x, alpha, args...)
 
 function CVAR(::Val, ::AbstractShortfallResult, ::Float64, args...)
-    throw(ArgumentError("Invalid dim, use one of $CVAR_METRICS"))
+    throw(ArgumentError("Invalid quantity, use one of $CVAR_QUANTITIES"))
 end
 
 NCVAR(x::AbstractShortfallResult, cvar::CVAR, ::Colon) =

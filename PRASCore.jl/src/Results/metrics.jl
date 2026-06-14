@@ -169,7 +169,7 @@ function Base.show(io::IO, x::NEUE)
 
 end
 
-const CVAR_METRICS = (:energy,)
+const CVAR_QUANTITIES = (:energy,)
 
 
 """
@@ -183,21 +183,20 @@ respectively.
 """
 struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
 
-    dim::Symbol
+    quantity::Symbol
     cvar::MeanEstimate
     alpha::Float64
     var::Float64
 
-    function CVAR{N,L,T,E}(dim::Symbol,
+    function CVAR{N,L,T,E}(quantity::Symbol,
                            cvar::MeanEstimate,
                            alpha::Float64,
                            var::Float64) where {N,L,T<:Period,E<:EnergyUnit}
-        # _check_dim(dim)
         val(cvar) >= 0 || throw(DomainError(val(cvar),
             "$(val(cvar)) is not a valid CVAR"))
         0 <= alpha < 1 || throw(DomainError(alpha,
             "$alpha is not a valid confidence level"))
-        new{N,L,T,E}(dim, cvar, alpha, var)
+        new{N,L,T,E}(quantity, cvar, alpha, var)
     end
 
 end
@@ -221,17 +220,16 @@ respectively.
 """
 struct NCVAR <: ReliabilityMetric
 
-    dim::Symbol
+    quantity::Symbol
     ncvar::MeanEstimate
     alpha::Float64
     var::Float64
     
-    function NCVAR(dim::Symbol, ncvar::MeanEstimate, alpha::Float64, var::Float64)
+    function NCVAR(quantity::Symbol, ncvar::MeanEstimate, alpha::Float64, var::Float64)
 
-        _check_dim(dim)
         val(ncvar) >= 0 || throw(DomainError(val(ncvar),
             "$(val(ncvar)) is not a valid NCVAR"))
-        new(dim, ncvar, alpha, var)
+        new(quantity, ncvar, alpha, var)
     end
 
 end
