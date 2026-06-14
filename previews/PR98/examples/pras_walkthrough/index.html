@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>PRAS 101 Walkthrough · PRAS</title><meta name="title" content="PRAS 101 Walkthrough · PRAS"/><meta property="og:title" content="PRAS 101 Walkthrough · PRAS"/><meta property="twitter:title" content="PRAS 101 Walkthrough · PRAS"/><meta name="description" content="Documentation for PRAS."/><meta property="og:description" content="Documentation for PRAS."/><meta property="twitter:description" content="Documentation for PRAS."/><meta property="og:url" content="https://natlabrockies.github.io/PRAS/stable/examples/pras_walkthrough/"/><meta property="twitter:url" content="https://natlabrockies.github.io/PRAS/stable/examples/pras_walkthrough/"/><link rel="canonical" href="https://natlabrockies.github.io/PRAS/stable/examples/pras_walkthrough/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">PRAS</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../resourceadequacy/">Resource Adequacy</a></li><li><span class="tocitem">Getting Started</span><ul><li><a class="tocitem" href="../../installation/">Installation</a></li><li><a class="tocitem" href="../../quickstart/">Quick Start</a></li></ul></li><li><span class="tocitem">PRAS Components </span><ul><li><a class="tocitem" href="../../PRAS/sysmodelspec/">System Model Specification</a></li><li><a class="tocitem" href="../../PRAS/simulations/">Simulation Specifications</a></li><li><a class="tocitem" href="../../PRAS/results/">Result Specifications</a></li><li><a class="tocitem" href="../../PRAS/capacitycredit/">Capacity Credit Calculation</a></li></ul></li><li><a class="tocitem" href="../../SystemModel_HDF5_spec/">.pras File Format</a></li><li><span class="tocitem">Tutorials</span><ul><li class="is-active"><a class="tocitem" href>PRAS 101 Walkthrough</a><ul class="internal"><li><a class="tocitem" href="#explore_systemmodel"><span>Read and Explore a SystemModel</span></a></li><li><a class="tocitem" href="#Run-a-Sequential-Monte-Carlo-Simulation"><span>Run a Sequential Monte Carlo Simulation</span></a></li></ul></li><li><a class="tocitem" href="../demand_response_walkthrough/">Demand Response Walkthrough</a></li></ul></li><li><a class="tocitem" href="../../extending/">Extending PRAS</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><span class="tocitem">API Reference</span><ul><li><a class="tocitem" href="../../PRASCore/api/">PRASCore</a></li><li><a class="tocitem" href="../../PRASFiles/api/">PRASFiles</a></li><li><a class="tocitem" href="../../PRASCapacityCredits/api/">PRASCapacityCredits</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>PRAS 101 Walkthrough</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>PRAS 101 Walkthrough</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/NatLabRockies/PRAS" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/NatLabRockies/PRAS/blob/main/PRAS.jl/examples/pras_walkthrough.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="pras_walkthrough"><a class="docs-heading-anchor" href="#pras_walkthrough">PRAS Walkthrough</a><a id="pras_walkthrough-1"></a><a class="docs-heading-anchor-permalink" href="#pras_walkthrough" title="Permalink"></a></h1><p>This is a complete example of running a PRAS assessment, using the <a href="https://github.com/GridMod/RTS-GMLC">RTS-GMLC</a> system</p><p>Load the PRAS package and other tools necessary for analyses</p><pre><code class="language-julia hljs">using PRAS
+using Plots
+using DataFrames
+using Printf</code></pre><h2 id="explore_systemmodel"><a class="docs-heading-anchor" href="#explore_systemmodel">Read and Explore a SystemModel</a><a id="explore_systemmodel-1"></a><a class="docs-heading-anchor-permalink" href="#explore_systemmodel" title="Permalink"></a></h2><p>You can load in a system model from a <a href="../../SystemModel_HDF5_spec/#prasfile">.pras file</a> if you have one like so:</p><pre><code class="language-julia hljs">sys = SystemModel(&quot;mysystem.pras&quot;)</code></pre><p>For the purposes of this example, we&#39;ll just use the built-in RTS-GMLC model.</p><pre><code class="language-julia hljs">sys = PRAS.rts_gmlc();</code></pre><p>We see some information about the system by just typing its name (or rather the variable that holds it):</p><pre><code class="language-julia hljs">sys</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">PRAS system with 3 regions, and 3 interfaces between these regions.
+Region names: 1, 2, 3
+
+Assets: 
+  Generators: 153 units
+  Storages: 1 units
+  GeneratorStorages: 1 units
+  DemandResponses: 0 units
+  Lines: 6
+
+Time series:
+  Start time: 2020-01-01T00:00:00+00:00
+  Resolution: 1 Hour
+  Number of time steps: 8784
+  End time: 2020-12-31T23:00:00+00:00
+  Time zone: UTC
+</code></pre><p>We retrieve the parameters of the system using the <code>get_params</code> function and use this for the plots below to ensure we have correct units:</p><pre><code class="language-julia hljs">(timesteps,periodlen,periodunit,powerunit,energyunit) = get_params(rts_gmlc())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(8784, 1, Hour, MW, MWh)</code></pre><p>This system has 3 regions, with multiple Generators, one GenerationStorage in region &quot;2&quot; and one Storage in region &quot;3&quot;. We can see regional information by indexing the system by region name:</p><pre><code class="language-julia hljs">sys[&quot;2&quot;]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Region: 2 (index - 2)
+  Peak load: 2850 MW
+  Generators: 35 units [indices - 52:86]
+  Storages: 0 units [indices - 1:0]
+  GeneratorStorages: 1 units [indices - 1:1]
+  DemandResponses: 0 units [indices - 1:0]
+</code></pre><p>We can visualize a time series of the regional load in region &quot;2&quot;:</p><pre><code class="language-julia hljs">region_2_load = sys.regions.load[sys[&quot;2&quot;].index,:]
+plot(sys.timestamps, region_2_load,
+     xlabel=&quot;Time&quot;, ylabel=&quot;Region 2 load ($(powerunit))&quot;,
+     legend=false)</code></pre><img src="5c4e1837.svg" alt="Example block output"/><p>We can find more information about all the Generators in the system by retriving the <code>generators</code> in the SystemModel:</p><pre><code class="language-julia hljs">system_generators = sys.generators</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">153 Generators:
+  Category   | Count
+  --------------------
+  Gas CC     | 10        
+  Gas CT     | 27        
+  Oil CT     | 12        
+  Coal       | 16        
+  Wind       | 4         
+  Hydro      | 20        
+  Nuclear    | 1         
+  Oil ST     | 7         
+  Solar PV   | 25        
+  Solar RTPV | 31        
+</code></pre><p>This returns an object of the asset type <a href="../../PRASCore/api/#PRASCore.Systems.Generators">Generators</a> and we can retrieve capacities of all generators in the system, which returns a Matrix with the shape (number of generators) x (number of timesteps):</p><pre><code class="language-julia hljs">system_generators.capacity</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">153×8784 Matrix{Int64}:
+  76   76   76   76   76   76   76   76  …   76   76   76   76   76   76   76
+  76   76   76   76   76   76   76   76      76   76   76   76   76   76   76
+  76   76   76   76   76   76   76   76      76   76   76   76   76   76   76
+  76   76   76   76   76   76   76   76      76   76   76   76   76   76   76
+ 155  155  155  155  155  155  155  155     155  155  155  155  155  155  155
+ 155  155  155  155  155  155  155  155  …  155  155  155  155  155  155  155
+ 155  155  155  155  155  155  155  155     155  155  155  155  155  155  155
+ 350  350  350  350  350  350  350  350     350  350  350  350  350  350  350
+ 355  355  355  355  355  355  355  355     355  355  355  355  355  355  355
+ 355  355  355  355  355  355  355  355     355  355  355  355  355  355  355
+   ⋮                        ⋮            ⋱                   ⋮            
+   0    0    0    0    0    0    0    4       0    0    0    0    0    0    0
+   0    0    0    0    0    0    0    4  …    0    0    0    0    0    0    0
+   0    0    0    0    0    0    0    4       0    0    0    0    0    0    0
+   0    0    0    0    0    0    0    4       0    0    0    0    0    0    0
+   0    0    0    0    0    0    0    5       0    0    0    0    0    0    0
+   0    0    0    0    0    0    0    2       0    0    0    0    0    0    0
+ 481  635  487  433  408  440  377  199  …  222  281  203  167  221  251  220
+ 143  139  145  145  137   99   62   47       0    0    0    0    0    0    0
+ 795  794  774  767  752  719  655  595      11   33   74   90   60   21   16</code></pre><p>We can visualize a time series of the total system capacity (sum over individual generators&#39; capacity at each time step)</p><pre><code class="language-julia hljs">plot(sys.timestamps, sum(system_generators.capacity, dims=1)&#39;,
+     xlabel=&quot;Time&quot;, ylabel=&quot;Total system capacity (MW)&quot;, legend=false)</code></pre><img src="e6a91a14.svg" alt="Example block output"/><p>Or, by category of generators:</p><pre><code class="language-julia hljs">category_indices = Dict([cat =&gt; findall(==(cat), system_generators.categories)
+                    for cat in unique(system_generators.categories)]);
+capacity_matrix = Vector{Vector{Int}}();
+for (category,indices) in category_indices
+    push!(capacity_matrix, sum(system_generators.capacity[indices, :], dims=1)[1,:])
+end
+areaplot(sys.timestamps, hcat(capacity_matrix...),
+        label=permutedims(collect(keys(category_indices))),
+        xlabel=&quot;Time&quot;, ylabel=&quot;Total system capacity (MW)&quot;)</code></pre><img src="ce9d7da3.svg" alt="Example block output"/><p>Similarly we can also retrieve all the Storages in the system and GenerationStorages in the system using <code>sys.storages</code> and <code>sys.generatorstorages</code>, respectively.</p><p>To retrieve the assets in a particular region, we can index by the region name and asset type (<code>Generators</code> here):</p><pre><code class="language-julia hljs">region_2_generators = sys[&quot;2&quot;, Generators]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">35 Generators:
+  Category   | Count
+  --------------------
+  Gas CC     | 3         
+  Gas CT     | 9         
+  Oil CT     | 4         
+  Coal       | 7         
+  Hydro      | 10        
+  Solar RTPV | 1         
+  Solar PV   | 1         
+</code></pre><p>We get the storage device in region &quot;3&quot; like so:</p><pre><code class="language-julia hljs">region_3_storage = sys[&quot;3&quot;, Storages]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1 Storages:
+  Category   | Count
+  --------------------
+  Storage    | 1         
+</code></pre><p>and the generation-storage device in region &quot;2&quot; like so:</p><pre><code class="language-julia hljs">region_2_genstorage = sys[&quot;2&quot;, GeneratorStorages]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">1 GeneratorStorages:
+  Category   | Count
+  --------------------
+  CSP        | 1         
+</code></pre><h2 id="Run-a-Sequential-Monte-Carlo-Simulation"><a class="docs-heading-anchor" href="#Run-a-Sequential-Monte-Carlo-Simulation">Run a Sequential Monte Carlo Simulation</a><a id="Run-a-Sequential-Monte-Carlo-Simulation-1"></a><a class="docs-heading-anchor-permalink" href="#Run-a-Sequential-Monte-Carlo-Simulation" title="Permalink"></a></h2><p>We can run a Sequential Monte Carlo simulation on this system using the <a href="../../PRASCore/api/#PRASCore.Simulations.assess-Tuple{SystemModel, SequentialMonteCarlo, Vararg{PRASCore.Results.ResultSpec}}">assess</a> function. Here we will also use four different <a href="../../PRAS/results/#results">result specifications</a>:</p><pre><code class="language-julia hljs">shortfall, surplus, utilization, storage = assess(
+    sys, SequentialMonteCarlo(samples=100, seed=1),
+    Shortfall(), Surplus(), Utilization(), StorageEnergy());</code></pre><p>Start by checking the overall system adequacy:</p><pre><code class="language-julia hljs">lole = LOLE(shortfall); # event-hours per year
+eue = EUE(shortfall); # unserved energy per year
+println(&quot;System $(lole), $(eue)&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">System LOLE = 0.00000 event-h/8784h, EUE = 0.00000 MWh/8784h</code></pre><p>Given we use only 100 samples and the RTS-GMLC system is quite reliable, we see a system which is reliable, with LOLE and EUE both near zero. For the purposes of this example, let&#39;s increase the system load homogenously by 700MW in every hour and region, and re-run the assessment.</p><pre><code class="language-julia hljs">sys.regions.load .+= 700.0
+shortfall, surplus, utilization, storage = assess(
+    sys, SequentialMonteCarlo(samples=100, seed=1),
+    Shortfall(), Surplus(), Utilization(), StorageEnergy());
+lole = LOLE(shortfall); # event-hours per year
+eue = EUE(shortfall); # unserved energy per year
+neue = NEUE(shortfall); # unserved energy per year
+println(&quot;System $(lole), $(eue), $(neue)&quot;)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">System LOLE = 85±2 event-h/8784h, EUE = 26400±1100 MWh/8784h, NEUE = 470±20 ppm</code></pre><p>Now we see a system which is slightly unreliable with a normalized expected unserved energy (NEUE) of close to 470 parts per million of total load.</p><p>We can now look at the hourly loss-of-load expectation (LOLE) to see when when shortfalls are occurring. <code>LOLE.(shortfall, many_hours)</code> is Julia shorthand for calling LOLE  on every timestep in the collection many_hours</p><pre><code class="language-julia hljs">lolps = LOLE.(shortfall, sys.timestamps)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">8784-element Vector{LOLE{1, 1, Hour}}:
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ ⋮
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h
+ LOLE = 0.00000 event-h/h</code></pre><p>Here results are in terms of event-hours per hour, which is equivalent to the loss-of-load probability (LOLP) for each hour. The LOLE object is shown as mean ± standard error. We are mostly interested in the mean here, we can retrieve this using <code>val.(lolps)</code> and visualize this:</p><pre><code class="language-julia hljs">plot(sys.timestamps, val.(lolps),
+     xlabel=&quot;Time&quot;, ylabel=&quot;Hourly LOLE (event-hours/hour)&quot;, legend=false)</code></pre><img src="8c992eb0.svg" alt="Example block output"/><p>We see the shortfall is concentrated in a few hours and there are many hours with LOLE = 1, which means that hour had a shortfall in every Monte Carlo sample.</p><p>We can find the regional NEUE for the entire simulation period, and obtain it in as a DataFrame for easier viewing:</p><pre><code class="language-julia hljs">regional_eue = DataFrame([(Region=reg_name, NEUE=val(NEUE(shortfall, reg_name)))
+                          for reg_name in sys.regions.names],
+                         )</code></pre><div><div style = "float: left;"><span>3×2 DataFrame</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">Region</th><th style = "text-align: left;">NEUE</th></tr><tr class = "columnLabelRow"><th class = "stubheadLabel" style = "font-weight: bold; text-align: right;"></th><th title = "String" style = "text-align: left;">String</th><th title = "Float64" style = "text-align: left;">Float64</th></tr></thead><tbody><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: left;">1</td><td style = "text-align: right;">684.134</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: left;">2</td><td style = "text-align: right;">569.856</td></tr><tr class = "dataRow"><td class = "rowLabel" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: left;">3</td><td style = "text-align: right;">173.376</td></tr></tbody></table></div><p>So, region &quot;1&quot; has the highest overall NEUE, and has a higher load normalized shortfall</p><p>We may be interested in the EUE in the hour with highest LOLE</p><pre><code class="language-julia hljs">max_lole_ts = sys.timestamps[findfirst(val.(lolps).==1)];
+println(&quot;Hour with first LOLE of 1.0: &quot;, max_lole_ts)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Hour with first LOLE of 1.0: 2020-07-24T18:00:00+00:00</code></pre><p>And we can find the unserved energy by region in that hour:</p><pre><code class="language-julia hljs">unserved_by_region = EUE.(shortfall, sys.regions.names, max_lole_ts)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{EUE{1, 1, Hour, MWh}}:
+ EUE = 190±20 MWh/h
+ EUE = 220±20 MWh/h
+ EUE = 70±10 MWh/h</code></pre><p>which returns a Vector of EUE values for each region.</p><p>Region 2 has highest EUE in that hour, and we can look at the utilization of interfaces into that region in that period:</p><pre><code class="language-julia hljs">utilization_str = join([@sprintf(&quot;Interface between regions 1 and 2 utilization: %0.2f&quot;,
+                            utilization[&quot;1&quot; =&gt; &quot;2&quot;, max_lole_ts][1]),
+                    @sprintf(&quot;Interface between regions 3 and 2 utilization: %0.2f&quot;,
+                            utilization[&quot;3&quot; =&gt; &quot;2&quot;, max_lole_ts][1]),
+                    @sprintf(&quot;Interface between regions 1 and 3 utilization: %0.2f&quot;,
+                            utilization[&quot;1&quot; =&gt; &quot;3&quot;, max_lole_ts][1])], &quot;\n&quot;);
+println(utilization_str)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Interface between regions 1 and 2 utilization: 0.00
+Interface between regions 3 and 2 utilization: 0.13
+Interface between regions 1 and 3 utilization: 0.01</code></pre><p>We see that the interfaces are not fully utilized, which means there is no excess generation in the system that could be transferred into region &quot;2&quot; and we can confirm this by looking at the surplus generation in each region</p><pre><code class="language-julia hljs">println(&quot;Surplus in&quot;)
+@printf(&quot;  region 1: %0.2f\n&quot;,surplus[&quot;1&quot;,max_lole_ts][1])
+@printf(&quot;  region 2: %0.2f\n&quot;,surplus[&quot;2&quot;,max_lole_ts][1])
+@printf(&quot;  region 3: %0.2f\n&quot;,surplus[&quot;3&quot;,max_lole_ts][1])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Surplus in
+  region 1: 0.00
+  region 2: 0.00
+  region 3: 0.00</code></pre><p>Is local storage another alternative for region 3? One can check on the average state-of-charge of the existing battery in region &quot;3&quot;, both in the hour before and during the problematic period:</p><pre><code class="language-julia hljs">@printf(&quot;Storage energy T-1: %0.2f\n&quot;,storage[&quot;313_STORAGE_1&quot;, max_lole_ts-Hour(1)][1])
+@printf(&quot;Storage energy T: %0.2f\n&quot;,storage[&quot;313_STORAGE_1&quot;, max_lole_ts][1])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Storage energy T-1: 63.39
+Storage energy T: 24.40</code></pre><p>It may be that the battery is on average charged going in to the event, and perhaps retains some energy during the event, even as load is being dropped. The device&#39;s ability to mitigate the shortfall must then be limited only by its discharge capacity, so increasing the regions storage capacity by adding more storage devices may help mitigate some shortfall.</p><p>Note that if the event was less consistent, this analysis could also have been performed on the subset of samples in which the event was observed, using the <code>ShortfallSamples</code>, <code>UtilizationSamples</code>, and <code>StorageEnergySamples</code> result specifications instead.</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../SystemModel_HDF5_spec/">« .pras File Format</a><a class="docs-footer-nextpage" href="../demand_response_walkthrough/">Demand Response Walkthrough »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 17 March 2026 19:47">Tuesday 17 March 2026</span>. Using Julia version 1.12.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="476" height="170" viewBox="0 0 476 170">
+<defs>
+<clipPath id="clip_0">
+<path transform="matrix(1,0,0,-1,-242,355)" d="M0 0H960V540H0Z"/>
+</clipPath>
+<clipPath id="clip_1">
+<path transform="matrix(1,0,0,-1,-242,355)" d="M0 0H960V540H0Z"/>
+</clipPath>
+<clipPath id="clip_2">
+<path transform="matrix(1,0,0,-1,-242,355)" d="M0 0H960V540H0Z"/>
+</clipPath>
+</defs>
+<g>
+<g>
+<g clip-path="url(#clip_0)">
+<g inkscape:groupmode="layer" inkscape:label="Background">
+<path transform="matrix(1,0,0,-1,-242,355)" d="M0 0H960V540H0Z" fill="#ffffff"/>
+</g>
+<path transform="matrix(1,0,0,-1,-242,355)" d="M454.32 354.84H717.72V185.16H454.32Z" fill="#5b9bd5" fill-rule="evenodd"/>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="9.96" font-family="ArialMT"><tspan y="-259.7304" x="522.043">1</tspan></text>
+<path transform="matrix(1,0,0,-1,261.7,63.22)" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#ffffff" d="M0 0V-48.958"/>
+<path transform="matrix(1,0,0,-1,264.7003,111.1779)" d="M0 0-3-6-6 0Z" fill="#ffffff" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-242,355)" d="M476.58 315.06H510.65998V291.18H476.58Z" fill="#ffffff" fill-opacity=".250977" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-242,355)" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#ffffff" d="M476.58 315.06H510.65998V291.18H476.58Z"/>
+<path transform="matrix(1,0,0,-1,242.85999,117.1264)" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#ffffff" d="M0 0V47.586"/>
+<path transform="matrix(1,0,0,-1,245.86042,70.53989)" d="M0 0-3 6-6 0Z" fill="#ffffff" fill-rule="evenodd"/>
+<g clip-path="url(#clip_1)">
+<path transform="matrix(1,0,0,-1,261.7,101.020008)" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#ffffff" d="M0 0C0 4.705 4.782 8.52 10.68 8.52"/>
+</g>
+<g clip-path="url(#clip_2)">
+<path transform="matrix(1,0,0,-1,255.76001,92.140018)" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#ffffff" d="M0 0C-7.124 0-12.9 4.379-12.9 9.78"/>
+</g>
+<path transform="matrix(1,0,0,-1,255.70001,92.26001)" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#ffffff" d="M0 0 20.906-.25"/>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="9.96" font-family="ArialMT"><tspan y="-226.3303" x="501.8077">4</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="9.96" font-family="ArialMT"><tspan y="-226.3303" x="482.17655">5</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="9.96" font-family="ArialMT"><tspan y="-279.9151" x="507.20603">3</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="9.96" font-family="ArialMT"><tspan y="-279.9151" x="474.9655">2</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="9.96" font-family="ArialMT"><tspan y="-299.3371" x="492.027">6</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="14.04" font-family="Arial" font-weight="bold"><tspan y="-311.4813" x="541.5107 552.43099 560.23019 568.75247 576.55166 582.07217 589.87136 594.55227 603.0745 608.59506 617.9541 622.635 631.1573 636.6764 644.35769 652.87997">GeneratorStorage</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="12" font-family="ArialMT"><tspan y="-296.6013" x="541.5107 544.87069 551.59066 555.0706 557.7106 564.43057 572.9505 576.1905 584.83047 591.5504 598.2704 604.99038 610.99038 613.6303 616.9903 622.87026 625.99069 629.9507 636.67068">Inflow Capacity (1)</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="12" font-family="ArialMT"><tspan y="-282.2013" x="541.5107 550.15066 556.8706 563.5906 567.5506 574.1506 583.99069 592.6306 599.3506 606.07058 612.7905 618.7905 621.4305 624.79049 633.91067 637.87069 644.59066">ChargeCapacity(2)</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="12" font-family="ArialMT"><tspan y="-267.8013" x="541.5106 550.1506 552.7905 558.7905 564.7905 571.5105 578.23049 582.1905 588.79049 595.51046 598.63046 607.2704 613.99038 620.7103 627.4303 633.4303 636.07028 639.43026 645.3102 648.5502 652.51138 659.2313">Discharge Capacity (3)</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="12" font-family="ArialMT"><tspan y="-253.4013" x="541.5106 550.8706 554.8306 557.47067 567.5506 570.9106 577.63058 580.2705 586.9905 592.9905 596.35049 598.9904 605.7104 612.31039 615.67037 624.3103 631.0303 637.63027 644.2302 650.2302 652.8702 656.23019 662.1101 665.2301 669.1913 675.91128">GridInjection Capacity (4)</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="12" font-family="ArialMT"><tspan y="-239.00131" x="541.5106 550.8706 554.8306 557.47067 567.4306 579.1906 581.83059 585.19058 591.9105 598.5105 602.4705 609.0705 617.59048 624.3104 629.9506 638.5906 645.31057 652.0305 658.7505 664.7505 667.39047 670.7504 676.6304 679.87039 683.8304 690.55038">GridWithdrawalCapacity (5)</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="12" font-family="ArialMT"><tspan y="-224.60132" x="541.5106 549.5506 556.27059 562.99057 566.95059 573.55056 579.4305 582.79067 591.4306 598.1506 604.87057 611.5905 617.5905 620.23049 623.59048 629.4704 632.5904 636.5504 643.2704">Energy Capacity (6)</tspan></text>
+<path transform="matrix(1,0,0,-1,-242,355)" d="M242.28 277.56H440.88V185.16H242.28Z" fill="#ed7d31" fill-rule="evenodd"/>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="14.04" font-family="Arial" font-weight="bold"><tspan y="-251.1032" x="307.6835 317.04399 321.7235 330.2458 335.76634 343.56556 352.08784">Storage</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="12" font-family="ArialMT"><tspan y="-236.2232" x="307.6835 316.32353 323.04353 329.76353 333.7235 340.32353 347.04353 350.1635 358.80354 365.52354 372.24354 378.96354 384.96354 387.60356 390.96357 396.84358 400.08357 404.04356 410.76356">Charge Capacity (1)</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="12" font-family="ArialMT"><tspan y="-221.82321" x="307.6835 316.32353 318.96354 324.96354 330.96354 337.68354 344.40354 348.36354 354.96354 361.68354 364.80354 373.44355 380.16355 386.88356 393.60356 399.60356 402.24357 405.60359 411.48359 414.72358 418.68479 425.4048">Discharge Capacity (2)</tspan><tspan y="-207.42322" x="307.6835 315.7235 322.4435 329.1635 333.1235 339.7235 345.60353 348.9635 357.60353 364.32353 371.04353 377.76353 383.76353 386.40354 389.76356 395.64356 398.76356 402.72355 409.44355">Energy Capacity (3)</tspan></text>
+<path transform="matrix(1,0,0,-1,-242,355)" d="M259.02 262.38H292.97999V238.62001H259.02Z" fill="#ffffff" fill-opacity=".250977" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-242,355)" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#ffffff" d="M259.02 262.38H292.97999V238.62001H259.02Z"/>
+<path transform="matrix(1,0,0,-1,27.100007,139.1629)" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#ffffff" d="M0 0V16.943"/>
+<path transform="matrix(1,0,0,-1,30.100312,123.219898)" d="M0 0-3 6-6 0Z" fill="#ffffff" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,41.98001,134.1629)" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#ffffff" d="M0 0V16.943"/>
+<path transform="matrix(1,0,0,-1,38.980287,133.1628)" d="M0 0 3-6 6 0Z" fill="#ffffff" fill-rule="evenodd"/>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="9.96" font-family="ArialMT"><tspan y="-246.9311" x="273.4608">3</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="9.96" font-family="ArialMT"><tspan y="-202.75852" x="266.12028">1</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="9.96" font-family="ArialMT"><tspan y="-202.75852" x="282.03636">2</tspan></text>
+<path transform="matrix(1,0,0,-1,-242,355)" d="M242.28 354.84H440.88V289.2H242.28Z" fill="#70ad47" fill-rule="evenodd"/>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="14.04" font-family="Arial" font-weight="bold"><tspan y="-327.665" x="289.5946 300.51493 308.30714 316.828 324.62864 330.14775 337.94837 342.6279 351.14878">Generator</tspan></text>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="12" font-family="ArialMT"><tspan y="-312.785" x="289.5946 298.95463 305.67463 312.39463 319.11463 323.07463 329.79463 333.15464 335.79466 342.39466 349.11466 352.11466 360.75468 367.47468 374.19468 380.91468 386.91468 389.5547 392.9147 398.7947 401.9147 405.8747 412.5947">Generation Capacity (1)</tspan></text>
+<path transform="matrix(1,0,0,-1,26.980011,15.700012)" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#ffffff" d="M0 0V-19"/>
+<path transform="matrix(1,0,0,-1,29.980286,33.700197)" d="M0 0-3-6-6 0Z" fill="#ffffff" fill-rule="evenodd"/>
+<text fill="#ffffff" xml:space="preserve" transform="matrix(1 0 -0 1 -242 355)" font-size="9.96" font-family="ArialMT"><tspan y="-300.937" x="266.305">1</tspan></text>
+</g>
+</g>
+</g>
+</svg>
