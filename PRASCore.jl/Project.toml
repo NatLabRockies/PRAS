@@ -4,9 +4,10 @@ authors = [
     "Surya Chandan Dhulipala <SuryaChandan.Dhulipala@nlr.gov>",
     "Srihari Sundar <Hari.Sundar@nlr.gov>",
     "Julian Florez <Julian.Florez@nlr.gov>",
-    "Gord Stephen <g.stephen@imperial.ac.uk>"
+    "Gord Stephen <g.stephen@imperial.ac.uk>",
+    "Abdelrahman Ayad <abdelrahman.ayad@nlr.gov"
 ]
-version = "0.8.1"
+version = "0.8.2"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
