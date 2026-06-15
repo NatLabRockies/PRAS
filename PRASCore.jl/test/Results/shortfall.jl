@@ -60,7 +60,7 @@
 
     region_cvar = CVAR(:energy, result, alpha, r)
     region_estimate = result.shortfall_region_samples[r_idx, :];
-    region_tail_losses = region_estimate[region_estimate .>= quantile(region_estimate, alpha)];
+    region_tail_losses = region_estimate[region_estimate .> quantile(region_estimate, alpha)];
     @test val(region_cvar) ≈ mean(region_tail_losses)
     @test stderror(region_cvar) ≈ std(region_tail_losses) / sqrt(length(region_tail_losses))
 
@@ -154,7 +154,7 @@ end
 
     ue_cvar = CVAR(:energy, result, alpha)
     estimate = result[];
-    tail_losses = estimate[estimate .>= quantile(estimate, alpha)];
+    tail_losses = estimate[estimate .> quantile(estimate, alpha)];
     @test val(ue_cvar) ≈ mean(tail_losses)
     @test stderror(ue_cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
 
@@ -183,7 +183,7 @@ end
 
     region_ue_cvar = CVAR(:energy, result, alpha, r)
     region_estimate = result[r];
-    region_tail_losses = region_estimate[region_estimate .>= quantile(region_estimate, alpha)];
+    region_tail_losses = region_estimate[region_estimate .> quantile(region_estimate, alpha)];
     @test val(region_ue_cvar) ≈ mean(region_tail_losses)
     @test stderror(region_ue_cvar) ≈ std(region_tail_losses) / sqrt(length(region_tail_losses))
 
@@ -240,7 +240,7 @@ end
 
     regionperiod_cvar = CVAR(:energy, result, alpha, r, t)
     regionperiod_estimate = result[r, t];
-    regionperiod_tail_losses = regionperiod_estimate[regionperiod_estimate .>= quantile(regionperiod_estimate, alpha)];
+    regionperiod_tail_losses = regionperiod_estimate[regionperiod_estimate .> quantile(regionperiod_estimate, alpha)];
     @test val(regionperiod_cvar) ≈ mean(regionperiod_tail_losses)
     @test stderror(regionperiod_cvar) ≈ std(regionperiod_tail_losses) / sqrt(length(regionperiod_tail_losses))
 
