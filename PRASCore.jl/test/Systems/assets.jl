@@ -5,7 +5,7 @@
 
     vals_int   = rand(1:100, 3, 10)
     vals_float = rand(3, 10)
-
+    vals_float_soc = rand(0.0:0.1:1.0, length(names))
     @testset "Generators" begin
 
         gens = Generators{10,1,Hour,MW}(
@@ -46,24 +46,24 @@
 
         stors = Storages{10,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_float, vals_float, vals_float, vals_float)
+            vals_float, vals_float, vals_float, vals_float, vals_float;initial_soc = vals_float_soc)
         @test stors isa Storages
 
         @test_throws AssertionError Storages{5,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_float, vals_float, vals_float, vals_float)
+            vals_float, vals_float, vals_float, vals_float, vals_float;initial_soc =  vals_float_soc)
 
         @test_throws AssertionError Storages{10,1,Hour,MW,MWh}(
             names, categories[1:2], vals_int, vals_int, vals_int,
-            vals_float, vals_float, vals_float, vals_float, vals_float)
+            vals_float, vals_float, vals_float, vals_float, vals_float;initial_soc =  vals_float_soc)
 
         @test_throws AssertionError Storages{10,1,Hour,MW,MWh}(
             names[1:2], categories[1:2], vals_int, vals_int, vals_int,
-            vals_float, vals_float, vals_float, vals_float, vals_float)
+            vals_float, vals_float, vals_float, vals_float, vals_float;initial_soc =  vals_float_soc)
 
         @test_throws AssertionError Storages{10,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_float, -vals_float, vals_float, vals_float)
+            vals_float, vals_float, -vals_float, vals_float, vals_float;initial_soc =  vals_float_soc)
 
         @testset "Printing" begin
             io = IOBuffer()
@@ -89,29 +89,29 @@
         gen_stors = GeneratorStorages{10,1,Hour,MW,MWh}(
             names, categories,
             vals_int, vals_int, vals_int, vals_float, vals_float, vals_float,
-            vals_int, vals_int, vals_int, vals_float, vals_float)
+            vals_int, vals_int, vals_int, vals_float, vals_float;initial_soc =  vals_float_soc)
         @test gen_stors isa GeneratorStorages
 
         @test_throws AssertionError GeneratorStorages{5,1,Hour,MW,MWh}(
             names, categories,
             vals_int, vals_int, vals_int, vals_float, vals_float, vals_float,
-            vals_int, vals_int, vals_int, vals_float, vals_float)
+            vals_int, vals_int, vals_int, vals_float, vals_float;initial_soc =  vals_float_soc)
 
 
         @test_throws AssertionError GeneratorStorages{10,1,Hour,MW,MWh}(
             names, categories[1:2],
             vals_int, vals_int, vals_int, vals_float, vals_float, vals_float,
-            vals_int, vals_int, vals_int, vals_float, vals_float)
+            vals_int, vals_int, vals_int, vals_float, vals_float;initial_soc =  vals_float_soc)
 
         @test_throws AssertionError GeneratorStorages{10,1,Hour,MW,MWh}(
             names[1:2], categories[1:2],
             vals_int, vals_int, vals_int, vals_float, vals_float, vals_float,
-            vals_int, vals_int, vals_int, vals_float, vals_float)
+            vals_int, vals_int, vals_int, vals_float, vals_float;initial_soc =  vals_float_soc)
 
         @test_throws AssertionError GeneratorStorages{10,1,Hour,MW,MWh}(
             names, categories,
             vals_int, vals_int, vals_int, vals_float, vals_float, -vals_float,
-            vals_int, vals_int, vals_int, vals_float, vals_float)
+            vals_int, vals_int, vals_int, vals_float, vals_float;initial_soc =  vals_float_soc)
 
         @testset "Printing" begin
             io = IOBuffer()
@@ -135,19 +135,19 @@
 
         DemandResponses{10,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float, vals_float, vals_float)
+            vals_float, vals_int, vals_float, vals_float;initial_borrowed_load =  vals_float_soc, borrow_efficiency = vals_float, payback_efficiency = vals_float)
 
         @test_throws AssertionError DemandResponses{5,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float, vals_float, vals_float,)
+            vals_float, vals_int, vals_float, vals_float;initial_borrowed_load =  vals_float_soc, borrow_efficiency = vals_float, payback_efficiency = vals_float)
 
         @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
             names, categories[1:2], vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float,vals_float, vals_float)
+            vals_float, vals_int, vals_float, vals_float;initial_borrowed_load =  vals_float_soc, borrow_efficiency = vals_float, payback_efficiency = vals_float)
 
         @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
             names[1:2], categories[1:2], vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float,vals_float, vals_float)
+            vals_float, vals_int, vals_float, vals_float;initial_borrowed_load =  vals_float_soc, borrow_efficiency = vals_float, payback_efficiency = vals_float)
     end
 
     @testset "Lines" begin
