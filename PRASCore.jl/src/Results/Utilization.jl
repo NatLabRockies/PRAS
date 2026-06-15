@@ -77,7 +77,7 @@ struct UtilizationResult{N,L,T<:Period} <: AbstractUtilizationResult{N,L,T}
 
     nsamples::Union{Int,Nothing}
     interfaces::Vector{Pair{String,String}}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     utilization_mean::Matrix{Float64}
 

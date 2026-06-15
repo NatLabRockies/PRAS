@@ -64,7 +64,7 @@ accumulatortype(::FlowSamples) = FlowSamplesAccumulator
 struct FlowSamplesResult{N,L,T<:Period,P<:PowerUnit} <: AbstractFlowResult{N,L,T}
 
     interfaces::Vector{Pair{String,String}}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     flow::Array{Int,3}
 

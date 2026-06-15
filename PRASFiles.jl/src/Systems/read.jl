@@ -20,7 +20,9 @@ function SystemModel(inputfile::String)
         # Determine the appropriate version of the importer to use
         return if (0,5,0) <= version < (0,8,0)
             systemmodel_0_5(f)
-        elseif (0,8,0) <= version < (0,9,0)
+        elseif (0,8,0) <= version < (0,10,0)
+            # v0.9.x adds optional non-contiguous time-slice metadata, which the
+            # 0.8 reader handles (it falls back to a contiguous range when absent).
             systemmodel_0_8(f)
         else
             error("PRAS file format $versionstring not supported by this version of PRASBase.")
@@ -53,8 +55,19 @@ function _systemmodel_core(f::File)
     type_params = (N,L,T,P,E)
 
     timestep = T(L)
-    end_timestamp = start_timestamp + (N-1)*timestep
-    timestamps = StepRange(start_timestamp, timestep, end_timestamp)
+
+    if haskey(metadata, "n_slices") && Int(read(metadata["n_slices"])) > 1
+        # Non-contiguous time axis: rebuild each slice from its (start, length).
+        slice_starts = ZonedDateTime.(read(metadata["slice_start_timestamps"]),
+                                       dateformat"yyyy-mm-ddTHH:MM:SSz")
+        slice_lengths = Int.(read(metadata["slice_lengths"]))
+        slices = [StepRange(s, timestep, s + (len - 1) * timestep)
+                  for (s, len) in zip(slice_starts, slice_lengths)]
+        timestamps = SlicedTimestamps(slices)
+    else
+        end_timestamp = start_timestamp + (N-1)*timestep
+        timestamps = StepRange(start_timestamp, timestep, end_timestamp)
+    end
 
     has_regions = haskey(f, "regions")
     has_generators = haskey(f, "generators")
@@ -386,7 +399,8 @@ function read_attrs(f::File)
     metadata = attributes(f)
 
     reqd_attrs_keys = ["pras_dataversion", "start_timestamp", "timestep_count",
-                "timestep_length", "timestep_unit", "power_unit", "energy_unit"]
+                "timestep_length", "timestep_unit", "power_unit", "energy_unit",
+                "n_slices", "slice_start_timestamps", "slice_lengths"]
     
     addl_attrs_keys = setdiff(keys(metadata), reqd_attrs_keys)
     

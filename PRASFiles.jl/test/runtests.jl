@@ -3,6 +3,8 @@ using PRASFiles
 using Test
 using JSON3
 
+import PRASCore.Systems: SlicedTimestamps
+
 @testset verbose=true "PRASFiles" begin
 
     @testset "Roundtrip .pras files to/from disk" begin
@@ -27,6 +29,51 @@ using JSON3
         rts_userattrs = SystemModel(path * "/rts_userattrs.pras")
         @test rts == rts_userattrs
         @test PRASFiles.read_attrs(path * "/rts_userattrs.pras") == Dict("about" => "this is a representation of the RTS GMLC system")
+
+    end
+
+    @testset "Non-contiguous time slices" begin
+
+        path = dirname(@__FILE__)
+
+        # Rebuild the toy model with a non-contiguous time axis: split its N
+        # timesteps into two slices separated by a large gap. Asset data is
+        # unchanged; only the timestamps are relabeled.
+        toy = PRASFiles.toymodel()
+        N = length(toy.timestamps)
+        Δ = step(toy.timestamps)
+        n1 = N ÷ 2
+        t0 = first(toy.timestamps)
+        slice1 = t0:Δ:(t0 + (n1 - 1) * Δ)
+        s2 = t0 + (N + 50) * Δ
+        slice2 = s2:Δ:(s2 + (N - n1 - 1) * Δ)
+
+        noncontig = SystemModel(
+            toy.regions, toy.interfaces,
+            toy.generators, toy.region_gen_idxs,
+            toy.storages, toy.region_stor_idxs,
+            toy.generatorstorages, toy.region_genstor_idxs,
+            toy.demandresponses, toy.region_dr_idxs,
+            toy.lines, toy.interface_line_idxs,
+            [slice1, slice2], toy.attrs)
+
+        @test noncontig.timestamps isa SlicedTimestamps
+        @test length(noncontig.timestamps) == N
+
+        # Round-trip through a .pras file preserves the slices
+        savemodel(noncontig, path * "/toy_noncontig.pras")
+        rt = SystemModel(path * "/toy_noncontig.pras")
+        @test rt.timestamps isa SlicedTimestamps
+        @test noncontig == rt
+        # Slice metadata must not leak into user attributes
+        @test !haskey(PRASFiles.read_attrs(path * "/toy_noncontig.pras"), "n_slices")
+
+        # assess runs over the concatenated timesteps and results index across the gap
+        sf = assess(noncontig,
+                    SequentialMonteCarlo(samples=10, threaded=false, seed=1),
+                    Shortfall())[1]
+        @test length(sf.timestamps) == N
+        @test sf[first(slice2)] !== nothing
 
     end
 

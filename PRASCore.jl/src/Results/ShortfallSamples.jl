@@ -79,7 +79,7 @@ accumulatortype(::S) where {
 struct ShortfallSamplesResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit, S} <: AbstractShortfallResult{N,L,T}
 
     regions::Regions{N,P}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     shortfall::Array{Int,3} # r x t x s
 

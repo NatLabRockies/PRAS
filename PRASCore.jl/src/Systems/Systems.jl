@@ -29,6 +29,7 @@ export
 include("units.jl")
 include("collections.jl")
 include("assets.jl")
+include("utils.jl")
 include("SystemModel.jl")
 include("TestData.jl")
 

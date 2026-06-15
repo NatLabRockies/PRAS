@@ -56,7 +56,7 @@ accumulatortype(::GeneratorStorageAvailability) = GenStorAvailabilityAccumulator
 struct GeneratorStorageAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
 
     generatorstorages::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     available::Array{Bool,3}
 

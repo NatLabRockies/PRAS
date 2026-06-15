@@ -57,7 +57,7 @@ accumulatortype(::StorageEnergySamples) = StorageEnergySamplesAccumulator
 struct StorageEnergySamplesResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
 
     storages::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     energy::Array{Int,3}
 

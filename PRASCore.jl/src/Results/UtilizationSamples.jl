@@ -74,7 +74,7 @@ accumulatortype(::UtilizationSamples) = UtilizationSamplesAccumulator
 struct UtilizationSamplesResult{N,L,T<:Period} <: AbstractUtilizationResult{N,L,T}
 
     interfaces::Vector{Pair{String,String}}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::AbstractVector{ZonedDateTime}
 
     utilization::Array{Float64,3}
 

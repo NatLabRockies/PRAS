@@ -6,7 +6,7 @@ authors = [
     "Julian Florez <Julian.Florez@nlr.gov>",
     "Gord Stephen <g.stephen@imperial.ac.uk>"
 ]
-version = "0.8.1"
+version = "0.9.0"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
