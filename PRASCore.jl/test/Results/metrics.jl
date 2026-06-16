@@ -96,4 +96,20 @@
 
     end
 
+    @testset "LOLD" begin
+
+        lold1 = LOLD{1}(MeanEstimate(0.2))
+        @test val(lold1) == 0.2
+        @test stderror(lold1) == 0.
+        @test string(lold1) == "LOLD = 0.20000 event-day/day"
+    
+        lold2 = LOLD{365}(MeanEstimate(2.4, 0.1))
+        @test val(lold2) == 2.4
+        @test stderror(lold2) == 0.1
+        @test string(lold2) == "LOLD = 2.4±0.1 event-day/365days"
+    
+        @test_throws DomainError LOLD{365}(MeanEstimate(-1.2, 0.))
+    
+    end
+
 end

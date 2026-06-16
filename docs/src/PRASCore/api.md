@@ -23,6 +23,7 @@ Order = [:function,:type]
 PRASCore.Results.LOLE
 PRASCore.Results.EUE
 PRASCore.Results.NEUE
+PRASCore.Results.LOLD
 PRASCore.Results.Shortfall
 PRASCore.Results.ShortfallSamples
 PRASCore.Results.Surplus

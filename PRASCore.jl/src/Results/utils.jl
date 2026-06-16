@@ -65,3 +65,54 @@ function _ncvar(cvar::CVAR, demand::Real)
     end
     return ncvar, var
 end
+
+function _day_ids(timestamps)
+    n = length(timestamps)
+    ids = Vector{Int}(undef, n)
+
+    n == 0 && return ids
+
+    current_day = Date(first(timestamps))
+    current_id = 1
+    ids[1] = current_id
+
+    for i in 2:n
+        d = Date(timestamps[i])
+        if d != current_day
+            current_day = d
+            current_id += 1
+        end
+        ids[i] = current_id
+    end
+
+    return ids
+end
+
+function _ndays(timestamps)
+    if isempty(timestamps)
+        return 0
+    else
+        return last(_day_ids(timestamps))
+    end
+end
+
+function _unique_days(timestamps)
+    return unique(Date.(timestamps))
+end
+
+function _day_range(timestamps, d::Date)
+    n = length(timestamps)
+    n == 0 && throw(ArgumentError("date $(d) is not in the simulation horizon (empty horizon)"))
+
+    first_i = findfirst(t -> Date(t) == d, timestamps)
+    first_i === nothing && throw(ArgumentError(
+        "date $(d) is not in the simulation horizon ($(Date(first(timestamps))) to $(Date(last(timestamps))))"
+    ))
+
+    last_i = first_i
+    while last_i < n && Date(timestamps[last_i + 1]) == d
+        last_i += 1
+    end
+
+    return first_i:last_i
+end

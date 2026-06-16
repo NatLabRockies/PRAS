@@ -5,6 +5,7 @@ import OnlineStats: Series
 import OnlineStatsBase: EqualWeight, Mean, Variance, value
 import Printf: @sprintf
 import StatsBase: mean, std, stderror, quantile
+import Dates: Date
 
 import ..Systems: SystemModel, ZonedDateTime, Period,
                   PowerUnit, EnergyUnit, conversionfactor,
@@ -12,7 +13,7 @@ import ..Systems: SystemModel, ZonedDateTime, Period,
 export
 
     # Metrics
-    ReliabilityMetric, LOLE, EUE, NEUE,
+    ReliabilityMetric, LOLE, EUE, NEUE, LOLD,
     val, stderror, CVAR, NCVAR,
 
     # Result specifications
@@ -89,6 +90,16 @@ end
 
 NCVAR(x::AbstractShortfallResult, cvar::CVAR, ::Colon) =
     NCVAR.(x, cvar, x.regions.names)
+
+LOLD(x::AbstractShortfallResult, ::Colon, d::Date) =
+    LOLD.(x, x.regions.names, d)
+
+LOLD(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
+    LOLD.(x, r, _unique_days(x.timestamps))
+
+LOLD(x::AbstractShortfallResult, ::Colon, ::Colon) =
+    LOLD.(x, x.regions.names, permutedims(_unique_days(x.timestamps)))
+
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
 

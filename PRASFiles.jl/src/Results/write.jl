@@ -28,6 +28,7 @@ function generate_systemresult(shortfall::AbstractShortfallResult, pras_sys::Sys
             EUEResult(shortfall, region = reg_name),
             LOLEResult(shortfall, region = reg_name),
             NEUEResult(shortfall, region = reg_name),
+            get_lold_result(shortfall, region = reg_name),
             pras_sys.regions.load[idx,:],
             peak_load,
             capacity,
@@ -46,6 +47,7 @@ function generate_systemresult(shortfall::AbstractShortfallResult, pras_sys::Sys
         EUEResult(shortfall),
         LOLEResult(shortfall),
         NEUEResult(shortfall),
+        get_lold_result(shortfall),
         region_results,
     )
 
@@ -77,7 +79,8 @@ function saveshortfall(
     pras_sys::SystemModel,
     outfile::String,
 )
-
+    _lold_warned[] = false
+    
     dt_now = format(now(), "dd-u-yy-H-M-S")
     export_location = joinpath(outfile, dt_now)
     if ~(isdir(export_location))

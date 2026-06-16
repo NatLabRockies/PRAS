@@ -351,7 +351,30 @@ function NCVAR(x::ShortfallResult, cvar::CVAR, r::AbstractString)
     ncvar, var = _ncvar(cvar, demand)
 
     return NCVAR(cvar.quantity, ncvar, cvar.alpha, var)
+end
   
+function LOLD(::ShortfallResult)
+    throw(ArgumentError(
+        "LOLD requires a ShortfallSamplesResult. Make sure ShortfallSamples() is included in assess()."
+    ))
+end
+
+function LOLD(::ShortfallResult, ::AbstractString)
+    throw(ArgumentError(
+        "LOLD requires a ShortfallSamplesResult. Make sure ShortfallSamples() is included in assess()."
+    ))
+end
+
+function LOLD(::ShortfallResult, ::Date)
+    throw(ArgumentError(
+        "LOLD requires a ShortfallSamplesResult. Make sure ShortfallSamples() is included in assess()."
+    ))
+end
+
+function LOLD(::ShortfallResult, ::AbstractString, ::Date)
+    throw(ArgumentError(
+        "LOLD requires a ShortfallSamplesResult. Make sure ShortfallSamples() is included in assess()."
+    ))
 end
 
 function finalize(
