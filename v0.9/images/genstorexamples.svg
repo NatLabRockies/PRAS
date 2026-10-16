@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="669" height="227" viewBox="0 0 669 227">
+<defs>
+<clipPath id="clip_0">
+<path transform="matrix(1,0,0,-1,0,227)" d="M0 0H669V227H0Z"/>
+</clipPath>
+<clipPath id="clip_1">
+<path transform="matrix(1,0,0,-1,-143,385)" d="M0 0H960V540H0Z"/>
+</clipPath>
+<clipPath id="clip_2">
+<path transform="matrix(1,0,0,-1,-143,385)" d="M0 0H960V540H0Z"/>
+</clipPath>
+<clipPath id="clip_3">
+<path transform="matrix(1,0,0,-1,-143,385)" d="M0 0H960V540H0Z"/>
+</clipPath>
+<clipPath id="clip_4">
+<path transform="matrix(1,0,0,-1,-143,385)" d="M0 0H960V540H0Z"/>
+</clipPath>
+<clipPath id="clip_5">
+<path transform="matrix(1,0,0,-1,-143,385)" d="M0 0H960V540H0Z"/>
+</clipPath>
+<clipPath id="clip_6">
+<path transform="matrix(1,0,0,-1,-143,385)" d="M0 0H960V540H0Z"/>
+</clipPath>
+<clipPath id="clip_7">
+<path transform="matrix(1,0,0,-1,-143,385)" d="M0 0H960V540H0Z"/>
+</clipPath>
+<clipPath id="clip_8">
+<path transform="matrix(1,0,0,-1,-143,385)" d="M0 0H960V540H0Z"/>
+</clipPath>
+<clipPath id="clip_9">
+<path transform="matrix(1,0,0,-1,-143,385)" d="M0 0H960V540H0Z"/>
+</clipPath>
+</defs>
+<g clip-path="url(#clip_0)">
+<g clip-path="url(#clip_1)">
+<g inkscape:groupmode="layer" inkscape:label="Background">
+<path transform="matrix(1,0,0,-1,-143,385)" d="M0 0H960V540H0Z" fill="#ffffff"/>
+</g>
+<path transform="matrix(1,0,0,-1,68.020008,59.380006)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#333333" d="M0 0V-124.5"/>
+<path transform="matrix(1,0,0,-1,72.52049,182.3798)" d="M0 0-4.5-9-9 0Z" fill="#333333" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-143,385)" d="M144.66 382.62H227.82V324.18H144.66Z" fill="#80d0ff" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-143,385)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M144.66 382.62H227.82V324.18H144.66Z"/>
+<text fill="#333333" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-356.7208" x="167.5562 177.63694 184.47583 192.27646 196.956 204.75662">Hydro </tspan><tspan y="-339.91493" x="156.15572 166.23645 174.02866 181.10904 188.90967 193.5892 200.4295 208.23014 211.34983">Reservoir</tspan></text>
+<path transform="matrix(1,0,0,-1,21.820008,189.5847)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#333333" d="M0 0V121.145"/>
+<path transform="matrix(1,0,0,-1,26.320496,69.93979)" d="M0 0-4.5 9-9 0Z" fill="#333333" fill-rule="evenodd"/>
+<g clip-path="url(#clip_2)">
+<path transform="matrix(1,0,0,-1,68.020008,151.48)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0C0 11.565 11.632 20.94 25.98 20.94"/>
+</g>
+<g clip-path="url(#clip_3)">
+<path transform="matrix(1,0,0,-1,53.320009,130.3)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0C-17.397 0-31.5 10.772-31.5 24.06"/>
+</g>
+<path transform="matrix(1,0,0,-1,53.259996,130.3)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0 51.143-.612"/>
+<text fill="#0079c1" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-258.6412" x="250.2323 260.31303 268.10523 275.18559 279.14625 283.82579 291.6264 299.4186">Upstream</tspan><tspan y="-241.83533" x="250.2323 254.193 261.9852 265.94587 269.06556 276.86619">Inflow</tspan></text>
+<text fill="#0079c1" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-178.16393" x="190.05686 198.57773 206.36994 211.04947 218.8501 221.96979 229.77042">Turbine</tspan></text>
+<text fill="#0079c1" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-178.16393" x="148.00705 157.36751 165.16672 176.80588">Pump</tspan></text>
+<path transform="matrix(1,0,0,-1,247.18,59.380006)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#333333" d="M0 0V-124.5"/>
+<path transform="matrix(1,0,0,-1,251.68051,182.3798)" d="M0 0-4.5-9-9 0Z" fill="#333333" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-143,385)" d="M323.82 382.62H406.98V324.18H323.82Z" fill="#ffe7a8" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-143,385)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M323.82 382.62H406.98V324.18H323.82Z"/>
+<text fill="#333333" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-348.3208" x="343.1225 352.48298 360.27519 364.23585 368.1951 375.99574 380.67527">Battery</tspan></text>
+<path transform="matrix(1,0,0,-1,200.98001,189.5847)" stroke-width="3" stroke-linecap="butt" stroke-dasharray="3,3" stroke-linejoin="round" fill="none" stroke="#333333" d="M0 0V121.145"/>
+<path transform="matrix(1,0,0,-1,205.4805,69.93979)" d="M0 0-4.5 9-9 0Z" fill="#333333" fill-rule="evenodd"/>
+<g clip-path="url(#clip_4)">
+<path transform="matrix(1,0,0,-1,247.18,151.48)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0C0 11.565 11.632 20.94 25.98 20.94"/>
+</g>
+<g clip-path="url(#clip_5)">
+<path transform="matrix(1,0,0,-1,232.48001,130.3)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0C-17.397 0-31.5 10.772-31.5 24.06"/>
+</g>
+<path transform="matrix(1,0,0,-1,232.42002,130.3)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0 51.143-.612"/>
+<text fill="#dba000" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-257.5219" x="435.9362 445.30088">PV</tspan><tspan y="-240.71604" x="435.9362 445.29667 453.08888 460.8895 468.69013">Panel</tspan></text>
+<text fill="#dba000" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-175.89336" x="323.39155 327.3508 336.71549 339.83238 347.6386 350.7555 355.43083 363.23005 370.3104 374.26966 377.38655 385.0664 392.86564 400.67189 403.78877">[Bidirectional]</tspan><tspan y="-159.08748" x="341.75587 345.71653 353.50874 360.349 368.14964 372.82917 376.78984 384.58204">Inverter</tspan></text>
+<path transform="matrix(1,0,0,-1,367.3,189.6854)" stroke-width="3" stroke-linecap="butt" stroke-dasharray="3,3" stroke-linejoin="round" fill="none" stroke="#d6d6d6" d="M0 0V83.385"/>
+<path transform="matrix(1,0,0,-1,413.38,59.5)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#333333" d="M0 0V-124.5"/>
+<path transform="matrix(1,0,0,-1,417.8805,182.4998)" d="M0 0-4.5-9-9 0Z" fill="#333333" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-143,385)" d="M490.02 382.5H573.18V324.06H490.02Z" fill="#fbd9a3" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-143,385)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M490.02 382.5H573.18V324.06H490.02Z"/>
+<text fill="#333333" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-356.6036" x="516.6884 526.76919 534.56137 542.36196 546.3212">Heat </tspan><tspan y="-339.79774" x="501.56733 511.64805 519.44027 526.5206 534.3212 539.00076 545.84109 553.64169 556.76138">Reservoir</tspan></text>
+<g clip-path="url(#clip_6)">
+<path transform="matrix(1,0,0,-1,413.38,151.6)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0C0 11.565 11.659 20.94 26.04 20.94"/>
+</g>
+<g clip-path="url(#clip_7)">
+<path transform="matrix(1,0,0,-1,398.74,130.42)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0C-17.364 0-31.44 10.772-31.44 24.06"/>
+</g>
+<path transform="matrix(1,0,0,-1,398.74,130.42)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0 51.143-.612"/>
+<text fill="#c47b08" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-258.1071" x="600.6859 610.76669 620.12576">CSP</tspan><tspan y="-241.30121" x="600.6859 610.76669 618.55886 626.35946">Heat</tspan></text>
+<text fill="#c47b08" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-180.05873" x="534.5294 543.0503 550.84249 555.522 563.3226 566.44229 574.24288">Turbine</tspan></text>
+<path transform="matrix(1,0,0,-1,367.3,106.319217)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0V37.759"/>
+<path transform="matrix(1,0,0,-1,371.80049,70.059818)" d="M0 0-4.5 9-9 0Z" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,527.38,189.6854)" stroke-width="3" stroke-linecap="butt" stroke-dasharray="3,3" stroke-linejoin="round" fill="none" stroke="#d6d6d6" d="M0 0V83.385"/>
+<path transform="matrix(1,0,0,-1,573.58,59.5)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#333333" d="M0 0V-124.5"/>
+<path transform="matrix(1,0,0,-1,578.0804,182.4998)" d="M0 0-4.5-9-9 0Z" fill="#333333" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-143,385)" d="M650.22 382.5H733.25997V324.06H650.22Z" fill="#c3c7cb" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-143,385)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M650.22 382.5H733.25997V324.06H650.22Z"/>
+<text fill="#333333" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-356.6036" x="678.0143 686.53518 694.32736 702.1279 705.2476">Fuel </tspan><tspan y="-339.79774" x="663.1319 672.4966 676.4559 684.2621 691.34109 698.42147 706.22769 709.34457 712.4614">Stockpile</tspan></text>
+<g clip-path="url(#clip_8)">
+<path transform="matrix(1,0,0,-1,573.58,151.6)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0C0 11.565 11.632 20.94 25.98 20.94"/>
+</g>
+<g clip-path="url(#clip_9)">
+<path transform="matrix(1,0,0,-1,558.82,130.42)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0C-17.364 0-31.44 10.772-31.44 24.06"/>
+</g>
+<path transform="matrix(1,0,0,-1,558.82,130.42)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0 51.143-.612"/>
+<text fill="#333333" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-258.1071" x="760.8118 769.3327 777.1249 784.9255">Fuel</tspan><tspan y="-241.30121" x="760.8118 770.8926 778.6918 781.80868 784.92556 791.76449 799.5707 804.246">Delivery</tspan></text>
+<text fill="#333333" xml:space="preserve" transform="matrix(1 0 -0 1 -143 385)" font-size="14.04" font-family="ArialMT"><tspan y="-173.72669" x="681.64028 691.721 699.5132 711.15377 718.9459 726.7465 733.8269 737.7876 740.9073 748.69949">Combustion</tspan></text>
+<path transform="matrix(1,0,0,-1,527.38,106.319217)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M0 0V37.759"/>
+<path transform="matrix(1,0,0,-1,531.8805,70.059818)" d="M0 0-4.5 9-9 0Z" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,200.98001,106.26929)" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#333333" d="M0 0V37.949"/>
+<path transform="matrix(1,0,0,-1,205.4805,69.81979)" d="M0 0-4.5 9-9 0Z" fill="#333333" fill-rule="evenodd"/>
+</g>
+</g>
+</svg>
