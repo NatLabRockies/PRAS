@@ -34,7 +34,11 @@ of event-periods (e.g. event-hours per year, event-days per year). When
 reported in terms of event-hours, LOLE is sometimes referred to as LOLH
 (loss-of-load hours).
 
-For a practical comparison of resource adequacy metrics, see [Multi-Metric Resource Adequacy Analyses with PRAS](@ref multi_metric_resource_adequacy).
+**Loss-of-Load Events (LOLEv)** is the expected number of contiguous shortfall events over the study period.
+An event can contain several consecutive event-periods and can cross a calendar-day boundary.
+LOLEv therefore measures event frequency rather than the number of shortfall periods or days, complementing LOLE and EUE.
+
+For definitions, references and a practical comparison of resource adequacy metrics, see [Multi-Metric Resource Adequacy Analyses with PRAS](@ref multi_metric_resource_adequacy).
 
 While a system's shortfall risk can never be eliminated entirely, if these
 risk metrics are assessed to be lower than some predetermined threshold, the

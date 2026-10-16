@@ -261,3 +261,71 @@ end
     @test_throws BoundsError CVAR(:energy, result, alpha, r_bad, t_bad)
 
 end
+
+@testset "ShortfallEventsResult" begin
+    N = DD.nperiods
+    r, r_bad = DD.testresource, DD.notaresource
+    event = PRASCore.Results.ShortfallEvent
+    system_events = [
+        [event(1, 3, 6), event(6, 8, 12)],
+        [event(3, 6, 20)],
+        event[],
+    ]
+    region_events = [event[] for _ in 1:DD.nresources, _ in 1:3]
+    region_events[1, 1] = copy(system_events[1])
+    region_events[1, 2] = [event(3, 4, 6)]
+    region_events[2, 2] = [event(5, 6, 14)]
+    result = PRASCore.Results.ShortfallEventsResult{N,1,Hour,MW,MWh}(
+        Regions{N,MW}(DD.resourcenames, DD.resource_vals),
+        DD.periods, system_events, region_events)
+
+    # System events and sample identity
+
+    selected = @test_logs eventsinterval(result, DD.periods)
+    @test selected == system_events
+    empty!(selected[1])
+    @test result[1] == [event(1, 3, 6), event(6, 8, 12)]
+
+    # Inclusive boundaries and an event spanning the entire interval
+
+    excluded_two = r"Excluded 2 overlapping events"
+    selected = @test_logs (:info, excluded_two) eventsinterval(result, DD.periods[3:6])
+    @test selected == [event[], [event(3, 6, 20)], event[]]
+    selected = @test_logs (:info, r"Excluded 1 overlapping events") eventsinterval(
+        result, DD.periods[4:5])
+    @test selected == [event[], event[], event[]]
+    selected = @test_logs (:info, excluded_two) eventsinterval(result, DD.periods[3:3])
+    @test selected == [event[], event[], event[]]
+
+    # Events entirely outside the interval do not generate a message.
+
+    selected = @test_logs eventsinterval(result, DD.periods[9:10])
+    @test selected == [event[], event[], event[]]
+    # The range specifies interval endpoints, not a sparse timestep selection.
+    selected = @test_logs (:info, excluded_two) eventsinterval(result, DD.periods[3:3:6])
+    @test selected == [event[], [event(3, 6, 20)], event[]]
+
+    # Region-specific selection uses only that region's event boundaries.
+
+    selected = @test_logs eventsinterval(result, r, DD.periods[3:6])
+    @test selected == [event[], [event(5, 6, 14)], event[]]
+    selected = @test_logs (:info, excluded_two) eventsinterval(
+        result, DD.resourcenames[1], DD.periods[3:6])
+    @test selected == [event[], [event(3, 4, 6)], event[]]
+    selected = @test_logs eventsinterval(result, DD.resourcenames[3], DD.periods)
+    @test selected == [event[], event[], event[]]
+
+    # Invalid selections follow the existing timestamp and region lookup errors.
+
+    @test_throws BoundsError eventsinterval(result, r_bad, DD.periods)
+    @test_throws BoundsError eventsinterval(result, DD.badperiods)
+    @test_throws BoundsError eventsinterval(result, r, DD.badperiods)
+    @test_throws BoundsError eventsinterval(
+        result, first(DD.periods) - Hour(1):Hour(1):DD.periods[3])
+    @test_throws BoundsError eventsinterval(
+        result, DD.periods[3]:Hour(1):last(DD.periods) + Hour(1))
+    @test_throws ArgumentError eventsinterval(
+        result, DD.periods[2]:Hour(1):DD.periods[1])
+    @test_throws ArgumentError eventsinterval(
+        result, DD.periods[8]:Hour(-1):DD.periods[3])
+end

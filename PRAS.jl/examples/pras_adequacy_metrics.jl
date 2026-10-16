@@ -23,10 +23,11 @@
 # - An **adequacy event** is a set of event-periods that are contiguous at the highest available temporal resolution.
 #
 # These distinctions are important because different metrics count different temporal quantities.
-# LOLE and LOLD correspond to the first two concepts:
+# LOLE, LOLD and LOLEv correspond to these three concepts:
 #
 # - **LOLE** is the expected number of event-periods
 # - **LOLD** is the expected number of event-days
+# - **LOLEv** is the expected number of adequacy events
 #
 # These metrics are related, but they are not interchangeable.
 #
@@ -36,7 +37,7 @@
 
 # ## Shortfall Severity
 #
-# LOLE and LOLD describe when shortfalls occur, but they do not describe their magnitude.
+# LOLE, LOLD and LOLEv describe the temporal occurrence of shortfalls but not their magnitude.
 # EUE complements these metrics by measuring the expected total amount of unserved energy over the study horizon.
 
 # ## Why Multiple Metrics Matter
@@ -49,18 +50,20 @@
 # We can consider a simple example of two cases next, for which we assume that
 # every shortfall hour has the same amount of unserved energy.
 #
-# **Case A**: One day with 10 hours of shortfall
+# **Case A**: One day with 10 consecutive hours of shortfall
 #
-# **Case B**: Ten days with 1 hour of shortfall each
+# **Case B**: Ten nonconsecutive days with 1 hour of shortfall each
 #
 # | Metric | Case A | Case B |
 # |------|--------|--------|
 # | LOLE | 10 | 10 |
 # | EUE | same | same |
 # | LOLD | 1 | 10 |
+# | LOLEv | 1 | 10 |
 #
 # As we can see in the table above, even though LOLE and EUE are identical in this case, 
 # LOLD reveals that shortfall events are more dispersed in Case B.
+# Here LOLEv also distinguishes one long event from ten separate events.
 #
 
 # Because event-periods may be distributed across many days, a system with the
@@ -124,6 +127,22 @@
 # \end{cases}
 # ```
 
+# ### LOLEv
+#
+# LOLEv counts the expected number of transitions from no system shortfall to positive system shortfall:
+#
+# ```math
+# \mathrm{LOLEv} =
+# \mathbb{E}\left[\sum_t
+# \mathbf{1}\left(
+# \sum_r S_{r,t,s} > 0
+# \;\land\;
+# \sum_r S_{r,t-1,s} = 0
+# \right)\right]
+# ```
+#
+# Here ``S_{r,0,s}=0`` so shortfall at the first timestep of each sample starts an event.
+#
 # ### EUE
 #
 # EUE measures expected total unserved energy across the Monte Carlo samples:
@@ -132,6 +151,15 @@
 # \mathrm{EUE} =
 # \mathbb{E}\left[\sum_t \sum_r S_{r,t,s}\,\Delta t\right]
 # ```
+#
+# ## Event Duration and Energy
+#
+# `MeanEventDuration` and `MeanEventEnergy` average across all events pooled from all samples.
+# Each event receives equal weight, so a sample containing several events contributes several observations.
+# Samples without events contribute zero to the event count used by LOLEv but do not contribute a zero-duration or zero-energy event to these means.
+# `MaxEventDuration` and `MaxEventEnergy` return the largest observed duration and energy across the pooled events, not the mean of each sample's maximum.
+#
+# See [Shortfall Events](@ref shortfall_events) for units, standard errors and result accessors.
 #
 # ## Analysis with PRAS
 #
@@ -142,20 +170,36 @@ using PRAS
 sys = PRAS.rts_gmlc()
 sys.regions.load .+= 700.0
 
-shortfall_samples, = assess(
+# We request both result types to calculate the metrics from the same simulated samples.
+# `ShortfallSamples()` provides the sample-level results needed for LOLD while `ShortfallEvents()` provides the event records needed for the event metrics.
+shortfall_samples, events = assess(
     sys,
     SequentialMonteCarlo(samples=100, seed=1),
     ShortfallSamples(),
+    ShortfallEvents(),
 )
 
-# and we calculate the metrics we discussed above:
+# We then calculate the metrics discussed above:
 system_lole = LOLE(shortfall_samples)
 system_lold = LOLD(shortfall_samples)
 system_eue = EUE(shortfall_samples)
+system_lolev = LOLEv(events)
 
 println(system_lole)
 println(system_lold)
 println(system_eue)
+println(system_lolev)
+
+# We also calculate system-level event duration and energy statistics:
+system_mean_event_duration = MeanEventDuration(events)
+system_max_event_duration = MaxEventDuration(events)
+system_mean_event_energy = MeanEventEnergy(events)
+system_max_event_energy = MaxEventEnergy(events)
+
+println(system_mean_event_duration)
+println(system_max_event_duration)
+println(system_mean_event_energy)
+println(system_max_event_energy)
 
 # We can also evaluate upper-tail severity by selecting a CVAR confidence level:
 alpha = 0.95
@@ -168,6 +212,8 @@ println(system_cvar)
 # same day rather than being evenly distributed across the year.
 # EUE summarizes the average total unserved energy, while CVAR (``\alpha = 0.95``) summarizes
 # unserved energy in outcomes beyond the 95th-percentile threshold.
+
+# See [Exporting shortfall events](@ref exporting_shortfall_events) to save the event summaries and individual records as JSON.
 
 
 # ## References

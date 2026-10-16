@@ -44,6 +44,7 @@ makedocs(
             "Capacity Credit Calculation" => "PRAS/capacitycredit.md",            
         ],
         ".pras File Format" => "SystemModel_HDF5_spec.md",
+        "PRAS Files" => "PRASFiles/index.md",
         "Tutorials" => [
             "PRAS 101 Walkthrough" => "examples/pras_walkthrough.md",
             "Demand Response Walkthrough" => "examples/demand_response_walkthrough.md",

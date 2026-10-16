@@ -13,10 +13,11 @@ import ..Systems: SystemModel, ZonedDateTime, Period,
 export
 
     # Metrics
-    ReliabilityMetric, LOLE, EUE, NEUE, LOLD,
+    ReliabilityMetric, LOLE, EUE, NEUE, LOLD, LOLEv,
+    MeanEventDuration, MaxEventDuration, MeanEventEnergy, MaxEventEnergy,
     val, stderror, CVAR, NCVAR,
 
-    # Result specifications
+    # Result specifications and accessors
     Shortfall, ShortfallSamples,
     DemandResponseShortfall, DemandResponseShortfallSamples,
     Surplus, SurplusSamples,
@@ -26,7 +27,8 @@ export
     DemandResponseEnergy, DemandResponseEnergySamples,
     GeneratorAvailability, StorageAvailability,
     GeneratorStorageAvailability,DemandResponseAvailability,
-    LineAvailability
+    LineAvailability, ShortfallEvents,
+    eventsinterval
 
 include("metrics.jl")
 include("utils.jl")
@@ -194,6 +196,7 @@ include("DemandResponseEnergy.jl")
 include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
 include("DemandResponseEnergySamples.jl")
+include("ShortfallEvents.jl")
 
 function resultchannel(
     results::T, nworkers::Int
