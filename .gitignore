@@ -10,3 +10,6 @@ PRASFiles.jl/test/PRAS_Results_Export/
 docs/build/
 docs/site/
 docs/src/examples/
+# Any html and duckdb files generated during testing
+*.html 
+*.duckdb

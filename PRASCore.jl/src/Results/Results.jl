@@ -77,6 +77,9 @@ EUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
 EUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
     EUE.(x, x.regions.names, permutedims(x.timestamps))
 
+NEUE(x::AbstractShortfallResult, ::Colon, t::ZonedDateTime) =
+    NEUE.(x, x.regions.names, t)
+
 NEUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
     NEUE.(x, r, x.timestamps)
 

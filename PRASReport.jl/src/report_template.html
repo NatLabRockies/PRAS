@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRAS Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .summary-card h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .summary-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .summary-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-list li:last-child {
+            border-bottom: none;
+        }
+
+        .summary-list strong {
+            color: #667eea;
+            margin-right: 0.5rem;
+        }
+
+        .card-footer {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .card-footer.centered {
+            justify-content: center;
+            gap: 4rem;
+        }
+
+        .card-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .card-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .glossary-link {
+            text-align: left;
+        }
+
+        .generated-with {
+            text-align: right;
+        }
+
+        .export-db-link {
+            text-align: center;
+        }
+
+        .view-toggle {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .toggle-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            margin: 0 0.25rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .toggle-button:hover {
+            background: #5a67d8;
+        }
+
+        .toggle-button.active {
+            background: #4c51bf;
+        }
+
+        .charts-container {
+            padding: 1rem;
+            display: none;
+        }
+
+        .charts-container.active {
+            display: block;
+        }
+
+        #table-wrapper {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 600px;
+        }
+
+        #table-wrapper[style*="display: none"] {
+            visibility: hidden;
+            position: absolute;
+            height: 0;
+            padding: 0;
+            margin: 0;
+            border: none;
+            box-shadow: none;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 450px;
+            padding: 0.5rem;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .table-header {
+            background: #667eea;
+            color: white;
+            padding: 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            flex: 1;
+        }
+
+        .table-header .view-toggle {
+            margin: 0;
+        }
+
+        .table-header .toggle-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .table-header .toggle-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .table-header .toggle-button.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .debug {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            border: 1px solid #bee5eb;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        .numeric {
+            text-align: right;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        th.numeric {
+            text-align: center;
+        }
+
+        /* Scrollable table enhancements */
+        #table-wrapper::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        #table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #table-wrapper::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        #table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Add a subtle fade effect at the top when scrolled */
+        #table-wrapper {
+            position: relative;
+        }
+
+        #table-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to bottom, rgba(102, 126, 234, 0.1), transparent);
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #table-wrapper.scrolled::before {
+            opacity: 1;
+        }
+
+        .event-name {
+            font-weight: 500;
+            color: #667eea;
+        }
+
+        .navigation-link {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        .navigation-link:hover {
+            background: #5a67d8;
+            text-decoration: none;
+            color: white;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .glossary-term {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .glossary-term:last-child {
+            border-bottom: none;
+        }
+
+        .glossary-term h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .glossary-term p {
+            line-height: 1.7;
+            color: #555;
+        }
+
+        .back-link {
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 8px 12px;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-wrapper {
+                height: 350px;
+            }
+
+            .card-footer.centered {
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{{REPORT_TITLE_PLACEHOLDER}}</h1>
+        </header>
+
+        <!-- Main Report Page -->
+        <div id="main-page" class="page active">
+        <div class="summary-card">
+            <h2>Simulation Summary</h2>
+            <ul class="summary-list">
+                <li><strong>Simulation Period:</strong> <span id="simulation-period">-</span></li>
+                <li><strong>Samples:</strong> <span id="sample-count">-</span></li>
+                <li><strong>System LOLE:</strong> <span id="system-lole">-</span></li>
+                <li><strong>System NEUE:</strong> <span id="system-neue">-</span></li>
+                <li><strong>Events:</strong> <span id="event-count">-</span></li>
+                <li><strong>Event threshold:</strong> <span id="event-threshold">-</span></li>
+            </ul>
+            <div class="card-footer centered">
+                <div class="glossary-link">
+                    <a href="#" onclick="showGlossary(); return false;">Glossary of Terms</a>
+                </div>
+                <div class="export-db-link">
+                    <a href="#" onclick="exportDatabase(); return false;">Export report DB</a>
+                </div>
+                <div class="generated-with">
+                    Generated with <a href="https://nrel.github.io/PRAS/" target="_blank" rel="noopener noreferrer"><b>PRAS</b></a>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading data...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="debug" class="debug" style="display: none;"></div>
+
+        <div id="events-section" class="table-container">
+            <div class="table-header">
+                <div class="header-content">
+                    <span class="header-title">RA Events - system level summary</span>
+                    <div class="view-toggle">
+                        <button class="toggle-button active" onclick="showCharts()">View as Charts</button>
+                        <button class="toggle-button" onclick="showTable()">View as Table</button>
+                    </div>
+                </div>
+            </div>
+            <div id="charts-container-inner" class="charts-container active">
+                <div class="charts-grid">
+                    <div class="chart-wrapper">
+                        <canvas id="eue-chart"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="lole-chart"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="neue-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div id="table-wrapper" style="display: none;">
+                <table id="events-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th id="start-time-header">Start Time</th>
+                            <th id="end-time-header">End Time</th>
+                            <th id="duration-header">Event Duration</th>
+                            <th id="eue-header">EUE</th>
+                            <th id="lole-header">LOLE</th>
+                            <th id="neue-header">NEUE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        </div>
+
+        <!-- Glossary Page -->
+        <div id="glossary-page" class="page">
+            <div class="back-link">
+                <a href="#" class="navigation-link" onclick="showMainPage(); return false;">← Back to Report Homepage</a>
+            </div>
+            
+            <div class="summary-card">
+                <h2>Glossary of Terms</h2>
+                
+                <div class="glossary-term">
+                    <h3>Expected Unserved Energy (EUE)</h3>
+                    <p>Expected Unserved Energy (EUE) is the expected (average) total energy shortfall over the study period. It may be expressed in energy units (e.g. GWh per year).</p>
+                </div>
+
+                <div class="glossary-term">
+                    <h3>Loss-of-Load Expectation (LOLE)</h3>
+                    <p>Loss-of-Load Expectation (LOLE) is the expected (average) count of periods experiencing shortfall over the study period. It is expressed in terms of event-periods (e.g. event-hours per year, event-days per year). When reported in terms of event-hours, LOLE is sometimes referred to as LOLH (loss-of-load hours).</p>
+                </div>
+
+                <div class="glossary-term">
+                    <h3>Normalized Expected Unserved Energy (NEUE)</h3>
+                    <p>Normalized Expected Unserved Energy (NEUE) is the Expected Unserved Energy normalized against the system's total energy demand and expressed as a fraction, typically shown as a percentage or in parts-per-million (ppm).</p>
+                </div>
+
+                <div class="glossary-term">
+                    <h3>Resource Adequacy (RA) Event</h3>
+                    <p>A Resource Adequacy event in this report is a set of contiguous timeperiods where the system EUE in those timeperiods exceed the event threshold.</p>
+                </div>
+
+                <div class="glossary-term">
+                    <h3>Event Threshold</h3>
+                    <p>The minimum energy shortfall required for a time period to be considered part of a resource adequacy event.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.30.0/+esm';
+        
+        // Make duckdb available globally
+        window.duckdb = duckdb;
+        
+        // Placeholder for base64 database - this will be replaced by Julia
+        const BASE64_DB = "{{BASE64_DB_PLACEHOLDER}}";
+        
+        let db = null;
+        let conn = null;
+
+        function showError(message) {
+            console.error('Error:', message);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('events-section').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = message;
+        }
+
+        function showDebug(message) {
+            console.log('Debug:', message);
+            const debugEl = document.getElementById('debug');
+            if (debugEl) {
+                debugEl.style.display = 'block';
+                debugEl.textContent += message + '\n';
+            }
+        }
+
+        function formatNumber(value, decimals = 2) {
+            if (value === null || value === undefined) return '-';
+            return Number(value).toLocaleString(undefined, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        // Navigation functions
+        function showMainPage() {
+            document.getElementById('main-page').classList.add('active');
+            document.getElementById('glossary-page').classList.remove('active');
+        }
+
+        function showGlossary() {
+            document.getElementById('main-page').classList.remove('active');
+            document.getElementById('glossary-page').classList.add('active');
+        }
+
+        function exportDatabase() {
+            try {
+                if (BASE64_DB === "{{BASE64_DB_PLACEHOLDER}}") {
+                    showError("Database not available for export. Please generate the report with actual data.");
+                    return;
+                }
+
+                // Decode base64 database
+                const binaryData = Uint8Array.from(atob(BASE64_DB), c => c.charCodeAt(0));
+                
+                // Create blob and download link
+                const blob = new Blob([binaryData], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                
+                // Create temporary download link
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                downloadLink.download = 'pras_report.duckdb';
+                downloadLink.style.display = 'none';
+                
+                // Trigger download
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                
+                // Clean up
+                URL.revokeObjectURL(url);
+                
+                console.log('Database exported successfully');
+            } catch (error) {
+                console.error('Database export error:', error);
+                showError(`Database export failed: ${error.message}`);
+            }
+        }
+
+        // View toggle functions
+        function showCharts() {
+            document.getElementById('charts-container-inner').classList.add('active');
+            document.getElementById('table-wrapper').style.display = 'none';
+            document.querySelectorAll('.toggle-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.toggle-button')[0].classList.add('active');
+        }
+
+        function showTable() {
+            document.getElementById('charts-container-inner').classList.remove('active');
+            document.getElementById('table-wrapper').style.display = 'block';
+            document.querySelectorAll('.toggle-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.toggle-button')[1].classList.add('active');
+        }
+
+        // Make navigation functions globally available
+        window.showMainPage = showMainPage;
+        window.showGlossary = showGlossary;
+        window.exportDatabase = exportDatabase;
+        window.showCharts = showCharts;
+        window.showTable = showTable;
+
+        // Add scroll indicator for table
+        function setupTableScrollIndicator() {
+            const tableWrapper = document.getElementById('table-wrapper');
+            if (tableWrapper) {
+                tableWrapper.addEventListener('scroll', function() {
+                    if (this.scrollTop > 10) {
+                        this.classList.add('scrolled');
+                    } else {
+                        this.classList.remove('scrolled');
+                    }
+                });
+            }
+        }
+
+        // Call setup when table is shown
+        const originalShowTable = showTable;
+        showTable = function() {
+            originalShowTable();
+            setTimeout(setupTableScrollIndicator, 100); // Small delay to ensure DOM is ready
+        };
+
+        // Format timestamps from DuckDB TIMESTAMP WITHOUT TIME ZONE
+        // These come as naive timestamps that should be displayed as-is without timezone conversion
+        function formatTimestamp(timestamp) {
+
+            // If it's a number (timestamp in milliseconds), create Date and format
+            if (typeof timestamp === 'number') {
+                const date = new Date(timestamp);
+                const year = date.getUTCFullYear();
+                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                const hours = String(date.getUTCHours()).padStart(2, '0');
+                const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+                return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            }
+        }
+
+        // Create bubble charts for EUE, LOLE, and NEUE
+        function createBubbleCharts(events, stepSize, energyUnit, timeUnit) {
+            const chartData = events.map((event, index) => {
+                const duration = (event.time_period_count || 0) * stepSize;
+                return {
+                    duration: duration,
+                    eue: event.eue || 0,
+                    lole: event.lole || 0,
+                    neue: event.neue || 0,
+                    eventId: event.id || index + 1,
+                    startTime: formatTimestamp(event.start_timestamp),
+                    endTime: formatTimestamp(event.end_timestamp)
+                };
+            }).filter(d => d.duration > 0); // Filter out events with no duration
+
+            // Common chart options
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: `Event Duration (${timeUnit})`
+                        },
+                        grid: {
+                            color: '#e2e8f0'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        title: {
+                            display: true
+                        },
+                        grid: {
+                            color: '#e2e8f0'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        color: '#667eea',
+                        padding: {
+                            top: 10,
+                            bottom: 20
+                        }
+                    },
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                return `Event ${context[0].raw.eventId}`;
+                            },
+                            label: function(context) {
+                                const point = context.raw;
+                                return [
+                                    `Start: ${point.startTime || 'N/A'}`,
+                                    `End: ${point.endTime || 'N/A'}`,
+                                    `Duration: ${formatNumber(point.x)} ${timeUnit}`,
+                                    `Value: ${formatNumber(point.y, 3)}`
+                                ];
+                            }
+                        }
+                    }
+                }
+            };
+
+            // EUE Chart
+            const eueData = chartData.map(d => ({
+                x: d.duration,
+                y: d.eue,
+                eventId: d.eventId,
+                startTime: d.startTime,
+                endTime: d.endTime
+            }));
+
+            new Chart(document.getElementById('eue-chart'), {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'EUE',
+                        data: eueData,
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            ...commonOptions.plugins.title,
+                            text: 'Expected Unserved Energy (EUE)'
+                        }
+                    },
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            title: {
+                                display: true,
+                                text: `EUE (${energyUnit}/event-duration)`
+                            }
+                        }
+                    }
+                }
+            });
+
+            // LOLE Chart
+            const loleData = chartData.map(d => ({
+                x: d.duration,
+                y: d.lole,
+                eventId: d.eventId,
+                startTime: d.startTime,
+                endTime: d.endTime
+            }));
+
+            new Chart(document.getElementById('lole-chart'), {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'LOLE',
+                        data: loleData,
+                        backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            ...commonOptions.plugins.title,
+                            text: 'Loss-of-Load Expectation (LOLE)'
+                        }
+                    },
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            title: {
+                                display: true,
+                                text: `LOLE (event-${timeUnit}/event-duration)`
+                            }
+                        }
+                    }
+                }
+            });
+
+            // NEUE Chart
+            const neueData = chartData.map(d => ({
+                x: d.duration,
+                y: d.neue,
+                eventId: d.eventId,
+                startTime: d.startTime,
+                endTime: d.endTime
+            }));
+
+            new Chart(document.getElementById('neue-chart'), {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'NEUE',
+                        data: neueData,
+                        backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        title: {
+                            ...commonOptions.plugins.title,
+                            text: 'Normalized EUE (NEUE)'
+                        }
+                    },
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            title: {
+                                display: true,
+                                text: `NEUE (ppm/event-duration)`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function initializeDatabase() {
+            try {
+                // showDebug('Starting database initialization...');
+                
+                // Check if BASE64_DB is placeholder
+                if (BASE64_DB === "{{BASE64_DB_PLACEHOLDER}}") {
+                    throw new Error("Database not loaded. Please generate the report with actual data.");
+                }
+
+                // showDebug('Initializing DuckDB using JSDelivr bundles...');
+                
+                // Use the official recommended approach from npm documentation
+                const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
+                const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+
+                const worker_url = URL.createObjectURL(
+                    new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
+                );
+                
+                const worker = new Worker(worker_url);
+                const logger = new duckdb.ConsoleLogger();
+                db = new duckdb.AsyncDuckDB(logger, worker);
+                await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+                URL.revokeObjectURL(worker_url);
+                
+                conn = await db.connect();
+                // showDebug('DuckDB initialized successfully');
+
+                // Decode base64 database
+                // showDebug('Decoding base64 database...');
+                const binaryData = Uint8Array.from(atob(BASE64_DB), c => c.charCodeAt(0));
+                // showDebug(`Database size: ${binaryData.length} bytes`);
+                
+                // Register the database
+                await db.registerFileBuffer("report.db", binaryData);
+                await conn.query("ATTACH 'report.db' AS report_db");
+                // showDebug('Database attached successfully');
+
+                // List all tables to see what's available
+                const tablesResult = await conn.query("SELECT table_name FROM duckdb_tables() WHERE database_name='report_db'");
+                const tables = tablesResult.toArray();
+                // showDebug(`Available tables: ${tables.map(t => t.table_name).join(', ')}`);
+
+                await loadData();
+                
+            } catch (error) {
+                console.error('Database initialization error:', error);
+                showError(`Database initialization failed: ${error.message}`);
+            }
+        }
+
+        async function loadData() {
+            try {
+                // showDebug('Loading data...');
+
+                // Get parameters for units and calculations
+                // and system simulation results
+                let sampleCount, stepSize, timeUnit, energyUnit, timesteps, timezone, eventthreshold;
+                let startTimestamp, endTimestamp, loleMean, loleStderr, neueMean, neueStderr;
+                
+                try {
+                    const paramsResult = await conn.query(`
+                        SELECT n_samples, step_size, time_unit, energy_unit, timesteps,
+                                start_timestamp, end_timestamp, timezone,
+                                lole_mean, lole_stderr, neue_mean, neue_stderr,
+                                eventthreshold
+                        FROM report_db.systemsiminfo LIMIT 1
+                    `);
+                    const params = paramsResult.toArray();
+                    if (params.length > 0) {
+                        sampleCount = params[0].n_samples;
+                        stepSize = params[0].step_size;
+                        timeUnit = params[0].time_unit;
+                        energyUnit = params[0].energy_unit;
+                        timesteps = params[0].timesteps;
+                        startTimestamp = params[0].start_timestamp;
+                        endTimestamp = params[0].end_timestamp;
+                        timezone = params[0].timezone;
+                        eventthreshold = params[0].eventthreshold;
+                        loleMean = params[0].lole_mean;
+                        loleStderr = params[0].lole_stderr;
+                        neueMean = params[0].neue_mean;
+                        neueStderr = params[0].neue_stderr;
+                    }                
+                } catch (e) {
+                        showDebug(`Could not find parameters table: ${e.message}`);
+                }
+                
+                // Update column headers with units and timezone
+                document.getElementById('start-time-header').textContent = `Start Time (${timezone})`;
+                document.getElementById('end-time-header').textContent = `End Time (${timezone})`;
+                document.getElementById('duration-header').textContent = `Event Duration (${timeUnit})`;
+                document.getElementById('eue-header').textContent = `EUE`;
+                document.getElementById('lole-header').textContent = `LOLE`;
+                document.getElementById('neue-header').textContent = `NEUE`;
+
+                // Update simulation summary stats
+                document.getElementById('sample-count').textContent = formatNumber(sampleCount, 0);
+                document.getElementById('event-threshold').textContent = eventthreshold !== undefined ? `${formatNumber(eventthreshold, 0)} ${energyUnit}` : '-';
+                
+                // Format simulation period
+                if (startTimestamp && endTimestamp) {
+                    const periodText = `${formatTimestamp(startTimestamp)} - ${formatTimestamp(endTimestamp)} (${timezone})`;
+                    document.getElementById('simulation-period').textContent = periodText;
+                }
+                
+                // Calculate total simulation duration for rates
+                const totalDuration = timesteps * stepSize;
+                
+                // Format system LOLE: mean ± stderr event-(timeunit)/(timesteps)*(stepsize)
+                if (loleMean !== undefined && loleStderr !== undefined) {
+                    const loleText = `${formatNumber(loleMean, 1)} ± ${formatNumber(loleStderr, 1)} event-${timeUnit}/${totalDuration} ${timeUnit}`;
+                    document.getElementById('system-lole').textContent = loleText;
+                }
+                
+                // Format system NEUE: mean ± stderr ppm/(timesteps)*(stepsize)
+                if (neueMean !== undefined && neueStderr !== undefined) {
+                    const neueText = `${formatNumber(neueMean, 1)} ± ${formatNumber(neueStderr, 1)} ppm/${totalDuration} ${timeUnit}`;
+                    document.getElementById('system-neue').textContent = neueText;
+                }
+                
+                // showDebug(`Sample count: ${sampleCount}`);
+
+                // Get events with system shortfall metrics
+                const eventsQuery = `
+                    SELECT 
+                        e.id,
+                        e.start_timestamp,
+                        e.end_timestamp,
+                        e.time_period_count,
+                        ess.eue,
+                        ess.lole,
+                        ess.neue
+                    FROM report_db.events e
+                    LEFT JOIN report_db.event_system_shortfall ess ON e.id = ess.event_id
+                    ORDER BY e.start_timestamp
+                `;
+
+                // showDebug('Executing events query...');
+                const eventsResult = await conn.query(eventsQuery);
+                const events = eventsResult.toArray();
+                // showDebug(`Found ${events.length} events`);
+
+                // Update event count
+                document.getElementById('event-count').textContent = formatNumber(events.length, 0);
+
+                // Populate table
+                const tbody = document.getElementById('events-tbody');
+                tbody.innerHTML = '';
+
+                events.forEach((event, index) => {
+                    // showDebug(`Event ${index}: ${JSON.stringify(event)}`);
+                    
+                    // Calculate actual duration: time_period_count * step_size
+                    const actualDuration = (event.time_period_count || 0) * stepSize;
+                    
+                    const startTime = formatTimestamp(event.start_timestamp);
+                    const endTime = formatTimestamp(event.end_timestamp);
+                    
+                    // Format EUE with units showing rate per time unit
+                    const eueFormatted = event.eue ? `${formatNumber(event.eue, 1)} ${energyUnit}/${actualDuration} ${timeUnit}` : 'N/A';
+                    
+                    // Format LOLE: (number) event-(time_unit)/(event_duration_value)(time_unit)
+                    const loleFormatted = event.lole ? `${formatNumber(event.lole, 1)} event-${timeUnit}/${actualDuration} ${timeUnit}` : 'N/A';
+                    
+                    // Format NEUE: (number) ppm/(event_duration_value)(time_unit)
+                    const neueFormatted = event.neue ? `${formatNumber(event.neue, 1)} ppm/${actualDuration} ${timeUnit}` : 'N/A';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="numeric">${event.id || index + 1}</td>
+                        <td>${startTime}</td>
+                        <td>${endTime}</td>
+                        <td class="numeric">${formatNumber(actualDuration, 1)}</td>
+                        <td class="numeric">${eueFormatted}</td>
+                        <td class="numeric">${loleFormatted}</td>
+                        <td class="numeric">${neueFormatted}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Create charts
+                createBubbleCharts(events, stepSize, energyUnit, timeUnit);
+
+                // Hide loading and show charts by default (table is ready but hidden)
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('events-section').style.display = 'block';
+                document.getElementById('charts-container-inner').classList.add('active');
+                // Table data is ready but keep it hidden initially
+                // showDebug('Data loading completed successfully');
+
+            } catch (error) {
+                console.error('Data loading error:', error);
+                showError(`Data loading failed: ${error.message}`);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // showDebug('DOM loaded, starting initialization...');
+            initializeDatabase();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (conn) conn.close();
+            if (db) db.terminate();
+        });
+    </script>
+</body>
+</html>

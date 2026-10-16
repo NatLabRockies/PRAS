@@ -1,0 +1,71 @@
+name: PRASReport.jl tests
+# Run on master, tags, or any pull request
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC (8 PM CST)
+  push:
+    branches: [main]
+    tags: ["*"]
+  pull_request:
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - "lts"  # Latest LTS release, min supported
+          - "1"    # Latest release
+        os:
+          - ubuntu-latest
+          - macOS-latest
+          - windows-latest
+        arch:
+          - x64
+          - aarch64
+        exclude:
+          - os: windows-latest
+            arch: aarch64
+          - os: ubuntu-latest
+            arch: aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: actions/cache@v4
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-${{ matrix.arch }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-${{ matrix.arch }}-test-
+            ${{ runner.os }}-${{ matrix.arch }}-
+            ${{ runner.os }}-
+      - run: julia --project=PRASReport.jl -e 'import Pkg; 
+          Pkg.develop([
+            (path="PRASCore.jl",),
+            (path="PRASFiles.jl",),
+          ])'
+        shell: bash
+      - uses: julia-actions/julia-buildpkg@latest
+        with:
+          project: PRASReport.jl
+      - run: |
+          git config --global user.name Tester
+          git config --global user.email te@st.er
+      - uses: julia-actions/julia-runtest@latest
+        with:
+          project: PRASReport.jl
+        env:
+            JULIA_NUM_THREADS: 2
+      - uses: julia-actions/julia-processcoverage@v1
+        with:
+          directories: PRASReport.jl/src
+      - uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
