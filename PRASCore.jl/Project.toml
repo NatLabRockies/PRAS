@@ -4,9 +4,9 @@ authors = [
     "Surya Chandan Dhulipala <SuryaChandan.Dhulipala@nlr.gov>",
     "Srihari Sundar <Hari.Sundar@nlr.gov>",
     "Akrivi Liakopoulou <Akrivi.Liakopoulou@nlr.gov>",
+    "Abdelrahman Ayad <abdelrahman.ayad@nlr.gov",
     "Julian Florez <Julian.Florez@nlr.gov>",
     "Gord Stephen <g.stephen@imperial.ac.uk>",
-    "Abdelrahman Ayad <abdelrahman.ayad@nlr.gov"
 ]
 version = "0.9.0"
 
