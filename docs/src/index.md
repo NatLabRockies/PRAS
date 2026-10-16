@@ -1,11 +1,12 @@
 # PRAS
 
 !!! note "Announcement"
-    PRAS v0.8.0 was released in October 2025, and it includes the capability to 
-    model shift and shed type demand reponse devices. If you need these 
-    capabilities, be sure to increment PRAS version in your projects. There are no
-    breaking changes with this release, and your old workflows will also work 
-    as is.
+    PRAS v0.9.0 was released in October 2026, and PRAS now supports multi-metric
+    resource adequacy assessments, including the new Loss of Load Days (LOLD) and
+    unserved energy Conditional Value at Risk (CVaR) metrics. See the
+    [Multi-Metric Resource Adequacy Analyses](examples/pras_adequacy_metrics.md)
+    tutorial to get started. If you need these capabilities, be sure to
+    increment PRAS version in your projects.
 
 The Probabilistic Resource Adequacy Suite (PRAS) provides an open-source, research-oriented collection of tools for analysing the [resource adequacy](@ref resourceadequacy) of a
 bulk power system.  It allows the user to simulate power system operations under a wide range of operating conditions in order to study the risk of failing to meet demand (due to a lack of supply or deliverability), and identify the time periods and regions in which that risk occurs. It offers high-performance sequential Monte Carlo methods supporting multi-region composite reliability assessment, including simulation of energy-limited resources such as storage.
