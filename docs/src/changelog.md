@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0], 2026 - October
+
+- Add Unserved Energy Conditional Value at Risk (CVaR) metric (#100)
+- Add optional initial state of charge / borrowed load parameters for storages, generator-storages, and demand responses (#98)
+- Add Loss of Load Days (LOLD) metric (#108)
+- Reduce memory usage of sample-level result accumulators (#109)
+
 ## [0.8.0], 2025 - October
 
 - Add a demand response component which can model shift and shed type DR devices
