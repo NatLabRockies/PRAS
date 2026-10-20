@@ -322,6 +322,12 @@ function read_demand_responses(f::File,
         initial_borrowed_load = readvector(f["demandresponses/initialborrowedload"],region_order)
     end
 
+    if haskey(f, "demandresponses/energybudget")
+        energy_budget = readvector(f["demandresponses/energybudget"], region_order)
+    else
+        energy_budget = fill(Inf, length(dr_names))
+    end
+
     demandresponses = DemandResponses{N,L,T,P,E}(
         dr_names[region_order], dr_categories[region_order],
         load_matrix(f["demandresponses/borrowcapacity"], region_order, Int),
@@ -333,7 +339,8 @@ function read_demand_responses(f::File,
         load_matrix(f["demandresponses/repairprobability"], region_order, Float64);
         borrow_efficiency = borrow_efficiency,
         payback_efficiency = payback_efficiency,
-        initial_borrowed_load = initial_borrowed_load)
+        initial_borrowed_load = initial_borrowed_load,
+        energy_budget = energy_budget)
 
     region_dr_idxs = makeidxlist(dr_regions[region_order], n_regions)
 
