@@ -471,6 +471,14 @@ function update_problem!(
             maxborrow, floor(Int, energytopower(
             energyborrowable, E, L, T, P))
             )
+
+        # Count integer borrowing flows to avoid accumulating subhourly rounding error.
+        remaining_borrow = energytopower(
+            system.demandresponses.energy_budget[i], E, L, T, P
+        ) - state.drs_cumulative_borrow[i]
+        if remaining_borrow < borrow_capacity
+            borrow_capacity = floor(Int, max(0, remaining_borrow))
+        end
         updateinjection!(
             fp.nodes[borrow_node], slack_node, borrow_capacity)
 
@@ -527,6 +535,7 @@ function update_state!(
 
     #Demand Response Update
     for (i, e) in enumerate(problem.demandresponse_borrow_edges)
+        state.drs_cumulative_borrow[i] += edges[e].flow
         state.drs_energy[i] +=
             ceil(Int, edges[e].flow * p2e * system.demandresponses.borrow_efficiency[i, t])
     end
