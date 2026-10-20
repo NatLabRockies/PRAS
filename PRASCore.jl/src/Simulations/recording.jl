@@ -463,6 +463,35 @@ end
 
 reset!(acc::Results.DemandResponseEnergyAccumulator, sampleid::Int) = nothing
 
+# DemandResponseEnergyUsage
+
+function record!(
+    acc::Results.DemandResponseEnergyUsageAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    totalenergy = 0.0
+    ndemandresponses = length(system.demandresponses)
+    p2e = conversionfactor(L, T, P, E)
+
+    for s in 1:ndemandresponses
+
+        drenergy = state.drs_cumulative_borrow[s] * p2e
+        fit!(acc.energy_demandresponseperiod[s,t], drenergy)
+        totalenergy += drenergy
+
+    end
+
+    fit!(acc.energy_period[t], totalenergy)
+
+    return
+
+end
+
+reset!(acc::Results.DemandResponseEnergyUsageAccumulator, sampleid::Int) = nothing
+
 
 
 # StorageEnergySamples
@@ -513,3 +542,19 @@ function record!(
 end
 
 reset!(acc::Results.DemandResponseEnergySamplesAccumulator, sampleid::Int) = nothing
+
+# DemandResponseEnergyUsageSamples
+
+function record!(
+    acc::Results.DemandResponseEnergyUsageSamplesAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    acc.energy[:, t, sampleid] .= state.drs_cumulative_borrow .* conversionfactor(L, T, P, E)
+    return
+
+end
+
+reset!(acc::Results.DemandResponseEnergyUsageSamplesAccumulator, sampleid::Int) = nothing
