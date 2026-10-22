@@ -374,10 +374,8 @@ An optional Vector parameter of length generator-storage units, is available to 
 
 #### `demandresponses` group
 
-Information relating to the demand response only devices of the represented system is
-stored in the `demandresponses` group inside the root group. This group should contain
-eight datasets, one (named `_core`) providing core static data about each region
-and seven providing (potentially) time-varying data.
+Information relating to demand response devices is stored in the `demandresponses` group inside the root group.
+The `_core` dataset describes each device and the other datasets contain its time-varying or static properties.
 
 The `_core` dataset should be a vector / one-dimensional array storing instances of
 a compound datatype with the following fields (in order):
@@ -390,8 +388,7 @@ Each demand response in the system corresponds to a single instance of the compo
 datatype, so the vector should have as many elements as there are demand response in
 the system.
 
-The `demandresponse` group should also contain the following datasets describing
-(potentially) time-varying properties of the system demand resposne devices:
+The `demandresponses` group also contains the following datasets describing potentially time-varying properties of the devices.
 
  - `borrowcapacity`, as unsigned 32-bit integers representing maximum available
    borrowing capacity for each demand response unit in each timeperiod, expressed in
@@ -402,13 +399,15 @@ The `demandresponse` group should also contain the following datasets describing
  - `energycapacity`, as unsigned 32-bit integers representing maximum
    available borrowed load capacity for each demand response unit in each timeperiod,
    expressed in units given by the `energy_units` attribute.
- - `borrowed_energy_interest`, as 64-bit floats representing the interest borrowed load incurs
+ - `borrowedenergyinterest`, as 64-bit floats representing the interest borrowed load incurs
    across each timestep for each demand response device. A value greater than zero is growth,
    while a value less than zero is decay. Unitless.
  - `allowablepaybackperiod`, as unsigned 32-bit integers representing the maximum number
    of time steps a demand response device can hold borrowed load. Any energy still
    contained at the end of the period will be counted as unserved load for that hour.
    Expressed in units given by the `timestep_unit` attribute.
+ - `borrowefficiency`, as 64-bit floats representing fractional borrowing efficiencies for each demand response unit in each timeperiod.
+ - `paybackefficiency`, as 64-bit floats representing fractional payback efficiencies for each demand response unit in each timeperiod.
  - `failureprobability`, as 64-bit floats representing the probability the unit
    transitions from operational to forced outage during a given simulation
    timestep, for each demand response unit in each timeperiod. Unitless.
@@ -416,10 +415,13 @@ The `demandresponse` group should also contain the following datasets describing
    transitions from forced outage to operational during a given simulation
    timestep, for each demand response unit in each timeperiod. Unitless.
 
-An optional Vector parameter of length demand response units, is available to set the initial state of borrowed load for the unit:
+Optional static vector datasets have one element per demand response device in the same order as `_core`.
 
  - `initialborrowedload`, as 64-bit floats representing the initial borrowed load
    for the unit as a fraction [0.0, 1.0] of energy capacity at timestep 1, for each demand response unit.
+ - `energybudget`, as 64-bit floats representing cumulative demand reduction limits over each sample's complete simulation horizon, expressed in units given by `energy_unit`.
+
+Finite budgets require a PRAS version that supports `energybudget` because older readers may ignore the dataset.
 
 #### `interfaces` group
 

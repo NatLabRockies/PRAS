@@ -233,6 +233,8 @@ the levels of disaggregation they support.
 | `GeneratorStorageEnergySamples` | Energy | •   | •      |      | •       | •              |
 | `DemandResponseEnergy` | Energy | •   |        |      | •       | •              |
 | `DemandResponseEnergySamples` | Energy | •   | •      |      | •       | •              |
+| `DemandResponseEnergyUsage` | Energy | •   |        |      | •       | •              |
+| `DemandResponseEnergyUsageSamples` | Energy | •   | •      |      | •       | •              |
 
 *Table: Unit result specification characteristics.*
 

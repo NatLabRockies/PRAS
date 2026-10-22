@@ -133,9 +133,11 @@
 
     @testset "DemandResponses" begin
 
-        DemandResponses{10,1,Hour,MW,MWh}(
+        drs = DemandResponses{10,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float;borrow_efficiency = vals_float, payback_efficiency = vals_float, initial_borrowed_load =  vals_float_soc)
+            vals_float, vals_int, vals_float, vals_float;borrow_efficiency = vals_float, payback_efficiency = vals_float, initial_borrowed_load =  vals_float_soc, energy_budget = [0.0, 100.5, Inf], max_activation_duration = [0, 2, 10])
+        @test drs.energy_budget == [0.0, 100.5, Inf]
+        @test drs.max_activation_duration == [0, 2, 10]
 
         @test_throws AssertionError DemandResponses{5,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
@@ -148,6 +150,26 @@
         @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
             names[1:2], categories[1:2], vals_int, vals_int, vals_int,
             vals_float, vals_int, vals_float, vals_float;borrow_efficiency = vals_float, payback_efficiency = vals_float,initial_borrowed_load =  vals_float_soc)
+
+        @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
+            names, categories, vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float;energy_budget = [0.0])
+
+        @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
+            names, categories, vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float;energy_budget = [-1.0, 0.0, Inf])
+
+        @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
+            names, categories, vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float;energy_budget = [NaN, 0.0, Inf])
+
+        @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
+            names, categories, vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float;max_activation_duration = [0])
+
+        @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
+            names, categories, vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float;max_activation_duration = [-1, 0, 10])
     end
 
     @testset "Lines" begin

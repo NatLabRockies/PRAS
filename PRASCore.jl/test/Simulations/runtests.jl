@@ -52,7 +52,8 @@
            GeneratorAvailability(), LineAvailability(),
            StorageAvailability(), GeneratorStorageAvailability(),DemandResponseAvailability(),
            StorageEnergy(), GeneratorStorageEnergy(),DemandResponseEnergy(),
-           StorageEnergySamples(), GeneratorStorageEnergySamples(),DemandResponseEnergySamples())
+           StorageEnergySamples(), GeneratorStorageEnergySamples(),DemandResponseEnergySamples(),
+           DemandResponseEnergyUsage(), DemandResponseEnergyUsageSamples())
 
     @testset "Shortfall Results" begin
 
@@ -871,6 +872,7 @@
                 (StorageEnergySamples(), TestData.singlenode_stor),
                 (GeneratorStorageEnergySamples(), TestData.singlenode_stor),
                 (DemandResponseEnergySamples(), TestData.threenode_dr),
+                (DemandResponseEnergyUsageSamples(), TestData.threenode_dr),
                 (GeneratorAvailability(), TestData.threenode),
                 (StorageAvailability(), TestData.singlenode_stor),
                 (GeneratorStorageAvailability(), TestData.singlenode_stor),

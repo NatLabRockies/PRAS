@@ -155,3 +155,17 @@ plot(p1, p2; layout=(1,2), size=(1000, 500), link = :all)
 
 # We can see peak borrowing occurs around 4-6pm, shifting earlier in the following month, with payback,
 # occurring almost immediately after borrowing, peaking around 7-9pm in July.
+
+# ## Limit Cumulative Borrowing
+
+# We can also limit total borrowing to 100 MWh per sample.
+budgeted_rts = deepcopy(modified_rts_with_dr);
+budgeted_rts.demandresponses.energy_budget .= 100.0;
+budget_resultspecs = (Shortfall(), DemandResponseEnergyUsage());
+
+budget_shortfall, budget_usage = assess(budgeted_rts, simspec, budget_resultspecs...);
+
+# Repayment does not replenish this budget.
+# We can query the final cumulative usage to see total borrowing over the simulation.
+println("EUE with energy budget: ", EUE(budget_shortfall))
+println("Cumulative borrowing (MWh): ", budget_usage["DR1", last(budgeted_rts.timestamps)])

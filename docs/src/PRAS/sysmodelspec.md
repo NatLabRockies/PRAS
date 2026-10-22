@@ -65,6 +65,7 @@ and their associated resource collections (regions or interfaces).
 | Load Payback Capacity | | | | • | |
 | Energy Capacity | | • | • | |
 | Borrowed Load Capacity | | | | • | |
+| Horizon Energy Budget | | | | • | |
 | Charge Efficiency | | • | • | |
 | Discharge Efficiency | | • | • | |
 | Carryover Efficiency | | • | • | |
@@ -220,7 +221,7 @@ be counted as unserved energy.
 | **Demand Response Type**   | **Description** | **Relevance to PRAS?** |
 |:----------|:---------------|:----------------------|
 | **Shift**  | Demand response that encourages the movement of energy consumption from times of high demand to times of day when there is a surplus of generation.​   | Yes: can be dispatched as part of the PRAS optimization, to move load out of (net) peak periods.​           |
-| **Shed**   | Loads that can be curtailed to provide peak capacity reduction and support the system in emergency or contingency events with a range in advance notice times.​ | Yes: but caution must be used to avoid too frequent load shed and to capture only load that can truly be shed (i.e., not able to be paid back at a later time). Setting the `borrowed_energy_interest` to -0.99 will drop all effective borrowed load.​ |
+| **Shed**   | Loads that can be curtailed to provide peak capacity reduction and support the system in emergency or contingency events. | Set `borrowed_energy_interest` to `-1.0` to clear debt at the start of the next timestep and set `payback_capacity` to zero when repayment is not required. |
 | **Shape**  | Demand response that reshapes customer load profiles through price response or behavioral campaigns — ‘load-modifying DR’ — with advance notice of months to days.​ | Only through pre-processing to load; no original implementation option within the PRAS optimization.|
 | **Shimmy** | Loads that dynamically adjust to alleviate short-run ramps and disturbances on the system at timescales ranging from seconds up to an hour.​ | No: the system conditions and ramping are more granular than what is possible in PRAS. |
 *Table: Common demand response categories and what is possible to model in PRAS. Demand Response type categories are taken from Piette, Mary Ann, et al. "2025 California Demand Response Potential Study.".*
@@ -248,6 +249,12 @@ enable unique tailoring to the real world device being modeled. The allowable pa
 and follows the timestep units set for the system. If any surplus exists in the region, the demand response
 device will attempt to payback any borrowed load, before charging storage. If the demand response device
 pays back all borrowed load before the end of the period, the counter is reset upon further use.
+
+The optional `energy_budget` keyword of [`DemandResponses`](@ref) limits cumulative demand reduction over the complete simulation horizon.
+It takes one nonnegative value per device in the system's energy units, with `Inf` as the default and zero preventing new borrowing.
+Unlike `energy_capacity`, which limits outstanding debt, the budget limits total activated energy before efficiency adjustments and excludes initial borrowed energy. Repayment, debt decay and outages do not replenish the budget.
+
+The [demand response walkthrough](@ref demand_response_walkthrough) shows how to set a budget and query cumulative usage with [`DemandResponseEnergyUsage`](@ref).
 
 ## Interfaces
 

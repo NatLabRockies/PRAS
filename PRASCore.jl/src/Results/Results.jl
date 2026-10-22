@@ -24,6 +24,7 @@ export
     StorageEnergy, StorageEnergySamples,
     GeneratorStorageEnergy, GeneratorStorageEnergySamples,
     DemandResponseEnergy, DemandResponseEnergySamples,
+    DemandResponseEnergyUsage, DemandResponseEnergyUsageSamples,
     GeneratorAvailability, StorageAvailability,
     GeneratorStorageAvailability,DemandResponseAvailability,
     LineAvailability
@@ -191,9 +192,11 @@ getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
 include("StorageEnergy.jl")
 include("GeneratorStorageEnergy.jl")
 include("DemandResponseEnergy.jl")
+include("DemandResponseEnergyUsage.jl")
 include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
 include("DemandResponseEnergySamples.jl")
+include("DemandResponseEnergyUsageSamples.jl")
 
 function resultchannel(
     results::T, nworkers::Int

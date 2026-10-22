@@ -232,6 +232,8 @@ function initialize!(
         initialize_energy!(system.demandresponses.initial_borrowed_load, state.drs_energy, system.demandresponses.energy_capacity)
 
         fill!(state.drs_unservedenergy, 0)
+        fill!(state.drs_cumulative_borrow, 0)
+        fill!(state.drs_activation_duration, 0)
         fill!(state.drs_paybackcounter, -1)
         return
 
