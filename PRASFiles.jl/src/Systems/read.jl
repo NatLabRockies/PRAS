@@ -328,6 +328,12 @@ function read_demand_responses(f::File,
         energy_budget = fill(Inf, length(dr_names))
     end
 
+    if haskey(f, "demandresponses/maxactivationduration")
+        max_activation_duration = Int.(readvector(f["demandresponses/maxactivationduration"], region_order))
+    else
+        max_activation_duration = fill(N, length(dr_names))
+    end
+
     demandresponses = DemandResponses{N,L,T,P,E}(
         dr_names[region_order], dr_categories[region_order],
         load_matrix(f["demandresponses/borrowcapacity"], region_order, Int),
@@ -340,7 +346,8 @@ function read_demand_responses(f::File,
         borrow_efficiency = borrow_efficiency,
         payback_efficiency = payback_efficiency,
         initial_borrowed_load = initial_borrowed_load,
-        energy_budget = energy_budget)
+        energy_budget = energy_budget,
+        max_activation_duration = max_activation_duration)
 
     region_dr_idxs = makeidxlist(dr_regions[region_order], n_regions)
 

@@ -271,6 +271,9 @@ function process_demandresponses!(
 
     demandresponses["energybudget", deflate = compression] =
         sys.demandresponses.energy_budget
+
+    demandresponses["maxactivationduration", deflate = compression] =
+        sys.demandresponses.max_activation_duration
     return
 
 end

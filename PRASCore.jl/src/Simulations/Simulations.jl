@@ -233,6 +233,7 @@ function initialize!(
 
         fill!(state.drs_unservedenergy, 0)
         fill!(state.drs_cumulative_borrow, 0)
+        fill!(state.drs_activation_duration, 0)
         fill!(state.drs_paybackcounter, -1)
         return
 

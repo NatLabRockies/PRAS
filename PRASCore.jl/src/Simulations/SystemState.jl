@@ -15,6 +15,7 @@ struct SystemState
     drs_nexttransition::Vector{Int}
     drs_energy::Vector{Int}
     drs_cumulative_borrow::Vector{Int} # sum of borrowing power over fixed timesteps
+    drs_activation_duration::Vector{Int}
     drs_paybackcounter::Vector{Int}
     drs_unservedenergy::Vector{Int}
     lines_available::Vector{Bool}
@@ -41,6 +42,7 @@ struct SystemState
         drs_nexttransition = Vector{Int}(undef, ndrs)
         drs_energy = Vector{Int}(undef, ndrs)
         drs_cumulative_borrow = Vector{Int}(undef, ndrs)
+        drs_activation_duration = Vector{Int}(undef, ndrs)
         drs_unservedenergy = Vector{Int}(undef, ndrs)
         drs_paybackcounter = Vector{Int}(undef, ndrs)
 
@@ -53,7 +55,7 @@ struct SystemState
             stors_available, stors_nexttransition, stors_energy,
             genstors_available, genstors_nexttransition, genstors_energy,
             drs_available, drs_nexttransition, drs_energy,
-            drs_cumulative_borrow,
+            drs_cumulative_borrow, drs_activation_duration,
             drs_paybackcounter,drs_unservedenergy,
             lines_available, lines_nexttransition)
 

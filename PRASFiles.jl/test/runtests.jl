@@ -77,6 +77,7 @@ using JSON3
             borrow_efficiency = fill(0.95, number_of_drs, timesteps),
             payback_efficiency = fill(0.99, number_of_drs, timesteps),
             energy_budget = [100.5, Inf],
+            max_activation_duration = [2, 3],
             );
 
         dr_region_indices = [1:0,1:1,2:2];
@@ -102,6 +103,7 @@ using JSON3
         @test all(rt_rts.demandresponses.borrow_efficiency .== 0.95)
         @test all(rt_rts.demandresponses.payback_efficiency .== 0.99)
         @test rt_rts.demandresponses.energy_budget == [100.5, Inf]
+        @test rt_rts.demandresponses.max_activation_duration == [2, 3]
 
         @test rt_rts == new_rts
     end
