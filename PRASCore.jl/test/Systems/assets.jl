@@ -135,9 +135,22 @@
 
         drs = DemandResponses{10,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float;borrow_efficiency = vals_float, payback_efficiency = vals_float, initial_borrowed_load =  vals_float_soc, energy_budget = [0.0, 100.5, Inf], max_activation_duration = [0, 2, 10])
-        @test drs.energy_budget == [0.0, 100.5, Inf]
-        @test drs.max_activation_duration == [0, 2, 10]
+            vals_float, vals_int, vals_float, vals_float;
+            borrow_efficiency = vals_float,
+            payback_efficiency = vals_float,
+            initial_borrowed_load = vals_float_soc,
+            energy_budget_capacity = vals_float,
+            energy_budget_replenishment = vals_float,
+            max_activation_duration = fill(2, length(names)))
+        @test drs isa DemandResponses
+
+        @test_logs (:warn, "Energy budget capacity provided without replenishment - new borrowing is disabled.") DemandResponses{10,1,Hour,MW,MWh}(
+            names, categories, vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float;energy_budget_capacity = fill(30.0, 3, 10))
+
+        @test_logs DemandResponses{10,1,Hour,MW,MWh}(
+            names, categories, vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float;energy_budget_capacity = fill(30.0, 3, 10), energy_budget_replenishment = zeros(3, 10))
 
         @test_throws AssertionError DemandResponses{5,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
@@ -153,15 +166,19 @@
 
         @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float;energy_budget = [0.0])
+            vals_float, vals_int, vals_float, vals_float;energy_budget_capacity = zeros(1, 10))
 
         @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float;energy_budget = [-1.0, 0.0, Inf])
+            vals_float, vals_int, vals_float, vals_float;energy_budget_capacity = fill(-1.0, 3, 10))
 
         @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float;energy_budget = [NaN, 0.0, Inf])
+            vals_float, vals_int, vals_float, vals_float;energy_budget_replenishment = zeros(3, 1))
+
+        @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
+            names, categories, vals_int, vals_int, vals_int,
+            vals_float, vals_int, vals_float, vals_float;energy_budget_replenishment = fill(NaN, 3, 10))
 
         @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,

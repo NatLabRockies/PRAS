@@ -214,7 +214,7 @@ utilization over the time span.
 
 ## Unit Results
 
-The Availability and Energy families of result specifications are defined over
+The Availability, Energy and Borrowing families of result specifications are defined over
 individual units, and their result objects can all be indexed into by a unit
 name and timestep. The table below outlines the simulation
 specifications that members of these families are compatible with, as well as
@@ -233,8 +233,8 @@ the levels of disaggregation they support.
 | `GeneratorStorageEnergySamples` | Energy | •   | •      |      | •       | •              |
 | `DemandResponseEnergy` | Energy | •   |        |      | •       | •              |
 | `DemandResponseEnergySamples` | Energy | •   | •      |      | •       | •              |
-| `DemandResponseEnergyUsage` | Energy | •   |        |      | •       | •              |
-| `DemandResponseEnergyUsageSamples` | Energy | •   | •      |      | •       | •              |
+| `DemandResponseBorrowing` | Power | •   |        |      | •       | •              |
+| `DemandResponseBorrowingSamples` | Power | •   | •      |      | •       | •              |
 
 *Table: Unit result specification characteristics.*
 
@@ -263,3 +263,18 @@ sample-level disaggregation. Energy is always disaggregated by timestep and
 may also be disaggregated by unit (get the state of charge or borrowed load of a single
 unit) or aggregated across the system (get the sum of states of charge or borrowed loads
 of all component devices in the system).
+
+### Borrowing
+
+The Borrowing family of result specifications (`DemandResponseBorrowing` and
+`DemandResponseBorrowingSamples`) reports realized demand response borrowing
+power before efficiency adjustments and without subtracting repayment. Unlike
+`DemandResponseEnergy`, which reports outstanding borrowed energy, these results
+identify new borrowing in each timestep. `DemandResponseBorrowing` reports the
+mean and standard deviation across samples, while `DemandResponseBorrowingSamples`
+reports individual sample values.
+
+Borrowing is always disaggregated by timestep and may be queried for an
+individual device or summed across devices. Sample-level borrowing can be
+converted to energy using the timestep duration and accumulated to track
+budget consumption.

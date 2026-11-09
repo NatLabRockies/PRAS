@@ -42,8 +42,8 @@ PRASCore.Results.StorageEnergySamples
 PRASCore.Results.DemandResponseAvailability
 PRASCore.Results.DemandResponseEnergy
 PRASCore.Results.DemandResponseEnergySamples
-PRASCore.Results.DemandResponseEnergyUsage
-PRASCore.Results.DemandResponseEnergyUsageSamples
+PRASCore.Results.DemandResponseBorrowing
+PRASCore.Results.DemandResponseBorrowingSamples
 PRASCore.Results.LineAvailability
 PRASCore.Results.CVAR
 PRASCore.Results.NCVAR

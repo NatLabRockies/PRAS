@@ -156,16 +156,73 @@ plot(p1, p2; layout=(1,2), size=(1000, 500), link = :all)
 # We can see peak borrowing occurs around 4-6pm, shifting earlier in the following month, with payback,
 # occurring almost immediately after borrowing, peaking around 7-9pm in July.
 
-# ## Limit Cumulative Borrowing
+# ## Understanding Demand Response Constraints
 
-# We can also limit total borrowing to 100 MWh per sample.
-budgeted_rts = deepcopy(modified_rts_with_dr);
-budgeted_rts.demandresponses.energy_budget .= 100.0;
-budget_resultspecs = (Shortfall(), DemandResponseEnergyUsage());
+# We can use a smaller example to understand how the borrowing, payback and energy budget
+# limits interact. The figure below shows an example system simulated hourly for
+# ten hours, with one region, one generator and one demand response device. The top
+# panel shows available generation and demand, together with demand after borrowing
+# and payback. Generator and demand response outages are disabled, so the results
+# are deterministic. There is no storage or transmission in this example.
 
-budget_shortfall, budget_usage = assess(budgeted_rts, simspec, budget_resultspecs...);
+# The DR device is defined using the following inputs:
 
-# Repayment does not replenish this budget.
-# We can query the final cumulative usage to see total borrowing over the simulation.
-println("EUE with energy budget: ", EUE(budget_shortfall))
-println("Cumulative borrowing (MWh): ", budget_usage["DR1", last(budgeted_rts.timestamps)])
+# | Parameter | Value |
+# | --- | --- |
+# | `borrow_capacity` | `[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]` |
+# | `payback_capacity` | `[30, 30, 30, 30, 30, 30, 30, 30, 30, 30]` |
+# | `energy_capacity` | `[40, 40, 40, 40, 40, 40, 40, 40, 40, 40]` |
+# | `energy_budget_capacity` | `[25, 25, 25, 25, 25, 25, 25, 25, 25, 25]` |
+# | `energy_budget_replenishment` | `[25, 0, 0, 0, 25, 0, 0, 0, 0, 0]` |
+# | `max_activation_duration` | `[2]` |
+# | `allowable_payback_period` | `[10, 10, 10, 10, 10, 10, 10, 10, 10, 10]` |
+# | `borrowed_energy_interest` | `[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]` |
+# | `borrow_efficiency` | `[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]` |
+# | `payback_efficiency` | `[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]` |
+# | `initial_borrowed_load` | `[0.0]` |
+# | `λ` | `[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]` |
+# | `μ` | `[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]` |
+
+# Dashed lines in the middle panel show `borrow_capacity` and `payback_capacity`.
+# In the bottom panel, debt capacity corresponds to `energy_capacity` and budget
+# capacity corresponds to `energy_budget_capacity`. The dots show end-of-hour
+# states. Hour 1 spans time 0 to 1 and the bars are grouped within each hour,
+# not ordered by when actions occur. Replenishment and discarded budget are energy
+# quantities, while borrowing, payback and shortfall are power quantities. We note
+# that their numerical scales coincide in this example because each timestep lasts
+# one hour.
+
+# ![](../images/demand_response_constraints.svg)
+
+# In hour 1, demand exceeds available generation by 10 MW. At the beginning of the
+# simulation horizon, before dispatch, `energy_budget_replenishment` adds 25 MWh
+# to the initially empty budget. The device borrows 10 MW, reducing demand to the
+# available supply and avoiding shortfall. The bottom panel shows 10 MWh of
+# outstanding borrowed energy and 15 MWh of remaining budget. Another 10 MW is
+# borrowed in hour 2, leaving 20 MWh outstanding and 5 MWh of budget. These two
+# hours form one activation.
+
+# In hour 3, `max_activation_duration` prevents a third consecutive hour of
+# borrowing even though some budget remains. The middle panel therefore shows
+# 10 MW of shortfall. The zero-borrow hour ends the activation. When demand falls
+# in hour 4, the device pays back its 20 MWh at 20 MW, within
+# `payback_capacity`. Outstanding borrowed energy returns to zero, but the
+# remaining budget stays at 5 MWh. Payback does not replenish the borrowing budget.
+
+# At the start of hour 5, another 25 MWh grant would bring the budget to
+# 30 MWh. The 25 MWh `energy_budget_capacity` discards the excess 5 MWh before
+# dispatch. The device then borrows 10 MW in each of hours 5 and 6. The
+# duration limit again blocks borrowing in hour 7, leaving 10 MW of shortfall,
+# before the device pays back its 20 MWh in hour 8.
+
+# Hour 9 illustrates a different limit. Although `borrow_capacity` permits
+# 10 MW and a new activation is allowed, only 5 MWh of budget remains. Borrowing
+# is therefore limited to 5 MW and another 5 MW of shortfall remains. The final
+# 5 MWh of outstanding borrowed energy is paid back in hour 10. The device
+# borrows and repays 45 MWh over the simulation, with 25 MWh of shortfall remaining.
+
+# Outstanding borrowed energy measures what still needs repayment, while the
+# remaining budget limits additional borrowing. `DemandResponseEnergySamples`
+# reports the former and `DemandResponseBorrowingSamples` reports realized
+# borrowing power. The remaining budget can be reconstructed from borrowing and
+# the budget inputs.

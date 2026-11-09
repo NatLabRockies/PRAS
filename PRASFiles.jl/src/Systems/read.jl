@@ -322,10 +322,20 @@ function read_demand_responses(f::File,
         initial_borrowed_load = readvector(f["demandresponses/initialborrowedload"],region_order)
     end
 
+    energy_budget_capacity = nothing
+    energy_budget_replenishment = nothing
+
+    if haskey(f, "demandresponses/energybudgetcapacity")
+        energy_budget_capacity = load_matrix(f["demandresponses/energybudgetcapacity"], region_order, Float64)
+    end
+    if haskey(f, "demandresponses/energybudgetreplenishment")
+        energy_budget_replenishment = load_matrix(f["demandresponses/energybudgetreplenishment"], region_order, Float64)
+    end
     if haskey(f, "demandresponses/energybudget")
-        energy_budget = readvector(f["demandresponses/energybudget"], region_order)
-    else
-        energy_budget = fill(Inf, length(dr_names))
+        error("The experimental energybudget dataset is unsupported. Use energybudgetcapacity and energybudgetreplenishment instead.")
+    end
+    if haskey(f, "demandresponses/allowancecapacity") || haskey(f, "demandresponses/allowancereplenishment")
+        error("The experimental allowance datasets are unsupported. Use energybudgetcapacity and energybudgetreplenishment instead.")
     end
 
     if haskey(f, "demandresponses/maxactivationduration")
@@ -346,7 +356,8 @@ function read_demand_responses(f::File,
         borrow_efficiency = borrow_efficiency,
         payback_efficiency = payback_efficiency,
         initial_borrowed_load = initial_borrowed_load,
-        energy_budget = energy_budget,
+        energy_budget_capacity = energy_budget_capacity,
+        energy_budget_replenishment = energy_budget_replenishment,
         max_activation_duration = max_activation_duration)
 
     region_dr_idxs = makeidxlist(dr_regions[region_order], n_regions)

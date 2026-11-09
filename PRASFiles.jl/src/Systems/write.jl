@@ -269,8 +269,11 @@ function process_demandresponses!(
     demandresponses["initialborrowedload", deflate = compression] =
         sys.demandresponses.initial_borrowed_load
 
-    demandresponses["energybudget", deflate = compression] =
-        sys.demandresponses.energy_budget
+    demandresponses["energybudgetcapacity", deflate = compression] =
+        sys.demandresponses.energy_budget_capacity
+
+    demandresponses["energybudgetreplenishment", deflate = compression] =
+        sys.demandresponses.energy_budget_replenishment
 
     demandresponses["maxactivationduration", deflate = compression] =
         sys.demandresponses.max_activation_duration

@@ -463,34 +463,33 @@ end
 
 reset!(acc::Results.DemandResponseEnergyAccumulator, sampleid::Int) = nothing
 
-# DemandResponseEnergyUsage
+# DemandResponseBorrowing
 
 function record!(
-    acc::Results.DemandResponseEnergyUsageAccumulator,
+    acc::Results.DemandResponseBorrowingAccumulator,
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
 ) where {N,L,T,P,E}
 
-    totalenergy = 0.0
-    ndemandresponses = length(system.demandresponses)
-    p2e = conversionfactor(L, T, P, E)
+    totalborrowing = 0
+    edges = problem.fp.edges
 
-    for s in 1:ndemandresponses
+    for (s, e) in enumerate(problem.demandresponse_borrow_edges)
 
-        drenergy = state.drs_cumulative_borrow[s] * p2e
-        fit!(acc.energy_demandresponseperiod[s,t], drenergy)
-        totalenergy += drenergy
+        borrowing = edges[e].flow
+        fit!(acc.borrowing_demandresponseperiod[s,t], borrowing)
+        totalborrowing += borrowing
 
     end
 
-    fit!(acc.energy_period[t], totalenergy)
+    fit!(acc.borrowing_period[t], totalborrowing)
 
     return
 
 end
 
-reset!(acc::Results.DemandResponseEnergyUsageAccumulator, sampleid::Int) = nothing
+reset!(acc::Results.DemandResponseBorrowingAccumulator, sampleid::Int) = nothing
 
 
 
@@ -543,18 +542,20 @@ end
 
 reset!(acc::Results.DemandResponseEnergySamplesAccumulator, sampleid::Int) = nothing
 
-# DemandResponseEnergyUsageSamples
+# DemandResponseBorrowingSamples
 
 function record!(
-    acc::Results.DemandResponseEnergyUsageSamplesAccumulator,
+    acc::Results.DemandResponseBorrowingSamplesAccumulator,
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
 ) where {N,L,T,P,E}
 
-    acc.energy[:, t, sampleid] .= state.drs_cumulative_borrow .* conversionfactor(L, T, P, E)
+    for (s, e) in enumerate(problem.demandresponse_borrow_edges)
+        acc.borrowing[s, t, sampleid] = problem.fp.edges[e].flow
+    end
     return
 
 end
 
-reset!(acc::Results.DemandResponseEnergyUsageSamplesAccumulator, sampleid::Int) = nothing
+reset!(acc::Results.DemandResponseBorrowingSamplesAccumulator, sampleid::Int) = nothing

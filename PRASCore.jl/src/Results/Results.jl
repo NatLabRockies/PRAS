@@ -24,7 +24,7 @@ export
     StorageEnergy, StorageEnergySamples,
     GeneratorStorageEnergy, GeneratorStorageEnergySamples,
     DemandResponseEnergy, DemandResponseEnergySamples,
-    DemandResponseEnergyUsage, DemandResponseEnergyUsageSamples,
+    DemandResponseBorrowing, DemandResponseBorrowingSamples,
     GeneratorAvailability, StorageAvailability,
     GeneratorStorageAvailability,DemandResponseAvailability,
     LineAvailability
@@ -192,11 +192,26 @@ getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
 include("StorageEnergy.jl")
 include("GeneratorStorageEnergy.jl")
 include("DemandResponseEnergy.jl")
-include("DemandResponseEnergyUsage.jl")
 include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
 include("DemandResponseEnergySamples.jl")
-include("DemandResponseEnergyUsageSamples.jl")
+
+abstract type AbstractBorrowingResult{N,L,T} <: Result{N,L,T} end
+
+getindex(x::AbstractBorrowingResult, ::Colon) =
+    getindex.(x, x.timestamps)
+
+getindex(x::AbstractBorrowingResult, ::Colon, t::ZonedDateTime) =
+    getindex.(x, names(x), t)
+
+getindex(x::AbstractBorrowingResult, name::AbstractString, ::Colon) =
+    getindex.(x, name, x.timestamps)
+
+getindex(x::AbstractBorrowingResult, ::Colon, ::Colon) =
+    getindex.(x, names(x), permutedims(x.timestamps))
+
+include("DemandResponseBorrowing.jl")
+include("DemandResponseBorrowingSamples.jl")
 
 function resultchannel(
     results::T, nworkers::Int

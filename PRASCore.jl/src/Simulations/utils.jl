@@ -136,6 +136,20 @@ function update_energy!(
 
 end
 
+function update_dr_energy_budget!(
+    budget::Vector{Float64}, drs::DemandResponses{N,L,T,P,E}, t::Int
+) where {N,L,T,P,E}
+
+    for i in eachindex(budget)
+        capacity = energytopower(drs.energy_budget_capacity[i, t], E, L, T, P)
+        replenishment = energytopower(drs.energy_budget_replenishment[i, t], E, L, T, P)
+        budget[i] = min(capacity, budget[i] + replenishment)
+    end
+
+    return
+
+end
+
 function update_dr_energy!(
     drs_energy::Vector{Int},
     drs_unservedenergy::Vector{Int},
