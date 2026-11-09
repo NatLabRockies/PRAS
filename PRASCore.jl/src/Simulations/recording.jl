@@ -463,6 +463,34 @@ end
 
 reset!(acc::Results.DemandResponseEnergyAccumulator, sampleid::Int) = nothing
 
+# DemandResponseBorrowing
+
+function record!(
+    acc::Results.DemandResponseBorrowingAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    totalborrowing = 0
+    edges = problem.fp.edges
+
+    for (s, e) in enumerate(problem.demandresponse_borrow_edges)
+
+        borrowing = edges[e].flow
+        fit!(acc.borrowing_demandresponseperiod[s,t], borrowing)
+        totalborrowing += borrowing
+
+    end
+
+    fit!(acc.borrowing_period[t], totalborrowing)
+
+    return
+
+end
+
+reset!(acc::Results.DemandResponseBorrowingAccumulator, sampleid::Int) = nothing
+
 
 
 # StorageEnergySamples
@@ -513,3 +541,21 @@ function record!(
 end
 
 reset!(acc::Results.DemandResponseEnergySamplesAccumulator, sampleid::Int) = nothing
+
+# DemandResponseBorrowingSamples
+
+function record!(
+    acc::Results.DemandResponseBorrowingSamplesAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    for (s, e) in enumerate(problem.demandresponse_borrow_edges)
+        acc.borrowing[s, t, sampleid] = problem.fp.edges[e].flow
+    end
+    return
+
+end
+
+reset!(acc::Results.DemandResponseBorrowingSamplesAccumulator, sampleid::Int) = nothing

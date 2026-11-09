@@ -583,6 +583,17 @@ A struct representing demand response devices in the system.
    timeperiod. Unitless.
  - `initial_borrowed_load`: Optional initial state of borrowed load as a fraction [0,1.0] of `energy_capacity` at first timestep for 
    each demand response unit at the beginning of the simulation. Default is zero.
+ - `energy_budget_capacity`: Optional maximum remaining energy budget for each
+   device in each timeperiod, in energy units `E`. Default is unlimited.
+ - `energy_budget_replenishment`: Optional energy granted to each device before
+   dispatch in each timeperiod, in energy units `E`. The budget starts empty for
+   each sample and grants are capped by `energy_budget_capacity`. Borrowing
+   consumes budget before efficiencies, while repayment and debt decay do not
+   replenish it. Omitting both budget inputs leaves borrowing without a budget
+   limit, whereas supplying only capacity leaves the budget empty.
+ - `max_activation_duration`: Optional maximum consecutive borrowing timesteps for
+   each device. Default is `N` per device and zero disables borrowing.
+   A timestep with no borrowing ends an activation.
 """
 struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
@@ -604,6 +615,9 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
     payback_efficiency::Matrix{Float64}
 
     initial_borrowed_load::Vector{Float64} # energy
+    energy_budget_capacity::Matrix{Float64} # energy
+    energy_budget_replenishment::Matrix{Float64} # energy
+    max_activation_duration::Vector{Int} # timesteps
 
     function DemandResponses{N,L,T,P,E}(
         names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
@@ -613,7 +627,10 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         λ::Matrix{Float64}, μ::Matrix{Float64};
         borrow_efficiency::Matrix{Float64} = ones(Float64, size(borrowcapacity)),
         payback_efficiency::Matrix{Float64} = ones(Float64, size(paybackcapacity)),
-        initial_borrowed_load::Vector{Float64} = zeros(Float64, length(names))
+        initial_borrowed_load::Vector{Float64} = zeros(Float64, length(names)),
+        energy_budget_capacity::Union{Nothing,Matrix{Float64}} = nothing,
+        energy_budget_replenishment::Union{Nothing,Matrix{Float64}} = nothing,
+        max_activation_duration::Vector{Int} = fill(N, length(names))
     ) where {N,L,T,P,E}
 
         n_drs = length(names)
@@ -648,6 +665,35 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         @assert length(initial_borrowed_load) == n_drs
         @assert all(isfractional, initial_borrowed_load)
 
+        capacity_without_replenishment = !isnothing(energy_budget_capacity) &&
+            isnothing(energy_budget_replenishment)
+
+        if isnothing(energy_budget_capacity) && isnothing(energy_budget_replenishment)
+            energy_budget_replenishment = zeros(Float64, n_drs, N)
+            if N > 0
+                energy_budget_replenishment[:, 1] .= Inf
+            end
+        end
+
+        if isnothing(energy_budget_capacity)
+            energy_budget_capacity = fill(Inf, n_drs, N)
+        end
+        if isnothing(energy_budget_replenishment)
+            energy_budget_replenishment = zeros(Float64, n_drs, N)
+        end
+
+        @assert size(energy_budget_capacity) == (n_drs, N)
+        @assert size(energy_budget_replenishment) == (n_drs, N)
+        @assert all(isnonnegative, energy_budget_capacity)
+        @assert all(isnonnegative, energy_budget_replenishment)
+
+        @assert length(max_activation_duration) == n_drs
+        @assert all(isnonnegative, max_activation_duration)
+
+        if capacity_without_replenishment && any(>(0), energy_budget_capacity)
+            @warn "Energy budget capacity provided without replenishment - new borrowing is disabled."
+        end
+
         new{N,L,T,P,E}(string.(names), string.(categories),
                        borrowcapacity, paybackcapacity, energycapacity,
                       borrowedenergyinterest,
@@ -655,7 +701,9 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
                        λ, μ,
                        borrow_efficiency,
                        payback_efficiency,
-                       initial_borrowed_load)
+                       initial_borrowed_load, energy_budget_capacity,
+                       energy_budget_replenishment,
+                       max_activation_duration)
     end
 end
 
@@ -669,7 +717,8 @@ function DemandResponses{N,L,T,P,E}() where {N,L,T,P,E}
               Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N);
               borrow_efficiency = Matrix{Float64}(undef, 0, N),
               payback_efficiency = Matrix{Float64}(undef, 0, N),
-              initial_borrowed_load = zeros(Float64, 0))
+              initial_borrowed_load = zeros(Float64, 0),
+              max_activation_duration = Int[])
 end
 
 Base.:(==)(x::T, y::T) where {T <: DemandResponses} =
@@ -684,7 +733,10 @@ Base.:(==)(x::T, y::T) where {T <: DemandResponses} =
     x.allowable_payback_period == y.allowable_payback_period &&
     x.λ == y.λ &&
     x.μ == y.μ &&
-    x.initial_borrowed_load == y.initial_borrowed_load
+    x.initial_borrowed_load == y.initial_borrowed_load &&
+    x.energy_budget_capacity == y.energy_budget_capacity &&
+    x.energy_budget_replenishment == y.energy_budget_replenishment &&
+    x.max_activation_duration == y.max_activation_duration
 
 Base.getindex(dr::DR, idxs::AbstractVector{Int}) where {DR <: DemandResponses} =
     DR(dr.names[idxs], dr.categories[idxs],dr.borrow_capacity[idxs,:],
@@ -692,7 +744,10 @@ Base.getindex(dr::DR, idxs::AbstractVector{Int}) where {DR <: DemandResponses} =
       dr.borrowed_energy_interest[idxs, :],dr.allowable_payback_period[idxs, :],dr.λ[idxs, :], dr.μ[idxs, :];
       borrow_efficiency = dr.borrow_efficiency[idxs, :], 
       payback_efficiency = dr.payback_efficiency[idxs, :],
-      initial_borrowed_load = dr.initial_borrowed_load[idxs])
+      initial_borrowed_load = dr.initial_borrowed_load[idxs],
+      energy_budget_capacity = dr.energy_budget_capacity[idxs, :],
+      energy_budget_replenishment = dr.energy_budget_replenishment[idxs, :],
+      max_activation_duration = dr.max_activation_duration[idxs])
 
 function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
 
@@ -716,6 +771,9 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
     μ = Matrix{Float64}(undef, n_drs, N)
 
     initial_borrowed_load = Vector{Float64}(undef, n_drs)
+    energy_budget_capacity = Matrix{Float64}(undef, n_drs, N)
+    energy_budget_replenishment = Matrix{Float64}(undef, n_drs, N)
+    max_activation_duration = Vector{Int}(undef, n_drs)
 
     last_idx = 0
 
@@ -741,6 +799,9 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
         μ[rows, :] = dr.μ
 
         initial_borrowed_load[rows] = dr.initial_borrowed_load
+        energy_budget_capacity[rows, :] = dr.energy_budget_capacity
+        energy_budget_replenishment[rows, :] = dr.energy_budget_replenishment
+        max_activation_duration[rows] = dr.max_activation_duration
 
         last_idx += n
 
@@ -750,7 +811,10 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
     borrowed_energy_interest,allowable_payback_period, λ, μ;
     borrow_efficiency = borrow_efficiency, 
     payback_efficiency = payback_efficiency,
-    initial_borrowed_load = initial_borrowed_load)
+    initial_borrowed_load = initial_borrowed_load,
+    energy_budget_capacity = energy_budget_capacity,
+    energy_budget_replenishment = energy_budget_replenishment,
+    max_activation_duration = max_activation_duration)
 
 end
 

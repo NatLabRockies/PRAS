@@ -65,6 +65,9 @@ and their associated resource collections (regions or interfaces).
 | Load Payback Capacity | | | | • | |
 | Energy Capacity | | • | • | |
 | Borrowed Load Capacity | | | | • | |
+| Energy Budget Capacity | | | | • | |
+| Energy Budget Replenishment | | | | • | |
+| *Maximum Activation Duration* | | | | • | |
 | Charge Efficiency | | • | • | |
 | Discharge Efficiency | | • | • | |
 | Carryover Efficiency | | • | • | |
@@ -248,6 +251,26 @@ enable unique tailoring to the real world device being modeled. The allowable pa
 and follows the timestep units set for the system. If any surplus exists in the region, the demand response
 device will attempt to payback any borrowed load, before charging storage. If the demand response device
 pays back all borrowed load before the end of the period, the counter is reset upon further use.
+
+Demand response devices can also limit the energy available for new borrowing
+through the optional `energy_budget_capacity` and `energy_budget_replenishment`
+timeseries, expressed in the system's energy units. Unlike `energy_capacity`,
+which limits outstanding borrowed energy, these inputs define a separate budget
+that starts empty for each sample and receives replenishment before dispatch.
+Any balance above the budget capacity is discarded. Borrowing consumes this
+budget before efficiency adjustments, while repayment and debt decay do not
+replenish it.
+
+When both budget inputs are omitted, borrowing remains unlimited by an energy
+budget. Providing only replenishment leaves the budget capacity unlimited,
+whereas providing only capacity leaves the budget empty and produces a warning
+when capacity is positive.
+
+The optional `max_activation_duration` vector limits how many consecutive
+timesteps each device can borrow, independently of how long borrowed energy
+can remain outstanding under the allowable payback period. A timestep with no
+borrowing ends an activation. By default, the limit equals the number of
+timesteps in the simulation horizon, while setting it to zero disables borrowing.
 
 ## Interfaces
 

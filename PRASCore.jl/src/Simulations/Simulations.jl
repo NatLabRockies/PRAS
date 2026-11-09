@@ -1,6 +1,6 @@
 @reexport module Simulations
 
-import ..Systems: SystemModel, AbstractAssets, Generators, Lines,
+import ..Systems: SystemModel, AbstractAssets, Generators, Lines, DemandResponses,
                   conversionfactor, energytopower
 
 import ..Results
@@ -232,6 +232,8 @@ function initialize!(
         initialize_energy!(system.demandresponses.initial_borrowed_load, state.drs_energy, system.demandresponses.energy_capacity)
 
         fill!(state.drs_unservedenergy, 0)
+        fill!(state.drs_energy_budget, 0)
+        fill!(state.drs_activation_duration, 0)
         fill!(state.drs_paybackcounter, -1)
         return
 
@@ -266,6 +268,7 @@ function advance!(
     update_energy!(state.stors_energy, system.storages, t)
     update_energy!(state.genstors_energy, system.generatorstorages, t)
     update_dr_energy!(state.drs_energy, state.drs_unservedenergy, system.demandresponses, t)
+    update_dr_energy_budget!(state.drs_energy_budget, system.demandresponses, t)
 
     update_paybackcounter!(state.drs_paybackcounter,state.drs_energy, system.demandresponses,t)
 

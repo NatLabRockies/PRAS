@@ -49,7 +49,6 @@
     @test_throws BoundsError result[r_bad, t]
     @test_throws BoundsError result[r_bad, t_bad]
 
-
 end
 
 @testset "EnergySamplesResult" begin

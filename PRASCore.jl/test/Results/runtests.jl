@@ -6,6 +6,7 @@
     include("flow.jl")
     include("utilization.jl")
     include("energy.jl")
+    include("borrowing.jl")
     include("availability.jl")
 
 end

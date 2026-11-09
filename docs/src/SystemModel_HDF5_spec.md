@@ -375,9 +375,9 @@ An optional Vector parameter of length generator-storage units, is available to 
 #### `demandresponses` group
 
 Information relating to the demand response only devices of the represented system is
-stored in the `demandresponses` group inside the root group. This group should contain
-eight datasets, one (named `_core`) providing core static data about each region
-and seven providing (potentially) time-varying data.
+stored in the `demandresponses` group inside the root group.
+The `_core` dataset provides static device information and the other datasets
+describe device parameters.
 
 The `_core` dataset should be a vector / one-dimensional array storing instances of
 a compound datatype with the following fields (in order):
@@ -415,11 +415,20 @@ The `demandresponse` group should also contain the following datasets describing
  - `repairprobability`, as 64-bit floats representing the probability the unit
    transitions from forced outage to operational during a given simulation
    timestep, for each demand response unit in each timeperiod. Unitless.
+ - `energybudgetcapacity` (optional), as a matrix of 64-bit floats representing
+   the maximum remaining borrowing budget for each device in each timeperiod,
+   in units given by `energy_unit`.
+ - `energybudgetreplenishment` (optional), as a matrix of 64-bit floats
+   representing energy granted before dispatch for each device in each
+   timeperiod, in units given by `energy_unit`.
 
-An optional Vector parameter of length demand response units, is available to set the initial state of borrowed load for the unit:
+Optional vector datasets have one element per demand response unit in the
+same order as `_core`.
 
  - `initialborrowedload`, as 64-bit floats representing the initial borrowed load
    for the unit as a fraction [0.0, 1.0] of energy capacity at timestep 1, for each demand response unit.
+ - `maxactivationduration`, as a vector of integers representing the maximum
+   consecutive borrowing timesteps for each device.
 
 #### `interfaces` group
 
