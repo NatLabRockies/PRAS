@@ -61,9 +61,9 @@ function _cvar(estimate::AbstractVector{<:Real}, alpha::Float64)
         return MeanEstimate(var), var
     end
 
-    z = max.(estimate .- var, 0.0)
-    z_mean = mean(z)
-    cvar = MeanEstimate(var + z_mean / p, std(z, mean=z_mean) / p, n)
+    z_mean = mean(x -> max(x - var, 0.0), estimate)
+    z_std = std((max(x - var, 0.0) for x in estimate), mean=z_mean)
+    cvar = MeanEstimate(var + z_mean / p, z_std / p, n)
     return cvar, var
 end
 
