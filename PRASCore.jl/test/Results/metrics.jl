@@ -82,7 +82,30 @@
 
         @test_throws DomainError CVAR{1,1,Hour,MWh}(:energy,MeanEstimate(-1.2), 0.95, 1.2)
 
-    end    
+        # Worst 5% of samples: 20 at 100 plus 30 tied at VaR = 0
+        cvar3, var3 = _cvar([zeros(980); fill(100., 20)], 0.95)
+        @test val(cvar3) ≈ 40.
+        @test stderror(cvar3) ≈ sqrt(196000 / 999) / (0.05 * sqrt(1000))
+        @test var3 == 0.
+
+        # Worst 1.5 of 30 samples: 30 plus half-weighted 29 at VaR
+        cvar4, var4 = _cvar(collect(30:-1:1), 0.95)
+        @test val(cvar4) ≈ (30 + 0.5 * 29) / 1.5
+        @test var4 == 29.
+
+        cvar5, var5 = _cvar(fill(3., 50), 0.95)
+        @test val(cvar5) ≈ 3.
+        @test stderror(cvar5) == 0.
+        @test var5 == 3.
+
+        cvar6, var6 = @test_logs (:warn,) _cvar([5.], 0.95)
+        @test val(cvar6) == 5.
+        @test stderror(cvar6) == 0.
+        @test var6 == 5.
+
+        @test_throws DomainError _cvar([1., 2.], 1.)
+
+    end
 
     @testset "NCVAR" begin
 

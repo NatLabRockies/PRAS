@@ -32,10 +32,12 @@
     @test stderror(neue) ≈ last(result[]) / sqrt(DD.nsamples) / load*1e6
 
     cvar = CVAR(:energy, result, alpha)
-    estimate = result.shortfall_samples;
-    tail_losses = estimate[estimate .> quantile(estimate, alpha)];
+    estimate = sort(result.shortfall_samples);
+    threshold = estimate[ceil(Int, alpha * DD.nsamples)];
+    tail_losses = estimate[end-round(Int, (1 - alpha) * DD.nsamples)+1:end];
+    @test cvar.var ≈ threshold
     @test val(cvar) ≈ mean(tail_losses)
-    @test stderror(cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
+    @test stderror(cvar) ≈ std(max.(estimate .- threshold, 0)) / ((1 - alpha) * sqrt(DD.nsamples))
 
     ncvar = NCVAR(result, cvar)
     @test val(ncvar) ≈ val(cvar) / load*1e6
@@ -59,10 +61,12 @@
     @test stderror(region_neue) ≈ last(result[r]) / sqrt(DD.nsamples) / load*1e6
 
     region_cvar = CVAR(:energy, result, alpha, r)
-    region_estimate = result.shortfall_region_samples[r_idx, :];
-    region_tail_losses = region_estimate[region_estimate .> quantile(region_estimate, alpha)];
+    region_estimate = sort(result.shortfall_region_samples[r_idx, :]);
+    region_threshold = region_estimate[ceil(Int, alpha * DD.nsamples)];
+    region_tail_losses = region_estimate[end-round(Int, (1 - alpha) * DD.nsamples)+1:end];
+    @test region_cvar.var ≈ region_threshold
     @test val(region_cvar) ≈ mean(region_tail_losses)
-    @test stderror(region_cvar) ≈ std(region_tail_losses) / sqrt(length(region_tail_losses))
+    @test stderror(region_cvar) ≈ std(max.(region_estimate .- region_threshold, 0)) / ((1 - alpha) * sqrt(DD.nsamples))
 
     region_ncvar = NCVAR(result, region_cvar, r)
     @test val(region_ncvar) ≈ val(region_cvar) / load*1e6
@@ -153,10 +157,12 @@ end
     @test stderror(neue) ≈ std(result[]) / sqrt(DD.nsamples) / load*1e6
 
     ue_cvar = CVAR(:energy, result, alpha)
-    estimate = result[];
-    tail_losses = estimate[estimate .> quantile(estimate, alpha)];
+    estimate = sort(result[]);
+    threshold = estimate[ceil(Int, alpha * DD.nsamples)];
+    tail_losses = estimate[end-round(Int, (1 - alpha) * DD.nsamples)+1:end];
+    @test ue_cvar.var ≈ threshold
     @test val(ue_cvar) ≈ mean(tail_losses)
-    @test stderror(ue_cvar) ≈ std(tail_losses) / sqrt(length(tail_losses))
+    @test stderror(ue_cvar) ≈ std(max.(estimate .- threshold, 0)) / ((1 - alpha) * sqrt(DD.nsamples))
 
     ncvar = NCVAR(result, ue_cvar)
     @test val(ncvar) ≈ val(ue_cvar) / load*1e6
@@ -182,10 +188,12 @@ end
     @test stderror(region_neue) ≈ std(result[r]) / sqrt(DD.nsamples) / load*1e6
 
     region_ue_cvar = CVAR(:energy, result, alpha, r)
-    region_estimate = result[r];
-    region_tail_losses = region_estimate[region_estimate .> quantile(region_estimate, alpha)];
+    region_estimate = sort(result[r]);
+    region_threshold = region_estimate[ceil(Int, alpha * DD.nsamples)];
+    region_tail_losses = region_estimate[end-round(Int, (1 - alpha) * DD.nsamples)+1:end];
+    @test region_ue_cvar.var ≈ region_threshold
     @test val(region_ue_cvar) ≈ mean(region_tail_losses)
-    @test stderror(region_ue_cvar) ≈ std(region_tail_losses) / sqrt(length(region_tail_losses))
+    @test stderror(region_ue_cvar) ≈ std(max.(region_estimate .- region_threshold, 0)) / ((1 - alpha) * sqrt(DD.nsamples))
 
     region_ncvar = NCVAR(result, region_ue_cvar, r)
     @test val(region_ncvar) ≈ val(region_ue_cvar) / load*1e6
@@ -213,10 +221,12 @@ end
     @test stderror(period_eue) ≈ std(result[t]) / sqrt(DD.nsamples)
 
     period_cvar = CVAR(:energy, result, alpha, DD.periods)
-    period_estimate = result[DD.periods];
-    period_tail_losses = period_estimate[period_estimate .> quantile(period_estimate, alpha)];
+    period_estimate = sort(result[DD.periods]);
+    period_threshold = period_estimate[ceil(Int, alpha * DD.nsamples)];
+    period_tail_losses = period_estimate[end-round(Int, (1 - alpha) * DD.nsamples)+1:end];
+    @test period_cvar.var ≈ period_threshold
     @test val(period_cvar) ≈ mean(period_tail_losses)
-    @test stderror(period_cvar) ≈ std(period_tail_losses) / sqrt(length(period_tail_losses))
+    @test stderror(period_cvar) ≈ std(max.(period_estimate .- period_threshold, 0)) / ((1 - alpha) * sqrt(DD.nsamples))
 
     @test_throws BoundsError result[t_bad]
     @test_throws BoundsError LOLE(result, t_bad)
@@ -239,10 +249,12 @@ end
     @test stderror(regionperiod_eue) ≈ std(result[r, t]) / sqrt(DD.nsamples)
 
     regionperiod_cvar = CVAR(:energy, result, alpha, r, t)
-    regionperiod_estimate = result[r, t];
-    regionperiod_tail_losses = regionperiod_estimate[regionperiod_estimate .> quantile(regionperiod_estimate, alpha)];
+    regionperiod_estimate = sort(result[r, t]);
+    regionperiod_threshold = regionperiod_estimate[ceil(Int, alpha * DD.nsamples)];
+    regionperiod_tail_losses = regionperiod_estimate[end-round(Int, (1 - alpha) * DD.nsamples)+1:end];
+    @test regionperiod_cvar.var ≈ regionperiod_threshold
     @test val(regionperiod_cvar) ≈ mean(regionperiod_tail_losses)
-    @test stderror(regionperiod_cvar) ≈ std(regionperiod_tail_losses) / sqrt(length(regionperiod_tail_losses))
+    @test stderror(regionperiod_cvar) ≈ std(max.(regionperiod_estimate .- regionperiod_threshold, 0)) / ((1 - alpha) * sqrt(DD.nsamples))
 
     @test_throws BoundsError result[r, t_bad]
     @test_throws BoundsError result[r_bad, t]

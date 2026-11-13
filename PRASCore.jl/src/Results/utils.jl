@@ -47,10 +47,23 @@ function findlastunique(a::AbstractVector{T}, i::T) where T
     return i_idx
 end
 
+# See the CVAR docstring for the estimator and its standard error
 function _cvar(estimate::AbstractVector{<:Real}, alpha::Float64)
-    var = quantile(estimate, alpha)
-    tail = estimate[estimate .> var]   
-    cvar = isempty(tail) ? MeanEstimate(0.) : MeanEstimate(tail)
+    0 <= alpha < 1 || throw(DomainError(alpha,
+        "$alpha is not a valid confidence level"))
+    n = length(estimate)
+    p = 1 - alpha
+    k = clamp(ceil(Int, alpha * n), 1, n)
+    var = Float64(partialsort(estimate, k))
+
+    if n == 1
+        @warn "Only one sample provided; standard error will be zero"
+        return MeanEstimate(var), var
+    end
+
+    z_mean = mean(x -> max(x - var, 0.0), estimate)
+    z_std = std((max(x - var, 0.0) for x in estimate), mean=z_mean)
+    cvar = MeanEstimate(var + z_mean / p, z_std / p, n)
     return cvar, var
 end
 
