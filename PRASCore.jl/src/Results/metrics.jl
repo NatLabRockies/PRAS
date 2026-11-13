@@ -228,7 +228,14 @@ _cvar_quantity_unitsymbol(::Val{:energy}, ::Type{E}, ::Type) where {E<:EnergyUni
 
 Contains both the estimated value itself as well as the standard error
 of that estimate, which can be extracted with `val` and `stderror`,
-respectively.
+respectively. The value at risk (VaR) threshold is stored in the `var` field.
+
+CVAR is estimated as the mean unserved energy over the worst `(1 - alpha)`
+fraction of samples, with samples tied at VaR weighted fractionally. The
+standard error is the asymptotic estimate of Manistre and Hancock, "Variance
+of the CTE Estimator" (North American Actuarial Journal, 2005,
+doi:10.1080/10920277.2005.10596207), which accounts for uncertainty in which
+samples fall in the tail. It becomes unreliable when `n * (1 - alpha)` is small.
 """
 struct CVAR{N,L,T<:Period,E<:EnergyUnit} <: ReliabilityMetric
 

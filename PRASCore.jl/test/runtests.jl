@@ -4,7 +4,7 @@ using StatsBase
 using Test
 using TimeZones
 
-import PRASCore.Results: MeanEstimate, ReliabilityMetric
+import PRASCore.Results: MeanEstimate, ReliabilityMetric, _cvar
 import PRASCore.Systems: TestData, Regions
 
 withinrange(x::ReliabilityMetric, y::Real, n::Real) =
