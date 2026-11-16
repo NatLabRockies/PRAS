@@ -279,6 +279,15 @@ end
         Regions{N,MW}(DD.resourcenames, DD.resource_vals),
         DD.periods, system_events, region_events)
 
+    # Event mean standard errors
+
+    @test stderror(MeanEventDuration(result)) ≈ 2 / (3 * sqrt(3))
+    @test stderror(MeanEventEnergy(result)) ≈ 22 / (3 * sqrt(3))
+
+    region = first(DD.resourcenames)
+    @test stderror(MeanEventDuration(result, region)) ≈ 2 / (3 * sqrt(3))
+    @test stderror(MeanEventEnergy(result, region)) ≈ 2 / sqrt(3)
+
     # System events and sample identity
 
     selected = @test_logs eventsinterval(result, DD.periods)

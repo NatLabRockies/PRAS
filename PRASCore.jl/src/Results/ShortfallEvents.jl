@@ -8,7 +8,13 @@ A shortfall event is a contiguous run of one or more simulation timesteps
 with positive shortfall. A `ShortfallEventsResult` can be indexed by sample
 number to retrieve system-wide events or by region name and sample number to
 retrieve regional events. Each event records its starting timestep, ending
-timestep and unserved energy.
+timestep and an `energy` field containing the integer sum of shortfall power
+values over those timesteps.
+
+Convert the stored sum using the timestep length and system power and energy
+units to obtain unserved energy. For example, two 15-minute timesteps at 10 MW
+store `20`, which represents 5 MWh. The event-energy metrics apply this
+conversion automatically.
 
 Example:
 
@@ -24,7 +30,9 @@ regional_events = events["Region A", 1]
 first_system_event = first(system_events)
 start_idx = first_system_event.start_idx
 end_idx = first_system_event.end_idx
-energy = first_system_event.energy
+raw_energy = first_system_event.energy
+_, L, T, P, E = get_params(sys)
+energy = conversionfactor(L, T, P, E) * raw_energy
 
 # System-wide event metrics
 lolev = LOLEv(events)
@@ -59,8 +67,20 @@ end
 
 duration_periods(ev::ShortfallEvent) = ev.end_idx - ev.start_idx + 1
 event_energy(ev::ShortfallEvent) = ev.energy
-_event_meanestimate(xs::AbstractVector{<:Real}) =
-    isempty(xs) ? MeanEstimate(0.0) : MeanEstimate(xs)
+
+function _event_meanestimate(f, samples::AbstractVector{<:AbstractVector{ShortfallEvent}})
+    counts = length.(samples)
+    nevents = sum(counts)
+    iszero(nevents) && return MeanEstimate(0.0)
+
+    totals = [sum(f, events; init=0) for events in samples]
+    estimate = sum(totals) / nevents
+
+    # Linearize the ratio of event totals to counts across independent samples.
+    residuals = totals .- estimate .* counts
+    stderr = stderror(MeanEstimate(residuals)) / mean(counts)
+    return MeanEstimate(estimate, stderr)
+end
 
 mutable struct ShortfallEventsAccumulator <: ResultAccumulator{ShortfallEvents}
 
@@ -102,14 +122,6 @@ function accumulator(
         N)
 end
 
-function merge!(
-    x::ShortfallEventsAccumulator, y::ShortfallEventsAccumulator
-)
-    foreach(append!, x.system_events, y.system_events)
-    foreach(append!, x.region_events, y.region_events)
-    return
-end
-
 function copy_sample_partition!(
     x::ShortfallEventsAccumulator,
     y::ShortfallEventsAccumulator,
@@ -123,7 +135,7 @@ end
 accumulatortype(::ShortfallEvents) = ShortfallEventsAccumulator
 
 struct ShortfallEventsResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: Result{N,L,T}
-    regions::Regions
+    regions::Regions{N,P}
     timestamps::StepRange{ZonedDateTime,T}
 
     system_events::Vector{Vector{ShortfallEvent}}
@@ -167,16 +179,21 @@ end_event_timestamp(x::ShortfallEventsResult, ev::ShortfallEvent) = x.timestamps
     eventsinterval(x::ShortfallEventsResult, t::StepRange{ZonedDateTime})
     eventsinterval(x::ShortfallEventsResult, r::AbstractString, t::StepRange{ZonedDateTime})
 
-Return system-wide events, or events in region `r`, fully contained between the first and last timestamps of `t`, inclusive.
-The interval must be nonempty and forward in time with endpoints present in `x.timestamps`.
-All simulation timesteps between the endpoints are considered, regardless of the step of `t`.
+Return system-wide events, or events in region `r`, fully contained between
+the first and last timestamps of `t`, inclusive. The interval must be
+nonempty and forward in time with endpoints present in `x.timestamps`.
+All simulation timesteps between the endpoints are considered, regardless
+of the step of `t`.
 
-The returned vector contains a new event list for each original sample, including empty lists.
-Event boundaries and stored energy are unchanged.
-An `@info` message reports the number of overlapping events excluded because they start before or end after the interval, including events spanning the entire interval.
-An empty list therefore means no fully contained events, not necessarily no shortfall.
+The returned vector contains a new event list for each original sample,
+including empty lists. Event boundaries and stored energy are unchanged.
+An `@info` message reports the number of overlapping events excluded because
+they start before or end after the interval, including events spanning the
+entire interval. An empty list therefore means no fully contained events,
+not necessarily no shortfall.
 
-For example, `eventsinterval(x, x.timestamps[2:7])` excludes events at timesteps 1–3 and 6–8 but includes an event at timesteps 3–6.
+For example, `eventsinterval(x, x.timestamps[2:7])` excludes events at
+timesteps 1-3 and 6-8 but includes an event at timesteps 3-6.
 """
 function eventsinterval(x::ShortfallEventsResult, t::StepRange{ZonedDateTime})
     return _eventsinterval(x, t, x.system_events)
@@ -237,22 +254,14 @@ function finalize(
 end
 
 function MeanEventDuration(x::ShortfallEventsResult{N,L,T}) where {N,L,T}
-    durations = [
-        duration_periods(ev)
-        for events in x.system_events
-        for ev in events
-    ]
-    return MeanEventDuration{N,L,T}(_event_meanestimate(durations))
+    return MeanEventDuration{N,L,T}(
+        _event_meanestimate(duration_periods, x.system_events))
 end
 
 function MeanEventDuration(x::ShortfallEventsResult{N,L,T}, r::AbstractString) where {N,L,T}
     i_r = findfirstunique(x.regions.names, r)
-    durations = [
-        duration_periods(ev)
-        for s in axes(x.region_events, 2)
-        for ev in x.region_events[i_r, s]
-    ]
-    return MeanEventDuration{N,L,T}(_event_meanestimate(durations))
+    return MeanEventDuration{N,L,T}(
+        _event_meanestimate(duration_periods, view(x.region_events, i_r, :)))
 end
 
 function MaxEventDuration(x::ShortfallEventsResult{N,L,T}) where {N,L,T}
@@ -276,23 +285,15 @@ end
 
 function MeanEventEnergy(x::ShortfallEventsResult{N,L,T,P,E}) where {N,L,T,P,E}
     p2e = conversionfactor(L, T, P, E)
-    energies = [
-        p2e * event_energy(ev)
-        for events in x.system_events
-        for ev in events
-    ]
-    return MeanEventEnergy{N,L,T,E}(_event_meanestimate(energies))
+    return MeanEventEnergy{N,L,T,E}(
+        _event_meanestimate(ev -> p2e * event_energy(ev), x.system_events))
 end
 
 function MeanEventEnergy(x::ShortfallEventsResult{N,L,T,P,E}, r::AbstractString) where {N,L,T,P,E}
     i_r = findfirstunique(x.regions.names, r)
     p2e = conversionfactor(L, T, P, E)
-    energies = [
-        p2e * event_energy(ev)
-        for s in axes(x.region_events, 2)
-        for ev in x.region_events[i_r, s]
-    ]
-    return MeanEventEnergy{N,L,T,E}(_event_meanestimate(energies))
+    return MeanEventEnergy{N,L,T,E}(_event_meanestimate(
+        ev -> p2e * event_energy(ev), view(x.region_events, i_r, :)))
 end
 
 function MaxEventEnergy(x::ShortfallEventsResult{N,L,T,P,E}) where {N,L,T,P,E}
