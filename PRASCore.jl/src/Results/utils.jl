@@ -47,6 +47,18 @@ function findlastunique(a::AbstractVector{T}, i::T) where T
     return i_idx
 end
 
+function findfirstunique(a::StepRange{ZonedDateTime}, i::ZonedDateTime)
+    i_idx = searchsortedfirst(a, i; rev=step(a) < zero(step(a)))
+    (checkbounds(Bool, a, i_idx) && isequal(a[i_idx], i)) || throw(BoundsError(a))
+    return i_idx
+end
+
+function findlastunique(a::StepRange{ZonedDateTime}, i::ZonedDateTime)
+    i_idx = searchsortedlast(a, i; rev=step(a) < zero(step(a)))
+    (checkbounds(Bool, a, i_idx) && isequal(a[i_idx], i)) || throw(BoundsError(a))
+    return i_idx
+end
+
 function _cvar(estimate::AbstractVector{<:Real}, alpha::Float64)
     var = quantile(estimate, alpha)
     tail = estimate[estimate .> var]   
