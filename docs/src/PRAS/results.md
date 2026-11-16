@@ -79,6 +79,7 @@ they support.
 |------------------------------------|-------|-----|--------|--------|---------|------------------|
 | `Shortfall`                        | Energy | •   |        | •      | •       | •               |
 | `ShortfallSamples`                 | Energy | •   | •      | •      | •       | •               |
+| `ShortfallEvents`                  | [See below](@ref shortfall_events) | • | • | • | | |
 | `DemandResponseShortfall`          | Energy | •   |        | •      | •       | •               |
 | `DemandResponseShortfallSamples`   | Energy | •   | •      | •      | •       | •               |
 | `Surplus`                          | Power  | •   |        |        | •       | •               |
@@ -87,14 +88,10 @@ they support.
 *Table: Regional result specification characteristics.*
 
 ### Shortfall
-The Shortfall family of result specifications (`Shortfall` and
-`ShortfallSamples`) reports on unserved energy
-occuring during simulations. As quantifying unserved energy is the core aspect
-of resource adequacy analysis, in practice almost every assessment requests a
-Shortfall-related result. The basic `Shortfall` specification is most
-commonly used and reports average shortfall results, while
-`ShortfallSamples` provides more detailed results at the level of
-individual simulations (samples).
+
+The Shortfall family of result specifications reports on unserved energy occurring during simulations.
+As quantifying unserved energy is the core aspect of resource adequacy analysis, in practice almost every assessment requests a Shortfall-related result.
+The basic `Shortfall` specification reports average shortfall results while `ShortfallSamples` provides results for individual simulation samples and timesteps.
 
 If the system includes demand response units, demand response specific shortfall results
 can also be queried: (`DemandResponseShortfall` and `DemandResponseShortfallSamples`).
@@ -106,16 +103,12 @@ Note that the system shortfall object is inclusive of any attributable demand re
 and therefore the two should never be added together. Similar period and region 
 specific metrics can be obtained to the metrics mentioned below in the system shortfall object.
 
-Shortfall result objects can be indexed into by region, timestep, both region
-and timestep, or neither. Indexing on neither (via `result[]`) reports
-the total shortfall across all regions and time periods.
+`Shortfall` and `ShortfallSamples` result objects can be indexed into by region, timestep, both region and timestep or neither.
+Indexing on neither (via `result[]`) reports the total shortfall across all regions and time periods.
 
-Shortfall results are unique among the built-in result types in that the raw
-results can also be converted to specific probabilistic risk metrics
-(**EUE**,  **LOLE**, or **CVAR**). For sampling-based methods, both metric
-estimates and the standard error of those estimates are provided. For example,
-after assessing the system, metrics across all regions and the full simulation
-horizon can be extracted as:
+`Shortfall` and `ShortfallSamples` results can also be converted to probabilistic risk metrics such as **EUE**, **LOLE** or **CVAR**.
+For sampling-based methods, both metric estimates and their standard errors are provided.
+For example, metrics across all regions and the full simulation horizon can be extracted as:
 
 ```julia
 shortfall, = assess(sys, SequentialMonteCarlo(), Shortfall())
@@ -134,6 +127,80 @@ eue_period = EUE(shortfall, period)
 lole_region = LOLE(shortfall, region)
 eue_region_period = EUE(shortfall, region, period)
 ```
+
+#### [Shortfall Events](@id shortfall_events)
+
+`ShortfallEvents` records each contiguous run of simulation timesteps with positive shortfall as a separate event.
+Events are identified independently within each Monte Carlo sample at both system and regional levels.
+A timestep without shortfall ends an event; crossing midnight does not.
+Events still active at the end of a sample are closed at its final timestep and never continue into another sample.
+
+Unlike `ShortfallResult`, `ShortfallEventsResult` retains individual event timing and energy.
+It records events directly instead of requiring postprocessing of the full `ShortfallSamplesResult` array, reducing storage when events are sparse.
+
+![Shortfall time series for two samples and two regions with the corresponding system and regional event records](../images/shortfall-events.svg)
+
+*Illustrative shortfall values and their corresponding internal event records; events are recorded directly during simulation without first storing the displayed time series.*
+
+System events remain continuous while any region has shortfall, even if the affected region changes.
+In sample 1, timesteps 1–3 therefore form one system event despite Region A having two separate events; system event counts are not sums of regional event counts.
+
+##### Requesting and Accessing Events
+
+```julia
+events, = assess(sys, SequentialMonteCarlo(samples=1000), ShortfallEvents())
+region = first(sys.regions.names)
+
+system_events = events[1]          # System events in sample 1
+regional_events = events[region, 1] # Regional events in sample 1
+events_by_sample = events[region]  # Regional event lists for every sample
+```
+
+Samples without events have empty event lists.
+Unlike `ShortfallSamplesResult`, this result does not support timestep indexing or contain the within-event shortfall profile or peak shortfall.
+Each event has `start_idx`, `end_idx` and `energy` fields.
+
+```julia
+if !isempty(system_events)
+    event = first(system_events)
+    start_timestamp = events.timestamps[event.start_idx]
+    last_timestamp = events.timestamps[event.end_idx]
+    duration_periods = event.end_idx - event.start_idx + 1
+    duration = duration_periods * step(events.timestamps)
+end
+```
+
+Both boundary indices are inclusive.
+`last_timestamp` labels the final timestep included in the event; it is not the timestamp of the following timestep.
+For example, an event covering three 15-minute timesteps lasts 45 minutes.
+
+##### Event Metrics and Units
+
+```julia
+lolev = LOLEv(events)
+mean_duration = MeanEventDuration(events)
+max_duration = MaxEventDuration(events)
+mean_energy = MeanEventEnergy(events)
+max_energy = MaxEventEnergy(events)
+
+regional_lolev = LOLEv(events, region)
+regional_mean_energy = MeanEventEnergy(events, region)
+```
+
+All five metrics support either the whole system or a region name.
+`LOLEv` averages event counts across samples, including samples with no events.
+The mean duration and energy metrics pool all observed events; the maximum metrics report the largest observed event rather than an average of per-sample maxima.
+See [Multi-Metric Resource Adequacy Analyses with PRAS](@ref multi_metric_resource_adequacy) for their interpretation.
+
+If no events are observed, all five event metrics return zero with zero standard error.
+The maximum metrics also report zero standard error because they return observed maxima, not estimates of an expected maximum.
+
+Duration metric values count simulation timesteps and their display identifies the timestep length and unit.
+Energy metrics use the system's configured energy unit, such as MWh or kWh.
+The internal `event.energy` field is an unconverted sum of shortfall power values, so it must not be interpreted directly as energy in that unit.
+For example, 10 MW of shortfall over two 15-minute timesteps gives an internal sum of 20 and an event energy of 5 MWh after conversion.
+
+For JSON output, see [Exporting shortfall events](@ref exporting_shortfall_events).
 
 ### Surplus
 The Surplus family of result specifications (`Surplus` and

@@ -30,8 +30,8 @@
 
     assess(TestData.singlenode_a, smallsample, resultspecs...)
     shortfall_1a, _, flow_1a, util_1a,
-    shortfall2_1a, _, flow2_1a, util2_1a, _ =
-        assess(TestData.singlenode_a, simspec, resultspecs...)
+    shortfall2_1a, _, flow2_1a, util2_1a, _, events_1a =
+        assess(TestData.singlenode_a, simspec, resultspecs..., ShortfallEvents())
 
     assess(TestData.singlenode_a_5min, smallsample, resultspecs...)
     shortfall_1a5, _, flow_1a5, util_1a5,
@@ -45,8 +45,8 @@
 
     assess(TestData.threenode, smallsample, resultspecs...)
     shortfall_3, _, flow_3, util_3,
-    shortfall2_3, _, flow2_3, util2_3, _ =
-        assess(TestData.threenode, simspec, resultspecs...)
+    shortfall2_3, _, flow2_3, util2_3, _, events_3 =
+        assess(TestData.threenode, simspec, resultspecs..., ShortfallEvents())
 
     assess(TestData.threenode, smallsample, DemandResponseShortfall(),
            GeneratorAvailability(), LineAvailability(),
@@ -738,11 +738,149 @@
 
     end
 
+    @testset "Shortfall Event Metrics" begin
+        # Single-region system
+        @test val(LOLEv(events_1a)) >= 0
+        @test stderror(LOLEv(events_1a)) >= 0
+        @test val(MeanEventDuration(events_1a)) >= 0
+        @test stderror(MeanEventDuration(events_1a)) >= 0
+
+        @test LOLEv(events_1a) ≈ LOLEv(events_1a, "Region")
+        @test MeanEventDuration(events_1a) ≈ MeanEventDuration(events_1a, "Region")
+        @test MaxEventDuration(events_1a) ≈ MaxEventDuration(events_1a, "Region")
+        @test MeanEventEnergy(events_1a) ≈ MeanEventEnergy(events_1a, "Region")
+        @test MaxEventEnergy(events_1a) ≈ MaxEventEnergy(events_1a, "Region")
+
+        manual_lolev_1a = mean(length.(events_1a.system_events))
+        @test isapprox(val(LOLEv(events_1a)), manual_lolev_1a; rtol=1e-10)
+
+        durations_1a = [
+            Results.duration_periods(ev)
+            for evts in events_1a.system_events
+            for ev in evts
+        ]
+
+        manual_meandur_1a = isempty(durations_1a) ? 0.0 : mean(durations_1a)
+
+        @test isapprox(val(MeanEventDuration(events_1a)), manual_meandur_1a; rtol=1e-10)
+
+        manual_maxdur_1a = isempty(durations_1a) ? 0.0 : maximum(durations_1a)
+
+        @test isapprox(val(MaxEventDuration(events_1a)), manual_maxdur_1a; rtol=1e-10)
+
+        p2e_1a = PRASCore.Systems.conversionfactor(1, Hour, PRASCore.Systems.MW, PRASCore.Systems.MWh)
+
+        energies_1a = [
+            p2e_1a * Results.event_energy(ev)
+            for evts in events_1a.system_events
+            for ev in evts
+        ]
+
+        manual_meanenergy_1a = isempty(energies_1a) ? 0.0 : mean(energies_1a)
+
+        @test isapprox(val(MeanEventEnergy(events_1a)), manual_meanenergy_1a; rtol=1e-10)
+
+        manual_maxenergy_1a = isempty(energies_1a) ? 0.0 : maximum(energies_1a)
+
+        @test isapprox(val(MaxEventEnergy(events_1a)), manual_maxenergy_1a; rtol=1e-10)
+
+        # Multi-region system
+        @test val(LOLEv(events_3)) >= 0
+        @test val(MeanEventDuration(events_3)) >= 0
+        @test val(LOLEv(events_3, "Region A")) >= 0
+        @test val(MeanEventDuration(events_3, "Region A")) >= 0
+
+        @test Results.totalevents(events_1a) >= 0
+        @test Results.totalevents(events_3, "Region A") >= 0
+
+    end
+
+    @testset "Subhourly event energy" begin
+        sys = deepcopy(TestData.singlenode_a_5min)
+        sys.generators.capacity .= 0
+        sys.regions.load .= [12 12 0 12]
+
+        spec = SequentialMonteCarlo(samples=2, seed=42, threaded=false)
+        events, = assess(sys, spec, ShortfallEvents())
+        region = first(sys.regions.names)
+
+        # The two events contain 12 MW for 10 minutes and 12 MW for 5 minutes.
+        # Their energies are 2 MWh and 1 MWh.
+        @test val(MeanEventEnergy(events)) ≈ 1.5
+        @test val(MaxEventEnergy(events)) ≈ 2.0
+        @test val(MeanEventEnergy(events, region)) ≈ 1.5
+        @test val(MaxEventEnergy(events, region)) ≈ 2.0
+    end
+
+    @testset "System events remain continuous across regions" begin
+        sys = deepcopy(TestData.threenode)
+        sys.generators.capacity .= 0
+        sys.interfaces.limit_forward .= 0
+        sys.interfaces.limit_backward .= 0
+        sys.regions.load .= [1 0 1 0; 0 1 0 0; 0 0 0 0]
+
+        spec = SequentialMonteCarlo(samples=2, seed=42, threaded=false)
+        events, = assess(sys, spec, ShortfallEvents())
+
+        # Region B bridges the gap between Region A's two events.
+        for s in 1:spec.nsamples
+            @test [(ev.start_idx, ev.end_idx) for ev in events[s]] == [(1, 3)]
+            @test [(ev.start_idx, ev.end_idx) for ev in events["Region A", s]] ==
+                  [(1, 1), (3, 3)]
+            @test [(ev.start_idx, ev.end_idx) for ev in events["Region B", s]] ==
+                  [(2, 2)]
+        end
+
+        @test val(LOLEv(events)) == 1.0
+        @test val(LOLEv(events, "Region A")) == 2.0
+        @test val(LOLEv(events, "Region B")) == 1.0
+    end
+
+    @testset "Event metrics return zero when no events exist" begin
+        sys = deepcopy(TestData.singlenode_a)
+        sys.regions.load .= 0
+
+        spec = SequentialMonteCarlo(samples=100, seed=42, threaded=false)
+        events, = assess(sys, spec, ShortfallEvents())
+
+        @test Results.totalevents(events) == 0
+
+        @test val(MeanEventDuration(events)) == 0.0
+        @test val(MaxEventDuration(events)) == 0.0
+        @test val(MeanEventEnergy(events)) == 0.0
+        @test val(MaxEventEnergy(events)) == 0.0
+
+        @test stderror(MeanEventDuration(events)) == 0.0
+        @test stderror(MaxEventDuration(events)) == 0.0
+        @test stderror(MeanEventEnergy(events)) == 0.0
+        @test stderror(MaxEventEnergy(events)) == 0.0
+    end
+
     @testset "Threaded sample result partitioning" begin
         simspec_serial =
             SequentialMonteCarlo(samples=100, seed=123, threaded=false)
         simspec_threaded =
             SequentialMonteCarlo(samples=100, seed=123, threaded=true)
+
+        @testset "ShortfallEvents" begin
+            simspec_few_samples_serial =
+                SequentialMonteCarlo(samples=5, seed=123, threaded=false)
+            simspec_few_samples_threaded =
+                SequentialMonteCarlo(samples=5, seed=123, threaded=true)
+
+            sys = deepcopy(TestData.threenode)
+            # Isolate regions to avoid alternative regional dispatch solutions.
+            sys.interfaces.limit_forward .= 0
+            sys.interfaces.limit_backward .= 0
+
+            serial_events, =
+                assess(sys, simspec_few_samples_serial, ShortfallEvents())
+            threaded_events, =
+                assess(sys, simspec_few_samples_threaded, ShortfallEvents())
+
+            @test threaded_events.system_events == serial_events.system_events
+            @test threaded_events.region_events == serial_events.region_events
+        end
 
         @testset "Shortfall" begin
             serial_shortfall, serial_samples =
